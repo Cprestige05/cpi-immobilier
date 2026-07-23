@@ -69,7 +69,7 @@ export default function ClientPublicDashboard({ user }: Props) {
         )}
       </div>
 
-      {/* CHUES upgrade banner */}
+      {/* Fonctionnaire upgrade banner */}
       <div className="p-5 relative overflow-hidden" style={{ background: 'linear-gradient(90deg, #38080F 0%, #7B1A2E 100%)' }}>
         <div className="absolute right-0 top-0 bottom-0 w-32 opacity-10" style={{ background: 'radial-gradient(circle, #C8921A 0%, transparent 70%)' }} />
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative">
@@ -78,7 +78,7 @@ export default function ClientPublicDashboard({ user }: Props) {
             <div>
               <div className="text-white" style={{ fontSize: '0.9375rem', fontWeight: 700 }}>Réduisez votre taux de 3 points</div>
               <div className="text-[#DFC0C8] mt-0.5" style={{ fontSize: '0.8125rem' }}>
-                Les adhérents CHUES bénéficient du taux préférentiel AM SA KER à 6,5%. Renseignez-vous pour adhérer.
+                Les fonctionnaires bénéficient du taux préférentiel AM SA KER à 6,5%. Renseignez-vous si vous êtes éligible.
               </div>
             </div>
           </div>

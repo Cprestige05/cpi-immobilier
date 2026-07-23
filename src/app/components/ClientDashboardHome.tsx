@@ -50,7 +50,7 @@ const TONE_BG: Record<string, string> = {
 const JOURNEY = [
   { id: 1, label: 'Dossier soumis',     sub: '03 juin 2026',       done: true  },
   { id: 2, label: 'Validation CPI',     sub: '18 juin 2026',       done: true  },
-  { id: 3, label: 'Accord bancaire',    sub: 'En cours · CBAO',    done: false, active: true },
+  { id: 3, label: 'Accord bancaire',    sub: 'En cours · Banque',  done: false, active: true },
   { id: 4, label: 'Acquisition terrain',sub: 'Prévu · sept. 2026', done: false },
 ];
 

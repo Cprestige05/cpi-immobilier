@@ -41,7 +41,7 @@ const MONTHLY = [
 ];
 
 const BY_TYPE = [
-  { name: 'AM SA KER (CHUES)', value: 76, color: C.gold },
+  { name: 'AM SA KER (Fonctionnaire)', value: 76, color: C.gold },
   { name: 'Financement standard', value: 55, color: C.bordeaux },
 ];
 
@@ -63,10 +63,10 @@ const BY_BIEN = [
 
 const BY_AGENT = [
   { nom: 'Mme Thiombane', org: 'CPI', deposes: 47, approuves: 38, taux: 81, delai: 4.1 },
-  { nom: 'Fatou Sarr', org: 'CHUES', deposes: 38, approuves: 34, taux: 89, delai: 3.6 },
-  { nom: 'Pierre Mendy', org: 'CBAO', deposes: 31, approuves: 25, taux: 81, delai: 4.8 },
+  { nom: 'Fatou Sarr', org: 'CPI', deposes: 38, approuves: 34, taux: 89, delai: 3.6 },
+  { nom: 'Pierre Mendy', org: 'Banque', deposes: 31, approuves: 25, taux: 81, delai: 4.8 },
   { nom: 'Marème Diop', org: 'CPI', deposes: 29, approuves: 22, taux: 76, delai: 4.9 },
-  { nom: 'Alioune Ndoye', org: 'CBAO', deposes: 24, approuves: 22, taux: 92, delai: 3.2 },
+  { nom: 'Alioune Ndoye', org: 'Banque', deposes: 24, approuves: 22, taux: 92, delai: 3.2 },
 ];
 
 const FUNNEL_DATA = [
@@ -161,7 +161,7 @@ export default function StatisticsDashboard({ user }: Props) {
               Tableau de bord statistique
             </h2>
             <p style={{ fontSize: '0.8125rem', color: C.muted, marginTop: '2px' }}>
-              {isAdmin ? 'Plateforme CPI CHUES — Vue globale' : `Espace ${user.name} · ${user.role === 'agent-cpi' ? 'CPI' : user.role === 'agent-chues' ? 'CHUES' : 'CBAO'}`}
+              {isAdmin ? 'Plateforme CPI — Vue globale' : `Espace ${user.name} · ${user.role === 'agent-cpi' ? 'CPI' : 'Banque'}`}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -404,10 +404,10 @@ export default function StatisticsDashboard({ user }: Props) {
                 </ResponsiveContainer>
               </div>
 
-              {/* Comparatif CHUES vs Standard */}
+              {/* Comparatif Fonctionnaire vs Standard */}
               <div className="grid sm:grid-cols-2 gap-4">
                 {[
-                  { label: 'AM SA KER — CHUES', dossiers: 76, montant: 1027, taux: '6,5%', delai: '3,6 j', color: C.gold },
+                  { label: 'AM SA KER — Fonctionnaire', dossiers: 76, montant: 1027, taux: '6,5%', delai: '3,6 j', color: C.gold },
                   { label: 'Financement standard', dossiers: 55, montant: 722, taux: '9,5%', delai: '4,8 j', color: C.bordeaux },
                 ].map(o => (
                   <div key={o.label} className="p-5" style={{ border: `2px solid ${o.color}30`, background: `${o.color}06` }}>
@@ -439,7 +439,7 @@ export default function StatisticsDashboard({ user }: Props) {
               {/* Overview */}
               <div className="grid sm:grid-cols-3 gap-4">
                 {[
-                  { label: 'Agents actifs', value: '25', sub: 'CPI + CHUES + CBAO', color: C.bordeaux },
+                  { label: 'Agents actifs', value: '25', sub: 'CPI + Banques partenaires', color: C.bordeaux },
                   { label: 'Taux moyen d\'approbation', value: '83,8%', sub: 'Sur tous les agents', color: C.green },
                   { label: 'Délai moyen/agent', value: '4,1 j', sub: 'De réception à décision', color: C.gold },
                 ].map(k => (
@@ -467,7 +467,7 @@ export default function StatisticsDashboard({ user }: Props) {
                     </thead>
                     <tbody>
                       {BY_AGENT.map((a) => {
-                        const orgColor = a.org === 'CPI' ? C.bordeaux : a.org === 'CHUES' ? C.green : C.gold;
+                        const orgColor = a.org === 'CPI' ? C.bordeaux : C.gold;
                         const perfColor = a.taux >= 85 ? C.green : a.taux >= 75 ? C.gold : '#C0392B';
                         return (
                           <tr key={a.nom} style={{ borderBottom: `1px solid rgba(123,26,46,0.05)` }}
@@ -510,9 +510,8 @@ export default function StatisticsDashboard({ user }: Props) {
                   <SectionTitle>Volume par organisation</SectionTitle>
                   <ResponsiveContainer width="100%" height={200}>
                     <BarChart data={[
-                      { org: 'CPI', deposes: 76, approuves: 60 },
-                      { org: 'CHUES', deposes: 38, approuves: 34 },
-                      { org: 'CBAO', deposes: 55, approuves: 47 },
+                      { org: 'CPI', deposes: 114, approuves: 94 },
+                      { org: 'Banque', deposes: 55, approuves: 47 },
                     ]} barGap={4} barSize={22}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(123,26,46,0.06)" vertical={false} />
                       <XAxis dataKey="org" tick={{ fontSize: 12, fill: C.muted }} axisLine={false} tickLine={false} />
@@ -528,8 +527,7 @@ export default function StatisticsDashboard({ user }: Props) {
                   <SectionTitle>Taux d'approbation par organisation</SectionTitle>
                   <div className="space-y-4 pt-2">
                     {[
-                      { org: 'CHUES', taux: 89, color: C.green },
-                      { org: 'CBAO', taux: 85, color: C.gold },
+                      { org: 'Banque', taux: 85, color: C.gold },
                       { org: 'CPI', taux: 79, color: C.bordeaux },
                     ].map(o => (
                       <div key={o.org}>
@@ -646,7 +644,7 @@ export default function StatisticsDashboard({ user }: Props) {
                 <SectionTitle>Taux de conversion : AM SA KER vs Standard</SectionTitle>
                 <div className="grid sm:grid-cols-2 gap-4">
                   {[
-                    { label: 'AM SA KER (CHUES)', deposes: 100, convertis: 62, taux: 62, color: C.gold },
+                    { label: 'AM SA KER (Fonctionnaire)', deposes: 100, convertis: 62, taux: 62, color: C.gold },
                     { label: 'Financement standard', deposes: 85, convertis: 36, taux: 42, color: C.bordeaux },
                   ].map(o => (
                     <div key={o.label} className="p-5 bg-white" style={{ border: `1px solid ${C.border}` }}>
@@ -669,8 +667,8 @@ export default function StatisticsDashboard({ user }: Props) {
                         <div className="h-full" style={{ width: `${o.taux}%`, background: o.color }} />
                       </div>
                       <p style={{ fontSize: '0.75rem', color: C.muted, marginTop: '8px' }}>
-                        {o.label === 'AM SA KER (CHUES)'
-                          ? 'Les adhérents CHUES présentent un taux de conversion supérieur de 20 pts grâce à des dossiers mieux préparés.'
+                        {o.label === 'AM SA KER (Fonctionnaire)'
+                          ? 'Les dossiers Fonctionnaire présentent un taux de conversion supérieur de 20 pts grâce à des dossiers mieux préparés.'
                           : 'Le suivi renforcé pourrait améliorer ce taux — réduction des dossiers incomplets recommandée.'}
                       </p>
                     </div>

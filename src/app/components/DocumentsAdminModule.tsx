@@ -55,7 +55,7 @@ const INITIAL_DOCS: AdminDoc[] = [
   { id: 'ad3', titre: 'Courrier de bienvenue',         type: 'Courrier',          destinataire: 'Mamadou Diallo', date: '10 juin 2026', statut: 'publie'    },
   { id: 'ad4', titre: 'PV de réservation — Villa F3',  type: 'PV',                destinataire: 'Mamadou Diallo', date: '12 juin 2026', statut: 'brouillon' },
   { id: 'ad5', titre: "Autorisation de prélèvement automatique", type: 'Autorisation', destinataire: 'Fatou Mbaye', date: '14 juin 2026', statut: 'publie' },
-  { id: 'ad6', titre: 'Fiche conditions de prêt CBAO', type: 'Document bancaire', destinataire: 'Fatou Mbaye',    date: '09 juin 2026', statut: 'archive'   },
+  { id: 'ad6', titre: 'Fiche conditions de prêt bancaire', type: 'Document bancaire', destinataire: 'Fatou Mbaye',    date: '09 juin 2026', statut: 'archive'   },
 ];
 
 const CLIENTS = [CLIENT_AISSATOU.name, 'Mamadou Diallo', 'Fatou Mbaye', 'Ibrahim Sow', 'Mariama Diallo'];

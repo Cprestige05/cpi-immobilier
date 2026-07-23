@@ -173,7 +173,7 @@ const TIMELINE_STEPS = [
   { label: 'Dossier reçu',      sub: 'CPI a réceptionné'   },
   { label: 'Docs validés',      sub: 'Pièces conformes'     },
   { label: 'Analyse',           sub: 'Étude de dossier'     },
-  { label: 'Validation banque', sub: 'CBAO Attijariwafa'    },
+  { label: 'Validation banque', sub: 'Banque partenaire'    },
   { label: 'Signature',         sub: 'Contrats & actes'     },
   { label: 'Chantier',          sub: 'Démarrage travaux'    },
 ];

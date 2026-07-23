@@ -227,7 +227,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             {[
               { label: 'Durée max.', value: '25 ans', sub: '300 mensualités' },
-              { label: 'Taux CBAO', value: '8,50%', sub: 'Référence marché' },
+              { label: 'Taux banque', value: '8,50%', sub: 'Référence marché' },
               { label: 'Périodicité', value: 'Mensuelle', sub: '12 paiements/an' },
             ].map(({ label, value, sub }) => (
               <div key={label} style={{

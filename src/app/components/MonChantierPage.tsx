@@ -36,10 +36,10 @@ const FEED_STATIC = [
   ]},
   { date: '15 mai 2026', entries: [
     { icon: CheckCircle2, text: 'Tranche T2 démarrée — poteaux en cours de coulage', type: 'etape' },
-    { icon: Banknote, text: 'Décaissement T1 confirmé — 6 475 000 FCFA versés par CBAO', type: 'finance' },
+    { icon: Banknote, text: 'Décaissement T1 confirmé — 6 475 000 FCFA versés par la banque', type: 'finance' },
   ]},
   { date: '10 mars 2026', entries: [
-    { icon: CheckCircle2, text: 'Fondations terminées — T1 validée par CPI et CBAO', type: 'validation' },
+    { icon: CheckCircle2, text: 'Fondations terminées — T1 validée par CPI et la banque', type: 'validation' },
     { icon: Camera, text: '8 photos de la phase fondations disponibles dans la galerie', type: 'photo' },
   ]},
 ];
@@ -60,7 +60,7 @@ const CALENDAR_EVENTS = [
   { id: 'e2', titre: 'Réunion de chantier hebdomadaire', type: 'rdv-client', date: '01 août 2026', statut: 'prevu', color: '#1E4D8C' },
   { id: 'e3', titre: 'Livraison matériaux toiture', type: 'livraison-materiaux', date: '05 août 2026', statut: 'prevu', color: 'var(--accent)' },
   { id: 'e4', titre: 'Fin prévue toiture T2', type: 'fin-etape', date: '30 juil. 2026', statut: 'prevu', color: 'var(--success)' },
-  { id: 'e5', titre: 'Décaissement T2 — CBAO', type: 'rdv-client', date: 'Août 2026', statut: 'prevu', color: 'var(--accent)' },
+  { id: 'e5', titre: 'Décaissement T2 — Banque', type: 'rdv-client', date: 'Août 2026', statut: 'prevu', color: 'var(--accent)' },
 ];
 
 const PHASES = [
@@ -234,7 +234,7 @@ function TrancheCard({ t }: { t: Tranche }) {
                   fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700,
                   color: t.banqueOk ? 'var(--success)' : 'var(--muted-foreground)',
                   background: t.banqueOk ? 'rgba(26,107,68,0.12)' : 'var(--muted)',
-                }}>CBAO {t.banqueOk ? '✓' : '···'}</span>
+                }}>Banque {t.banqueOk ? '✓' : '···'}</span>
               </div>
             </div>
           </div>
@@ -300,7 +300,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
       { initials: 'MF', nom: 'Mamadou Fall', role: 'Conducteur de travaux', tel: '+221 77 532 08 91', email: 'm.fall@cpi-chantiers.sn', color: '#1E4D8C' },
       { initials: 'OD', nom: 'Oumar Diallo', role: 'Architecte', tel: '+221 77 643 17 55', email: 'o.diallo@arch-dakar.sn', color: 'var(--success)' },
       { initials: clientData.conseiller.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase(), nom: clientData.conseiller, role: 'Conseillère CPI', tel: '+221 77 201 44 03', email: 'thiombane@cpi.sn', color: 'var(--primary)' },
-      { initials: 'PB', nom: 'Pierre Bassène', role: `Conseiller ${clientData.banque.split(' ')[0]}`, tel: '+221 77 318 90 22', email: 'p.bassene@cbao.sn', color: 'var(--accent)' },
+      { initials: 'PB', nom: 'Pierre Bassène', role: 'Conseiller bancaire', tel: '+221 77 318 90 22', email: 'p.bassene@banque-partenaire.sn', color: 'var(--accent)' },
     ];
   }, [clientData]);
 
@@ -380,7 +380,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
       { date: '18 juin 2026', heure: '09:10', auteur: 'Mme Thiombane', role: 'Conseillère CPI', action: 'Inspection CPI réalisée — rapport disponible', icon: CheckCircle2 },
       { date: '10 juin 2026', heure: '11:00', auteur: 'Aliou Koné', role: 'Chef de chantier', action: 'Livraison matériaux lot 2 — 8 tonnes de ciment', icon: HardHat },
       { date: '15 mai 2026', heure: '08:00', auteur: 'Mamadou Fall', role: 'Conducteur de travaux', action: 'Tranche T2 démarrée — poteaux en cours de coulage', icon: Zap },
-      { date: '15 mai 2026', heure: '16:15', auteur: 'Pierre Bassène', role: 'Conseiller CBAO', action: 'Décaissement T1 confirmé — 6 475 000 FCFA versés', icon: Banknote },
+      { date: '15 mai 2026', heure: '16:15', auteur: 'Pierre Bassène', role: 'Conseiller bancaire', action: 'Décaissement T1 confirmé — 6 475 000 FCFA versés', icon: Banknote },
       { date: '10 mars 2026', heure: '15:00', auteur: 'Mme Thiombane', role: 'Conseillère CPI', action: 'T1 validée — fondations conformes au plan approuvé', icon: CheckCircle2 },
       { date: '10 mars 2026', heure: '10:00', auteur: 'Oumar Diallo', role: 'Architecte', action: 'Plans validés et transmis au chef de chantier', icon: FileText },
     ];
@@ -766,7 +766,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
 
         {/* Décaissements */}
         <div>
-          <SectionHeader icon={Banknote} title="Décaissements" sub="Versements CBAO par tranche" />
+          <SectionHeader icon={Banknote} title="Décaissements" sub="Versements bancaires par tranche" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {DISBURSEMENTS.map((d, i) => {
               const done = d.etat === 'payee';

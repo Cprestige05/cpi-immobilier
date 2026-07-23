@@ -43,7 +43,7 @@ const INITIAL_DOSSIERS: DossierDecaissement[] = [
   },
   {
     id: 'd2', client: 'Mamadou Diallo', ref: 'CPI-2026-04698', project: 'Villa F3 — Thiès Nord',
-    montantTotal: '12 500 000', banque: 'CBAO Attijariwafa Bank',
+    montantTotal: '12 500 000', banque: 'Banque partenaire',
     tranches: [
       { num: 1, label: 'Démarrage',  pctMontant: 35, montant: '4 375 000',  status: 'en-cours',  date: '', comment: '' },
       { num: 2, label: 'Gros œuvre', pctMontant: 30, montant: '3 750 000',  status: 'en-attente',date: '', comment: '' },
@@ -90,7 +90,7 @@ export default function DecaissementsModule() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Header */}
       <div style={{ background: 'var(--card)', border: '1px solid var(--border)', padding: '18px 20px' }}>
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, color: 'var(--foreground)', margin: '0 0 4px' }}>Décaissements CBAO</h2>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, color: 'var(--foreground)', margin: '0 0 4px' }}>Décaissements bancaires</h2>
         <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--muted-foreground)', margin: 0 }}>Gérez les 4 tranches de décaissement pour chaque dossier. Les informations sont visibles par le client.</p>
       </div>
 

@@ -163,8 +163,8 @@ const INITIAL_PUBLICATIONS_AISSATOU: ChantierPublication[] = [
   { id: 'pub3', phase: 2, titre: 'Livraison matériaux de construction (lot 2) — 8 tonnes de ciment',  description: '', date: '10 juin 2026', heure: '09:00', auteur: 'Aliou Koné',    type: 'actualite',    visibleClient: true },
   { id: 'pub4', phase: 2, titre: 'PV de réunion de chantier — semaine du 9 juin',                     description: '', date: '10 juin 2026', heure: '17:00', auteur: 'Aliou Koné',    type: 'document',     visibleClient: true },
   { id: 'pub5', phase: 2, titre: 'Tranche T2 démarrée — poteaux en cours de coulage',                 description: '', date: '15 mai 2026',  heure: '08:00', auteur: 'Mme Thiombane', type: 'etape-validee',visibleClient: true },
-  { id: 'pub6', phase: 1, titre: 'Décaissement T1 confirmé — 6 475 000 FCFA versés par CBAO',         description: '', date: '15 mai 2026',  heure: '16:00', auteur: 'Mme Thiombane', type: 'actualite',    visibleClient: true },
-  { id: 'pub7', phase: 1, titre: 'Fondations terminées — T1 validée par CPI et CBAO',                 description: '', date: '10 mars 2026', heure: '11:00', auteur: 'Mme Thiombane', type: 'etape-validee',visibleClient: true },
+  { id: 'pub6', phase: 1, titre: 'Décaissement T1 confirmé — 6 475 000 FCFA versés par la banque',    description: '', date: '15 mai 2026',  heure: '16:00', auteur: 'Mme Thiombane', type: 'actualite',    visibleClient: true },
+  { id: 'pub7', phase: 1, titre: 'Fondations terminées — T1 validée par CPI et la banque',             description: '', date: '10 mars 2026', heure: '11:00', auteur: 'Mme Thiombane', type: 'etape-validee',visibleClient: true },
   { id: 'pub8', phase: 1, titre: '8 photos de la phase fondations disponibles dans la galerie',        description: '', date: '10 mars 2026', heure: '15:00', auteur: 'Mme Thiombane', type: 'photo',        visibleClient: true },
 ];
 
@@ -181,7 +181,7 @@ const INITIAL_MEDIAS_AISSATOU: ChantierMedia[] = [
 
 const INITIAL_EVENTS_AISSATOU: CalendarEvent[] = [
   { id: 'ev1', titre: 'Visite de chantier',             type: 'visite',     date: '28 juillet 2026', heure: '10:00', description: "Inspection de l'avancement du gros œuvre.",              statut: 'prevu',    visibleClient: true  },
-  { id: 'ev2', titre: 'Inspection CBAO — Certification T2', type: 'inspection', date: '5 août 2026',     heure: '09:00', description: "Inspection bancaire pour déblocage de la tranche T2.", statut: 'confirme', visibleClient: false },
+  { id: 'ev2', titre: 'Inspection bancaire — Certification T2', type: 'inspection', date: '5 août 2026', heure: '09:00', description: "Inspection bancaire pour déblocage de la tranche T2.", statut: 'confirme', visibleClient: false },
 ];
 
 const INITIAL_STATE_BY_CLIENT: Record<string, PersistedState> = {

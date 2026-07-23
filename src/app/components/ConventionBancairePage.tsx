@@ -128,7 +128,7 @@ function ProductCard({
   );
 }
 
-export default function ConventionCBAOPage() {
+export default function ConventionBancairePage() {
   return (
     <div style={{
       minHeight: '100%',
@@ -151,7 +151,7 @@ export default function ConventionCBAOPage() {
             textTransform: 'uppercase' as const,
             color: GOLD,
           }}>
-            Convention CBAO · CHUES — 2/3
+            Convention de financement — 2/3
           </span>
         </div>
 
@@ -207,7 +207,7 @@ export default function ConventionCBAOPage() {
             fontSize: '0.75rem',
             color: 'rgba(255,255,255,0.55)',
           }}>
-            Convention CBAO - CHUES · Articles I &amp; II · Taux susceptibles d'évoluer selon conditions marché
+            Convention de financement · Articles I &amp; II · Taux susceptibles d'évoluer selon conditions marché
           </span>
         </div>
 

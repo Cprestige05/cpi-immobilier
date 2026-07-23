@@ -11,7 +11,7 @@ export const CLIENT_AISSATOU = {
   ref: 'CPI-2026-04721',
   dateOuverture: '03 juin 2026',
   conseiller: 'Mme Thiombane',
-  banque: 'CBAO Attijariwafa Bank',
+  banque: 'Banque Partenaire',
   statut: 'Dossier en cours de validation',
   nextEtape: 'Validation bancaire',
   progression: 67,
@@ -80,7 +80,7 @@ export const REQUIS_DOCS: RequisDocData[] = [
     dateValidation: undefined,
     commentaire: 'Veuillez déposer un document plus lisible — pages 2 et 3 illisibles.',
     version: 2,
-    submittedLabel: 'Releves_CBAO_3mois_v2',
+    submittedLabel: 'Releves_Bancaires_3mois_v2',
     taille: '3.1 Mo',
   },
 ];
@@ -116,7 +116,7 @@ export const CPI_FOLDERS_DATA: CpiFolderData[] = [
     label: 'Banque',
     docs: [
       { id: 'cd3', label: 'Convention de financement', status: 'en-attente', date: undefined      },
-      { id: 'cd4', label: 'Offre de prêt CBAO',        status: 'disponible', date: '14 juin 2026' },
+      { id: 'cd4', label: 'Offre de prêt bancaire',    status: 'disponible', date: '14 juin 2026' },
     ],
   },
   {
@@ -231,10 +231,10 @@ export const TRANCHES_AISSATOU: TrancheData[] = [
 ];
 
 export const DISBURSEMENTS_AISSATOU = [
-  { tranche: 1, label: 'Démarrage',   montant: '6 475 000', date: '25 mai 2026',  status: 'Effectué',   banque: 'CBAO' },
-  { tranche: 2, label: 'Gros œuvre', montant: '5 550 000', date: '—',             status: 'En cours',   banque: 'CBAO' },
-  { tranche: 3, label: 'Second œuvre',montant: '5 550 000', date: '—',             status: 'En attente', banque: 'CBAO' },
-  { tranche: 4, label: 'Livraison',   montant: '925 000',  date: '—',             status: 'En attente', banque: 'CBAO' },
+  { tranche: 1, label: 'Démarrage',   montant: '6 475 000', date: '25 mai 2026',  status: 'Effectué',   banque: 'Banque Partenaire' },
+  { tranche: 2, label: 'Gros œuvre', montant: '5 550 000', date: '—',             status: 'En cours',   banque: 'Banque Partenaire' },
+  { tranche: 3, label: 'Second œuvre',montant: '5 550 000', date: '—',             status: 'En attente', banque: 'Banque Partenaire' },
+  { tranche: 4, label: 'Livraison',   montant: '925 000',  date: '—',             status: 'En attente', banque: 'Banque Partenaire' },
 ];
 
 // ─── Helpers: map to module-specific shapes ──────────────────────────────────

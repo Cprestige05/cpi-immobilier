@@ -150,7 +150,7 @@ const TIMELINE = [
   { date: '08 juin 2026', hour: '11:00', text: 'Analyse démarrée par le service instruction',   type: 'success' },
   { date: '10 juin 2026', hour: '16:45', text: 'Conseillère affectée — Mme Thiombane',          type: 'success' },
   { date: '14 juin 2026', hour: '09:20', text: 'Relevé bancaire refusé — renvoi demandé',       type: 'warning' },
-  { date: '—',            hour: '—',     text: 'Validation bancaire CBAO (prochaine étape)',     type: 'pending' },
+  { date: '—',            hour: '—',     text: 'Validation bancaire (prochaine étape)',     type: 'pending' },
 ];
 
 // ── Design tokens ──────────────────────────────────────────────────

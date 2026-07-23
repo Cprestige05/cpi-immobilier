@@ -403,7 +403,7 @@ export default function ChantierModule({ agentName = 'Agent CPI' }: Props) {
 
                 {/* Tranches */}
                 <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: '12px' }}>Tranches CBAO</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: '12px' }}>Tranches bancaires</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {ch.tranches.map(t => {
                       const cfg = TRANCHE_STATUS_CFG[t.status];

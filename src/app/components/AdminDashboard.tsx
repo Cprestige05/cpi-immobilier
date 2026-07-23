@@ -26,30 +26,28 @@ const MONTHLY_DATA = [
 ];
 
 const PIE_DATA = [
-  { name: 'AM SA KER (CHUES)', value: 58, color: '#C8921A' },
+  { name: 'AM SA KER (Fonctionnaire)', value: 58, color: '#C8921A' },
   { name: 'Financement standard', value: 42, color: '#7B1A2E' },
 ];
 
 const PARTNERS = [
   { name: 'CPI', role: 'Promoteur immobilier', dossiers: 131, traites: 112, en_cours: 19, color: '#7B1A2E' },
-  { name: 'CHUES', role: 'Coopérative des enseignants', dossiers: 76, traites: 64, en_cours: 12, color: '#1A6B44' },
-  { name: 'CBAO', role: 'Partenaire bancaire officiel', dossiers: 131, traites: 98, en_cours: 33, color: '#C8921A' },
+  { name: 'Banque partenaire', role: 'Partenaire bancaire officiel', dossiers: 131, traites: 98, en_cours: 33, color: '#C8921A' },
 ];
 
 const RECENT_ACTIVITY = [
-  { action: 'Dossier DEM-2026-04721 approuvé', agent: 'F. Sarr (CHUES)', time: 'Il y a 12 min', type: 'approve' },
+  { action: 'Dossier DEM-2026-04721 approuvé', agent: 'F. Sarr (CPI)', time: 'Il y a 12 min', type: 'approve' },
   { action: 'Nouveau dossier déposé par I. Sall', agent: 'Système', time: 'Il y a 34 min', type: 'new' },
   { action: 'Compléments requis — DEM-2026-04698', agent: 'I. Fall (CPI)', time: 'Il y a 1h 20min', type: 'warn' },
-  { action: 'Décaissement effectué — DEM-2026-04589', agent: 'P. Mendy (CBAO)', time: 'Il y a 2h 05min', type: 'disburse' },
+  { action: 'Décaissement effectué — DEM-2026-04589', agent: 'P. Mendy (Banque)', time: 'Il y a 2h 05min', type: 'disburse' },
   { action: 'Dossier DEM-2026-04512 refusé', agent: 'I. Fall (CPI)', time: 'Il y a 3h 18min', type: 'refuse' },
 ];
 
 const USERS_BY_ROLE = [
-  { role: 'Clients CHUES', count: 1247, color: '#C8921A' },
+  { role: 'Clients Fonctionnaire', count: 1247, color: '#C8921A' },
   { role: 'Clients Grand Public', count: 893, color: '#7B1A2E' },
-  { role: 'Agents CPI', count: 8, color: '#6B4A52' },
-  { role: 'Agents CHUES', count: 5, color: '#1A6B44' },
-  { role: 'Agents CBAO', count: 12, color: '#C8921A' },
+  { role: 'Agents CPI', count: 13, color: '#6B4A52' },
+  { role: 'Agents Banque', count: 12, color: '#C8921A' },
 ];
 
 export default function AdminDashboard({ user, activeNav }: Props) {
@@ -239,10 +237,10 @@ export default function AdminDashboard({ user, activeNav }: Props) {
             <div className="space-y-3">
               {[
                 { name: 'Ibrahima Fall', org: 'CPI', dossiers: 47, rate: '84%' },
-                { name: 'Fatou Sarr', org: 'CHUES', dossiers: 38, rate: '89%' },
-                { name: 'Pierre Mendy', org: 'CBAO', dossiers: 31, rate: '81%' },
+                { name: 'Fatou Sarr', org: 'CPI', dossiers: 38, rate: '89%' },
+                { name: 'Pierre Mendy', org: 'Banque', dossiers: 31, rate: '81%' },
                 { name: 'Marème Diop', org: 'CPI', dossiers: 29, rate: '77%' },
-                { name: 'Alioune Ndoye', org: 'CBAO', dossiers: 24, rate: '92%' },
+                { name: 'Alioune Ndoye', org: 'Banque', dossiers: 24, rate: '92%' },
               ].map((agent) => (
                 <div key={agent.name} className="flex items-center justify-between p-3 bg-[#FAF7F7]">
                   <div className="flex items-center gap-3">
@@ -311,9 +309,9 @@ export default function AdminDashboard({ user, activeNav }: Props) {
                 </thead>
                 <tbody>
                   {[
-                    { partner: 'CHUES', type: 'Convention AM SA KER — Enseignants CHUES', date: '01 avr. 2026', validity: '31 mars 2027', status: 'Actif' },
-                    { partner: 'CBAO', type: 'Convention de financement enseignants', date: '17 mars 2026', validity: '16 mars 2027', status: 'Actif' },
-                    { partner: 'CBAO', type: 'Convention de financement enseignants', date: '31 mars 2026', validity: '30 mars 2027', status: 'Actif' },
+                    { partner: 'Banque partenaire', type: 'Convention AM SA KER — Fonctionnaires', date: '01 avr. 2026', validity: '31 mars 2027', status: 'Actif' },
+                    { partner: 'Banque partenaire', type: 'Convention de financement standard', date: '17 mars 2026', validity: '16 mars 2027', status: 'Actif' },
+                    { partner: 'Banque partenaire', type: 'Convention de financement standard', date: '31 mars 2026', validity: '30 mars 2027', status: 'Actif' },
                   ].map((row, i) => (
                     <tr key={i} className="border-b border-[rgba(123,26,46,0.05)]">
                       <td className="px-4 py-3 text-[#1C0810]" style={{ fontSize: '0.875rem', fontWeight: 600 }}>{row.partner}</td>

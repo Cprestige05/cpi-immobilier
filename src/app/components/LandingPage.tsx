@@ -28,22 +28,22 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
     { value: '2003', label: 'Année de fondation', icon: Award },
   ];
 
-  const chuesFeatures = [
-    "Taux préférentiel réservé aux adhérents CHUES",
-    "Conditions négociées avec la CBAO Attijariwafa Bank",
+  const fonctionnaireFeatures = [
+    "Taux préférentiel réservé aux fonctionnaires",
+    "Conditions négociées avec nos banques partenaires",
     "Traitement prioritaire de votre dossier",
     "Frais de dossier réduits",
-    "Accompagnement personnalisé CHUES",
+    "Accompagnement personnalisé",
     "Accès à l'offre AM SA KER (Ma maison)",
   ];
 
   const publicFeatures = [
-    "Ouvert à tout enseignant ou salarié de l'État",
+    "Ouvert à tout salarié du secteur privé ou profession libérale",
     "Financement immobilier à taux compétitif",
     "Villas et parcelles à Thiès",
     "Dossier 100% en ligne",
     "Conseil et accompagnement gratuits",
-    "Possibilité d'adhérer à la CHUES",
+    "Éligibilité vérifiée selon votre profil",
   ];
 
   const partners = [
@@ -54,23 +54,17 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
       color: CPI_PRIMARY,
     },
     {
-      name: 'CHUES',
-      full: 'Coopérative d\'Habitat des Usagers de l\'État du Sénégal',
-      desc: 'Coopérative des enseignants — convention signée le 31/03/2026',
-      color: '#1A6B44',
-    },
-    {
-      name: 'CBAO',
-      full: 'CBAO Attijariwafa Bank',
-      desc: 'Partenaire bancaire officiel — convention signée le 17/03/2026',
+      name: 'Banques partenaires',
+      full: 'Institutions financières agréées',
+      desc: 'Conventions de financement actives',
       color: GOLD,
     },
   ];
 
   const process = [
-    { step: '01', title: 'Choisissez votre profil', desc: 'Adhérent CHUES ou enseignant non-adhérent — chaque parcours est adapté à votre situation.' },
+    { step: '01', title: 'Choisissez votre profil', desc: 'Fonctionnaire, salarié du privé ou profession libérale — chaque parcours est adapté à votre situation.' },
     { step: '02', title: 'Constituez votre dossier', desc: 'Déposez vos pièces en ligne. Notre plateforme vous guide étape par étape.' },
-    { step: '03', title: 'Analyse & décision', desc: 'Les équipes CPI et la CBAO Attijariwafa Bank étudient votre demande.' },
+    { step: '03', title: 'Analyse & décision', desc: 'Les équipes CPI et notre banque partenaire étudient votre demande.' },
     { step: '04', title: 'Financement débloqué', desc: 'Votre financement est accordé et les clés de votre bien vous sont remises.' },
   ];
 
@@ -85,7 +79,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
     },
     {
       type: 'Parcelle constructible',
-      location: 'Lotissement CHUES, Thiès',
+      location: 'Lotissement CPI, Thiès',
       img: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&h=400&fit=crop&auto=format',
       surface: '200 m²',
       rooms: 'Terrain nu viabilisé',
@@ -93,7 +87,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
     },
     {
       type: 'Villa F4',
-      location: 'Résidence Enseignants, Thiès',
+      location: 'Résidence CPI, Thiès',
       img: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&h=400&fit=crop&auto=format',
       surface: '95 m²',
       rooms: '3 chambres',
@@ -110,7 +104,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
             {/* Logo */}
             <div className="flex items-center gap-3">
               <img
-                src="https://cpi-chues.com/logos/cpi-logo.png"
+                src="https://cpi.sn/logos/cpi-logo.png"
                 alt="CPI — Compagnie Prestige Immobilier"
                 className="h-10 w-auto"
                 onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -175,14 +169,14 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 border mb-6" style={{ background: 'rgba(200,146,26,0.18)', borderColor: 'rgba(200,146,26,0.4)', fontSize: '0.75rem', fontWeight: 700, color: GOLD_LIGHT, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                 <Award className="w-3 h-3" />
-                Programme Immobilier · Enseignants du Sénégal
+                Programme Immobilier · Travailleurs du Sénégal
               </div>
               <h1 className="text-white mb-6" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.1 }}>
                 Accédez à la propriété.
                 <span style={{ color: GOLD_LIGHT }}> Simplement.</span>
               </h1>
               <p className="mb-8" style={{ color: '#DFC0C8', fontSize: '1.0625rem', lineHeight: 1.7 }}>
-                CPI, la CHUES et la CBAO Attijariwafa Bank réunissent leurs forces pour faciliter l'accès à la propriété immobilière aux enseignants du Sénégal. Villas et parcelles à Thiès — financement sur mesure.
+                CPI et ses banques partenaires réunissent leurs forces pour faciliter l'accès à la propriété immobilière aux travailleurs du Sénégal. Villas et parcelles à Thiès — financement sur mesure.
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
@@ -209,11 +203,11 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
               <div className="flex flex-wrap gap-3 mt-8">
                 <div className="flex items-center gap-2 px-3 py-1.5" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}>
                   <CheckCircle2 className="w-3.5 h-3.5" style={{ color: '#86EFAC' }} />
-                  <span style={{ fontSize: '0.75rem', color: '#DFC0C8', fontWeight: 500 }}>Convention CHUES signée — 31/03/2026</span>
+                  <span style={{ fontSize: '0.75rem', color: '#DFC0C8', fontWeight: 500 }}>Dossier garanti CPI</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}>
                   <CheckCircle2 className="w-3.5 h-3.5" style={{ color: '#86EFAC' }} />
-                  <span style={{ fontSize: '0.75rem', color: '#DFC0C8', fontWeight: 500 }}>Convention CBAO signée — 17/03/2026</span>
+                  <span style={{ fontSize: '0.75rem', color: '#DFC0C8', fontWeight: 500 }}>Partenaire bancaire agréé</span>
                 </div>
               </div>
             </div>
@@ -261,22 +255,22 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
               Un portail, deux parcours adaptés
             </h2>
             <p className="max-w-xl mx-auto" style={{ color: CPI_MUTED, fontSize: '1rem', lineHeight: 1.7 }}>
-              Adhérent CHUES ou enseignant non-adhérent — la plateforme s'adapte à votre profil et vous oriente vers les meilleures conditions disponibles.
+              Fonctionnaire, salarié du privé ou profession libérale — la plateforme s'adapte à votre profil et vous oriente vers les meilleures conditions disponibles.
             </p>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
-            {/* CHUES Card */}
+            {/* Fonctionnaire Card */}
             <div className="p-8 relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${CPI_DARK} 0%, ${CPI_PRIMARY} 100%)` }}>
               <div className="absolute top-0 right-0 w-48 h-48" style={{ opacity: 0.06, background: `radial-gradient(circle, ${GOLD} 0%, transparent 70%)` }} />
               <div className="inline-flex items-center gap-2 px-3 py-1 mb-6" style={{ background: 'rgba(200,146,26,0.25)', fontSize: '0.6875rem', fontWeight: 700, color: GOLD_LIGHT, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
                 <Star className="w-3 h-3" />
-                Réservé aux adhérents CHUES
+                Réservé aux fonctionnaires
               </div>
               <h3 className="text-white mb-1" style={{ fontFamily: 'var(--font-display)', fontSize: '1.875rem', fontWeight: 800 }}>AM SA KER</h3>
-              <p style={{ color: '#DFC0C8', fontSize: '0.875rem', marginBottom: '1.5rem' }}>« Ma maison » — L'offre exclusive CHUES</p>
+              <p style={{ color: '#DFC0C8', fontSize: '0.875rem', marginBottom: '1.5rem' }}>« Ma maison » — L'offre dédiée aux fonctionnaires</p>
               <ul className="space-y-3 mb-8">
-                {chuesFeatures.map((f) => (
+                {fonctionnaireFeatures.map((f) => (
                   <li key={f} className="flex items-start gap-3">
                     <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: GOLD_LIGHT }} />
                     <span style={{ color: '#DFC0C8', fontSize: '0.875rem' }}>{f}</span>
@@ -290,7 +284,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#b07d15'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = GOLD; }}
               >
-                Je suis adhérent CHUES <ChevronRight className="w-4 h-4" />
+                Je suis fonctionnaire <ChevronRight className="w-4 h-4" />
               </button>
             </div>
 
@@ -299,10 +293,10 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
               <div className="absolute top-0 right-0 w-48 h-48" style={{ opacity: 0.03, background: `radial-gradient(circle, ${CPI_PRIMARY} 0%, transparent 70%)` }} />
               <div className="inline-flex items-center gap-2 px-3 py-1 mb-6" style={{ background: CPI_LIGHT, fontSize: '0.6875rem', fontWeight: 700, color: CPI_PRIMARY, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
                 <Users className="w-3 h-3" />
-                Ouvert à tous les enseignants
+                Ouvert à tous les profils
               </div>
               <h3 className="mb-1" style={{ fontFamily: 'var(--font-display)', fontSize: '1.875rem', fontWeight: 800, color: '#1C0810' }}>Parcours Standard</h3>
-              <p style={{ color: CPI_MUTED, fontSize: '0.875rem', marginBottom: '1.5rem' }}>Enseignants non-adhérents CHUES</p>
+              <p style={{ color: CPI_MUTED, fontSize: '0.875rem', marginBottom: '1.5rem' }}>Secteur privé & autres profils</p>
               <ul className="space-y-3 mb-8">
                 {publicFeatures.map((f) => (
                   <li key={f} className="flex items-start gap-3">
@@ -406,10 +400,10 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
           <div className="text-center mb-12">
             <div className="mb-3" style={{ color: GOLD, fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Nos partenaires</div>
             <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.25rem, 3vw, 1.875rem)', fontWeight: 800, color: '#1C0810' }}>
-              Trois institutions, une vision commune
+              Des institutions, une vision commune
             </h2>
           </div>
-          <div className="grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
             {partners.map((p) => (
               <div key={p.name} className="bg-white p-6 text-center" style={{ border: `1px solid ${CPI_BORDER}` }}>
                 <div className="w-16 h-16 mx-auto flex items-center justify-center mb-4" style={{ background: `${p.color}14`, border: `2px solid ${p.color}30` }}>
@@ -471,7 +465,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
             <div>
-              <img src="https://cpi-chues.com/logos/cpi-logo.png" alt="CPI" className="h-12 w-auto mb-4 brightness-200 contrast-75"
+              <img src="https://cpi.sn/logos/cpi-logo.png" alt="CPI" className="h-12 w-auto mb-4 brightness-200 contrast-75"
                 onError={e => {
                   const el = e.currentTarget as HTMLImageElement;
                   el.style.display = 'none';
@@ -505,7 +499,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
             <div>
               <div className="mb-4" style={{ color: '#DFC0C8', fontWeight: 700, fontSize: '0.875rem' }}>Offres</div>
               <ul className="space-y-2">
-                {['AM SA KER (CHUES)', 'Villas à Thiès', 'Parcelles à Thiès', 'Simulateur en ligne'].map(i => (
+                {['AM SA KER (Fonctionnaires)', 'Villas à Thiès', 'Parcelles à Thiès', 'Simulateur en ligne'].map(i => (
                   <li key={i}><a href="#" style={{ color: '#6B3040', fontSize: '0.8125rem' }}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#DFC0C8'; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#6B3040'; }}>{i}</a></li>
@@ -515,7 +509,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
             <div>
               <div className="mb-4" style={{ color: '#DFC0C8', fontWeight: 700, fontSize: '0.875rem' }}>Partenaires</div>
               <ul className="space-y-2">
-                {['CHUES', 'CBAO Attijariwafa Bank', 'Ministère de l\'Éducation', 'cpi.sn'].map(i => (
+                {['Banques partenaires', 'Institutions financières agréées', 'cpi.sn'].map(i => (
                   <li key={i}><a href="#" style={{ color: '#6B3040', fontSize: '0.8125rem' }}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#DFC0C8'; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#6B3040'; }}>{i}</a></li>
@@ -529,7 +523,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
                   { Icon: MapPin, text: 'Ngor, Lot N°8 (près station Shell), Dakar' },
                   { Icon: Phone, text: '+221 33 820 25 07 / +221 33 842 60 17' },
                   { Icon: Phone, text: 'WhatsApp : +221 77 664 94 00' },
-                  { Icon: Mail, text: 'contact@cpi-chues.com' },
+                  { Icon: Mail, text: 'contact@cpi.sn' },
                 ].map(({ Icon, text }) => (
                   <div key={text} className="flex items-start gap-2" style={{ color: '#6B3040', fontSize: '0.8125rem' }}>
                     <Icon className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
@@ -544,7 +538,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
           </div>
           <div className="border-t pt-6 flex flex-col sm:flex-row justify-between items-center gap-3" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
             <div style={{ color: '#3D1525', fontSize: '0.75rem' }}>
-              © 2026 Compagnie Prestige Immobilier · CHUES · CBAO Attijariwafa Bank. Tous droits réservés.
+              © 2026 Compagnie Prestige Immobilier. Tous droits réservés.
             </div>
             <div className="flex gap-4">
               {['Mentions légales', 'Politique de confidentialité', 'CGU'].map(i => (

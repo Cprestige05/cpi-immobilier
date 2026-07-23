@@ -29,34 +29,34 @@ const STATUS_CFG: Record<DossierStatus, { label: string; color: string; bg: stri
 };
 
 interface Dossier {
-  id: string; client: string; clientId: string; type: 'chues' | 'public';
+  id: string; client: string; clientId: string; type: 'fonctionnaire' | 'public';
   amount: string; terrainAmount: string | null; date: string; status: DossierStatus;
   agent: string; property: string; transmisALaBanque: boolean; datTransmission?: string;
 }
 
-// terrainAmount: 6 500 000 FCFA pour adhérents CHUES — à déterminer pour clients publics
+// terrainAmount: 6 500 000 FCFA pour dossiers Fonctionnaire — à déterminer pour clients publics
 const DOSSIERS: Dossier[] = [
-  { id: 'DEM-2026-04721', client: 'Aminata Diallo', clientId: 'CLI-001', type: 'chues',  amount: '18 500 000', terrainAmount: '6 500 000', date: '10 juin 2026', status: 'analyse',    agent: 'F. Sarr',  property: 'Villa R+1, Mbao',          transmisALaBanque: true,  datTransmission: '14 juin 2026' },
+  { id: 'DEM-2026-04721', client: 'Aminata Diallo', clientId: 'CLI-001', type: 'fonctionnaire',  amount: '18 500 000', terrainAmount: '6 500 000', date: '10 juin 2026', status: 'analyse',    agent: 'F. Sarr',  property: 'Villa R+1, Mbao',          transmisALaBanque: true,  datTransmission: '14 juin 2026' },
   { id: 'DEM-2026-04698', client: 'Ousmane Ba',     clientId: 'CLI-005', type: 'public', amount: '12 000 000', terrainAmount: null,        date: '08 juin 2026', status: 'complement', agent: 'Mme Thiombane',  property: 'F4, Pikine Ext.',           transmisALaBanque: false },
-  { id: 'DEM-2026-04641', client: 'Rokhaya Diop',   clientId: 'CLI-003', type: 'chues',  amount: '24 000 000', terrainAmount: '6 500 000', date: '02 juin 2026', status: 'approuve',   agent: 'F. Sarr',  property: 'Duplex, Keur Massar',       transmisALaBanque: true,  datTransmission: '07 juin 2026' },
+  { id: 'DEM-2026-04641', client: 'Rokhaya Diop',   clientId: 'CLI-003', type: 'fonctionnaire',  amount: '24 000 000', terrainAmount: '6 500 000', date: '02 juin 2026', status: 'approuve',   agent: 'F. Sarr',  property: 'Duplex, Keur Massar',       transmisALaBanque: true,  datTransmission: '07 juin 2026' },
   { id: 'DEM-2026-04589', client: 'Serigne Mbaye',  clientId: 'CLI-006', type: 'public', amount: '8 500 000',  terrainAmount: null,        date: '28 mai 2026',  status: 'approuve',   agent: 'P. Mendy', property: 'F3, Guédiawaye',            transmisALaBanque: true,  datTransmission: '03 juin 2026' },
   { id: 'DEM-2026-04512', client: "Ndèye Faye",     clientId: 'CLI-007', type: 'public', amount: '15 000 000', terrainAmount: null,        date: '20 mai 2026',  status: 'refuse',     agent: 'Mme Thiombane',  property: 'Villa, Thiès',              transmisALaBanque: false },
-  { id: 'DEM-2026-04488', client: 'Ibrahima Sall',  clientId: 'CLI-002', type: 'chues',  amount: '30 000 000', terrainAmount: '6 500 000', date: '18 mai 2026',  status: 'nouveau',    agent: 'F. Sarr',  property: 'Maison R+2, Dakar Plateau', transmisALaBanque: false },
+  { id: 'DEM-2026-04488', client: 'Ibrahima Sall',  clientId: 'CLI-002', type: 'fonctionnaire',  amount: '30 000 000', terrainAmount: '6 500 000', date: '18 mai 2026',  status: 'nouveau',    agent: 'F. Sarr',  property: 'Maison R+2, Dakar Plateau', transmisALaBanque: false },
   { id: 'DEM-2026-04401', client: 'Coumba Ndiaye',  clientId: 'CLI-008', type: 'public', amount: '9 200 000',  terrainAmount: null,        date: '10 mai 2026',  status: 'approuve',   agent: 'P. Mendy', property: 'F3, Parcelles Assainies',   transmisALaBanque: true,  datTransmission: '16 mai 2026' },
-  { id: 'DEM-2026-04312', client: 'Modou Diallo',   clientId: 'CLI-004', type: 'chues',  amount: '22 000 000', terrainAmount: '6 500 000', date: '02 mai 2026',  status: 'analyse',    agent: 'F. Sarr',  property: 'Villa, Saly',               transmisALaBanque: true,  datTransmission: '09 mai 2026' },
+  { id: 'DEM-2026-04312', client: 'Modou Diallo',   clientId: 'CLI-004', type: 'fonctionnaire',  amount: '22 000 000', terrainAmount: '6 500 000', date: '02 mai 2026',  status: 'analyse',    agent: 'F. Sarr',  property: 'Villa, Saly',               transmisALaBanque: true,  datTransmission: '09 mai 2026' },
 ];
 
 interface ClientProfile {
   id: string; name: string; phone: string; email: string;
   memberNumber: string | null; adhesionDate: string | null;
-  type: 'chues' | 'public'; address: string; employer: string; fonction: string;
+  type: 'fonctionnaire' | 'public'; address: string; employer: string; fonction: string;
 }
 
 const CLIENTS: ClientProfile[] = [
-  { id: 'CLI-001', name: 'Aminata Diallo', phone: '+221 77 234 56 78', email: 'aminata.diallo@education.sn', memberNumber: 'CHUES-4721', adhesionDate: 'Janv. 2019', type: 'chues', address: 'Parcelles Assainies, Dakar', employer: "Ministère de l'Éducation", fonction: 'Professeure certifiée' },
-  { id: 'CLI-002', name: 'Ibrahima Sall',  phone: '+221 76 890 12 34', email: 'ibrahima.sall@education.sn',  memberNumber: 'CHUES-4488', adhesionDate: 'Mars 2017',  type: 'chues', address: 'Plateau, Dakar',             employer: 'Université Cheikh Anta Diop', fonction: 'Maître-assistant' },
-  { id: 'CLI-003', name: 'Rokhaya Diop',   phone: '+221 70 456 78 90', email: 'rokhaya.diop@education.sn',   memberNumber: 'CHUES-4641', adhesionDate: 'Juil. 2020', type: 'chues', address: 'Keur Massar, Dakar',         employer: 'Lycée Seydou Nourou Tall',    fonction: 'Proviseure' },
-  { id: 'CLI-004', name: 'Modou Diallo',   phone: '+221 78 012 34 56', email: 'modou.diallo@education.sn',   memberNumber: 'CHUES-4312', adhesionDate: 'Oct. 2016',  type: 'chues', address: 'Saly, Mbour',                employer: "Ministère de l'Éducation",   fonction: 'Inspecteur' },
+  { id: 'CLI-001', name: 'Aminata Diallo', phone: '+221 77 234 56 78', email: 'aminata.diallo@education.sn', memberNumber: 'FCT-4721', adhesionDate: 'Janv. 2019', type: 'fonctionnaire', address: 'Parcelles Assainies, Dakar', employer: "Ministère de l'Éducation", fonction: 'Professeure certifiée' },
+  { id: 'CLI-002', name: 'Ibrahima Sall',  phone: '+221 76 890 12 34', email: 'ibrahima.sall@education.sn',  memberNumber: 'FCT-4488', adhesionDate: 'Mars 2017',  type: 'fonctionnaire', address: 'Plateau, Dakar',             employer: 'Université Cheikh Anta Diop', fonction: 'Maître-assistant' },
+  { id: 'CLI-003', name: 'Rokhaya Diop',   phone: '+221 70 456 78 90', email: 'rokhaya.diop@education.sn',   memberNumber: 'FCT-4641', adhesionDate: 'Juil. 2020', type: 'fonctionnaire', address: 'Keur Massar, Dakar',         employer: 'Lycée Seydou Nourou Tall',    fonction: 'Proviseure' },
+  { id: 'CLI-004', name: 'Modou Diallo',   phone: '+221 78 012 34 56', email: 'modou.diallo@education.sn',   memberNumber: 'FCT-4312', adhesionDate: 'Oct. 2016',  type: 'fonctionnaire', address: 'Saly, Mbour',                employer: "Ministère de l'Éducation",   fonction: 'Inspecteur' },
   { id: 'CLI-005', name: 'Ousmane Ba',     phone: '+221 77 567 89 01', email: 'ousmane.ba@gmail.com',         memberNumber: null,         adhesionDate: null,         type: 'public', address: 'Pikine Extension',          employer: 'Société Nationale',          fonction: 'Ingénieur' },
   { id: 'CLI-006', name: 'Serigne Mbaye',  phone: '+221 76 123 45 67', email: 'serigne.mbaye@gmail.com',      memberNumber: null,         adhesionDate: null,         type: 'public', address: 'Guédiawaye',               employer: 'Employé privé',              fonction: 'Technicien' },
   { id: 'CLI-007', name: "Ndèye Faye",     phone: '+221 70 789 01 23', email: 'ndeye.faye@education.sn',      memberNumber: null,         adhesionDate: null,         type: 'public', address: 'Thiès',                    employer: 'Mairie de Thiès',            fonction: 'Comptable' },
@@ -70,7 +70,7 @@ function getConformite(d: Dossier): ConformiteItem[] {
     { label: "Pièce d'identité valide (CNI / Passeport)",  status: 'ok' },
     { label: 'Bulletins de salaire — 3 derniers mois',      status: d.status === 'complement' ? 'missing' : 'ok' },
     { label: "Attestation de l'employeur",                  status: d.status === 'complement' ? 'pending' : 'ok' },
-    { label: "Attestation d'adhésion CHUES",                status: d.type === 'chues' ? 'ok' : 'missing' },
+    { label: "Attestation de fonction (fonction publique)", status: d.type === 'fonctionnaire' ? 'ok' : 'missing' },
     { label: 'Plan de masse visé',                          status: d.status === 'nouveau' ? 'pending' : 'ok' },
     { label: 'Devis ou contrat de construction',            status: d.status === 'complement' || d.status === 'nouveau' ? (d.status === 'complement' ? 'missing' : 'pending') : 'ok' },
     { label: 'Titre foncier / bail emphytéotique',          status: d.status === 'complement' ? 'missing' : d.status === 'nouveau' ? 'pending' : 'ok' },
@@ -82,10 +82,9 @@ function getConformite(d: Dossier): ConformiteItem[] {
 // ─── Role context ──────────────────────────────────────────────────────────────
 
 const ROLE_CTX: Record<UserRole, { title: string; scope: string }> = {
-  'agent-cpi':   { title: 'Espace Agent CPI',   scope: 'Tous les dossiers' },
-  'agent-chues': { title: 'Espace Agent CHUES', scope: 'Dossiers adhérents CHUES' },
-  'agent-cbao':  { title: 'Espace Agent CBAO',  scope: 'Dossiers à financer' },
-  'client-chues': { title: '', scope: '' }, 'client-public': { title: '', scope: '' }, 'admin': { title: '', scope: '' },
+  'agent-cpi':   { title: 'Espace Agent CPI',    scope: 'Tous les dossiers' },
+  'agent-banque':{ title: 'Espace Agent Banque', scope: 'Dossiers à financer' },
+  'client-fonctionnaire': { title: '', scope: '' }, 'client-public': { title: '', scope: '' }, 'admin': { title: '', scope: '' },
 };
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
@@ -184,7 +183,7 @@ function DossierDetail({ dossier, onClose, isCPI }: { dossier: Dossier; onClose:
               { label: 'Montant financement', value: `${dossier.amount} FCFA`, icon: Banknote },
               { label: 'Montant terrain',     value: dossier.terrainAmount ? `${dossier.terrainAmount} FCFA` : 'À déterminer', icon: Landmark },
               { label: 'Bien financé',        value: dossier.property, icon: Building2 },
-              { label: 'Type',                value: dossier.type === 'chues' ? 'AM SA KER (CHUES)' : 'Financement standard', icon: FileText },
+              { label: 'Type',                value: dossier.type === 'fonctionnaire' ? 'AM SA KER (Fonctionnaire)' : 'Financement standard', icon: FileText },
               { label: 'Date de dépôt',       value: dossier.date, icon: Calendar },
               { label: 'Agent',               value: dossier.agent, icon: User },
             ].map(d => {
@@ -212,7 +211,7 @@ function DossierDetail({ dossier, onClose, isCPI }: { dossier: Dossier; onClose:
             <Landmark size={15} style={{ color: dossier.transmisALaBanque ? 'var(--success)' : '#C8921A', flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
               <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 700, color: dossier.transmisALaBanque ? 'var(--success)' : '#C8921A' }}>
-                {dossier.transmisALaBanque ? 'Dossier transmis à CBAO Attijariwafa Bank' : 'Non encore transmis à la banque'}
+                {dossier.transmisALaBanque ? 'Dossier transmis à la banque partenaire' : 'Non encore transmis à la banque'}
               </div>
               {dossier.datTransmission && (
                 <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
@@ -307,9 +306,7 @@ export default function AgentDashboard({ user, activeNav = 'dashboard' }: Props)
   const isCPI = user.role === 'agent-cpi';
   const ctx = ROLE_CTX[user.role] || { title: 'Espace Agent', scope: 'Dossiers' };
 
-  const visibleDossiers = DOSSIERS.filter(d =>
-    user.role === 'agent-chues' ? d.type === 'chues' : true
-  );
+  const visibleDossiers = DOSSIERS;
 
   const activeDossiers = visibleDossiers.filter(d => d.status !== 'approuve' && d.status !== 'refuse');
   const traitedDossiers = visibleDossiers.filter(d => d.status === 'approuve' || d.status === 'refuse');
@@ -408,7 +405,7 @@ export default function AgentDashboard({ user, activeNav = 'dashboard' }: Props)
             { label: 'Taux de conformité moyen', value: '74%', icon: ShieldCheck, color: 'var(--success)' },
             { label: 'Délai moyen de traitement', value: '4,2 j', icon: Clock, color: '#C8921A' },
             { label: "Taux d'approbation",         value: '68%', icon: TrendingUp, color: 'var(--primary)' },
-            { label: 'Adhérents CHUES actifs',     value: '4',   icon: Users,     color: '#8B5CF6' },
+            { label: 'Dossiers Fonctionnaire actifs', value: '4',   icon: Users,     color: '#8B5CF6' },
           ].map(s => {
             const Icon = s.icon;
             return (
@@ -496,8 +493,8 @@ export default function AgentDashboard({ user, activeNav = 'dashboard' }: Props)
                         <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>{d.property}</div>
                       </td>
                       <td style={{ padding: '12px 14px' }}>
-                        <span style={{ padding: '2px 8px', background: d.type === 'chues' ? 'rgba(200,146,26,0.15)' : 'var(--secondary)', color: d.type === 'chues' ? '#C8921A' : 'var(--primary)', fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700 }}>
-                          {d.type === 'chues' ? 'CHUES' : 'PUBLIC'}
+                        <span style={{ padding: '2px 8px', background: d.type === 'fonctionnaire' ? 'rgba(200,146,26,0.15)' : 'var(--secondary)', color: d.type === 'fonctionnaire' ? '#C8921A' : 'var(--primary)', fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700 }}>
+                          {d.type === 'fonctionnaire' ? 'FONCTIONNAIRE' : 'PUBLIC'}
                         </span>
                       </td>
                       <td style={{ padding: '12px 14px', fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: 500, color: 'var(--foreground)', whiteSpace: 'nowrap' }}>{d.amount} FCFA</td>
@@ -568,9 +565,7 @@ export default function AgentDashboard({ user, activeNav = 'dashboard' }: Props)
 
   // ── Clients / Adhérents view ─────────────────────────────────────────────────
   if (activeNav === 'clients') {
-    const displayClients = user.role === 'agent-chues'
-      ? CLIENTS.filter(c => c.type === 'chues')
-      : CLIENTS;
+    const displayClients = CLIENTS;
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -592,10 +587,10 @@ export default function AgentDashboard({ user, activeNav = 'dashboard' }: Props)
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
                     <div style={{
                       width: '40px', height: '40px', flexShrink: 0,
-                      background: c.type === 'chues' ? 'rgba(200,146,26,0.15)' : 'var(--secondary)',
+                      background: c.type === 'fonctionnaire' ? 'rgba(200,146,26,0.15)' : 'var(--secondary)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontFamily: 'var(--font-display)', fontSize: '0.875rem', fontWeight: 800,
-                      color: c.type === 'chues' ? '#C8921A' : 'var(--primary)',
+                      color: c.type === 'fonctionnaire' ? '#C8921A' : 'var(--primary)',
                     }}>
                       {c.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                     </div>
@@ -605,10 +600,10 @@ export default function AgentDashboard({ user, activeNav = 'dashboard' }: Props)
                     </div>
                     <span style={{
                       padding: '2px 8px', flexShrink: 0,
-                      background: c.type === 'chues' ? 'rgba(200,146,26,0.15)' : 'var(--secondary)',
-                      color: c.type === 'chues' ? '#C8921A' : 'var(--primary)',
+                      background: c.type === 'fonctionnaire' ? 'rgba(200,146,26,0.15)' : 'var(--secondary)',
+                      color: c.type === 'fonctionnaire' ? '#C8921A' : 'var(--primary)',
                       fontFamily: 'var(--font-sans)', fontSize: '0.625rem', fontWeight: 700,
-                    }}>{c.type === 'chues' ? 'CHUES' : 'PUBLIC'}</span>
+                    }}>{c.type === 'fonctionnaire' ? 'FONCTIONNAIRE' : 'PUBLIC'}</span>
                   </div>
 
                   {/* Contact row */}
@@ -633,7 +628,7 @@ export default function AgentDashboard({ user, activeNav = 'dashboard' }: Props)
                         </span>
                         <StatusBadge status={d.status} />
                         {d.transmisALaBanque
-                          ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontFamily: 'var(--font-sans)', fontSize: '0.625rem', fontWeight: 700, color: 'var(--success)' }}><Landmark size={10} /> CBAO ✓</span>
+                          ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontFamily: 'var(--font-sans)', fontSize: '0.625rem', fontWeight: 700, color: 'var(--success)' }}><Landmark size={10} /> Banque ✓</span>
                           : <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontFamily: 'var(--font-sans)', fontSize: '0.625rem', fontWeight: 700, color: '#C8921A' }}><Clock size={10} /> Banque en attente</span>
                         }
                         {d.terrainAmount && (

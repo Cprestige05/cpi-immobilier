@@ -2,7 +2,7 @@ import { useState } from 'react';
 import AuthPage from './components/AuthPage';
 import AppShell from './components/AppShell';
 
-export type UserRole = 'client-chues' | 'client-public' | 'agent-cpi' | 'agent-chues' | 'agent-cbao' | 'admin';
+export type UserRole = 'client-fonctionnaire' | 'client-public' | 'agent-cpi' | 'agent-banque' | 'admin';
 
 export interface AuthUser {
   role: UserRole;

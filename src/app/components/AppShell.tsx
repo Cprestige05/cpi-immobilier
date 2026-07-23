@@ -13,13 +13,13 @@ import { CLIENT_SUMMARIES } from '../data/demoStore';
 import { DocStateProvider } from '../data/docStateContext';
 import { CpiDocsProvider } from '../data/cpiDocsContext';
 import { ChantierStateProvider } from '../data/chantierStateContext';
-import ClientCHUESDashboard from './ClientCHUESDashboard';
+import ClientFonctionnaireDashboard from './ClientFonctionnaireDashboard';
 import ClientPublicDashboard from './ClientPublicDashboard';
 import ClientDashboardHome from './ClientDashboardHome';
 import AgentDashboard from './AgentDashboard';
 import AdminDashboard from './AdminDashboard';
 import StatisticsDashboard from './StatisticsDashboard';
-import ConventionCBAOPage from './ConventionCBAOPage';
+import ConventionBancairePage from './ConventionBancairePage';
 import MonDossierPage from './MonDossierPage';
 import MonChantierPage from './MonChantierPage';
 import MaDemandePage from './MaDemandePage';
@@ -33,27 +33,25 @@ interface AppShellProps {
 }
 
 const ROLE_LABELS: Record<UserRole, string> = {
-  'client-chues': 'Adhérent CHUES',
+  'client-fonctionnaire': 'Fonctionnaire',
   'client-public': 'Client',
   'agent-cpi': 'Agent CPI',
-  'agent-chues': 'Agent CHUES',
-  'agent-cbao': 'Agent CBAO',
+  'agent-banque': 'Agent Banque',
   'admin': 'Administrateur',
 };
 
 const ROLE_COLORS: Record<UserRole, { bg: string; text: string }> = {
-  'client-chues': { bg: 'rgba(200,146,26,0.15)', text: '#C8921A' },
+  'client-fonctionnaire': { bg: 'rgba(200,146,26,0.15)', text: '#C8921A' },
   'client-public': { bg: 'var(--secondary)', text: 'var(--primary)' },
   'agent-cpi': { bg: 'var(--secondary)', text: 'var(--primary)' },
-  'agent-chues': { bg: 'rgba(26,107,68,0.12)', text: '#1A6B44' },
-  'agent-cbao': { bg: 'rgba(200,146,26,0.15)', text: '#C8921A' },
+  'agent-banque': { bg: 'rgba(200,146,26,0.15)', text: '#C8921A' },
   'admin': { bg: 'rgba(139,92,246,0.12)', text: '#7C3AED' },
 };
 
 type NavItem = { id: string; label: string; icon: React.ComponentType<{ className?: string }> };
 
 function getNavItems(role: UserRole): NavItem[] {
-  if (role === 'client-chues') return [
+  if (role === 'client-fonctionnaire') return [
     { id: 'dashboard',   label: 'Tableau de bord', icon: LayoutDashboard },
     { id: 'ma-demande',  label: 'Ma demande',       icon: FileText        },
     { id: 'documents',   label: 'Documents',        icon: FileText        },
@@ -67,7 +65,7 @@ function getNavItems(role: UserRole): NavItem[] {
     { id: 'notifications', label: 'Notifications',  icon: Bell            },
     { id: 'support',      label: 'Support',          icon: LifeBuoy        },
   ];
-  if (role === 'agent-cpi' || role === 'agent-cbao') return [
+  if (role === 'agent-cpi' || role === 'agent-banque') return [
     { id: 'dashboard',          label: 'Tableau de bord',    icon: LayoutDashboard },
     { id: 'dossiers',           label: 'Dossiers en cours',  icon: FileText        },
     { id: 'traites',            label: 'Dossiers traités',   icon: ShieldCheck     },
@@ -75,18 +73,11 @@ function getNavItems(role: UserRole): NavItem[] {
     { id: 'documents-clients',  label: 'Documents clients',  icon: FolderOpen      },
     { id: 'documents-admin',    label: 'Documents admin',    icon: ScrollText      },
     { id: 'chantier',           label: 'Suivi chantier',     icon: HardHat         },
-    { id: 'decaissements',      label: 'Décaissements CBAO', icon: Banknote        },
+    { id: 'convention',         label: 'Produits financiers',icon: BookOpen        },
+    { id: 'decaissements',      label: 'Décaissements bancaires', icon: Banknote   },
     { id: 'notifications-agent',label: 'Notifications',      icon: Bell            },
     { id: 'historique',         label: 'Historique',         icon: History         },
     { id: 'statistiques',       label: 'Statistiques',       icon: BarChart3       },
-  ];
-  if (role === 'agent-chues') return [
-    { id: 'dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
-    { id: 'dossiers', label: 'Dossiers en cours', icon: FileText },
-    { id: 'traites', label: 'Dossiers traités', icon: ShieldCheck },
-    { id: 'clients', label: 'Clients', icon: Users },
-    { id: 'convention', label: 'Produits financiers', icon: BookOpen },
-    { id: 'statistiques', label: 'Statistiques', icon: BarChart3 },
   ];
   if (role === 'admin') return [
     { id: 'dashboard',          label: 'Vue globale',        icon: LayoutDashboard },
@@ -96,7 +87,7 @@ function getNavItems(role: UserRole): NavItem[] {
     { id: 'documents-clients',  label: 'Documents clients',  icon: FolderOpen      },
     { id: 'documents-admin',    label: 'Documents admin',    icon: ScrollText      },
     { id: 'chantier',           label: 'Suivi chantier',     icon: HardHat         },
-    { id: 'decaissements',      label: 'Décaissements CBAO', icon: Banknote        },
+    { id: 'decaissements',      label: 'Décaissements bancaires', icon: Banknote   },
     { id: 'notifications-agent',label: 'Notifications',      icon: Bell            },
     { id: 'historique',         label: 'Historique',         icon: History         },
     { id: 'statistiques',       label: 'Rapports & Stats',   icon: BarChart3       },
@@ -373,7 +364,7 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
 
   const renderDashboard = () => {
     if (activeNav === 'statistiques')  return <StatisticsDashboard user={user} />;
-    if (activeNav === 'convention')    return <ConventionCBAOPage />;
+    if (activeNav === 'convention')    return <ConventionBancairePage />;
     if (activeNav === 'ma-demande')    return <MaDemandePage user={user} />;
     if (activeNav === 'mon-dossier')   return <MonDossierPage  user={user} />;
     if (activeNav === 'mon-chantier')  return <MonChantierPage user={user} />;
@@ -382,12 +373,12 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
     if (activeNav === 'notifications') return <NotificationsPage />;
     if (activeNav === 'mon-profil')    return <MonProfilPage user={user} />;
 
-    if (user.role === 'client-chues')  return <ClientCHUESDashboard user={user} />;
+    if (user.role === 'client-fonctionnaire')  return <ClientFonctionnaireDashboard user={user} />;
     if (user.role === 'client-public') {
       if (activeNav === 'dashboard') return <ClientDashboardHome user={user} />;
       return <ClientPublicDashboard user={user} />;
     }
-    if (user.role === 'agent-cpi' || user.role === 'agent-chues' || user.role === 'agent-cbao') return <AgentDashboard user={user} activeNav={activeNav} />;
+    if (user.role === 'agent-cpi' || user.role === 'agent-banque') return <AgentDashboard user={user} activeNav={activeNav} />;
     if (user.role === 'admin') return <AdminDashboard user={user} activeNav={activeNav} />;
     return null;
   };
@@ -571,7 +562,7 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
 // ─── Exported shell — wraps all providers ────────────────────────────────────
 
 export default function AppShell({ user, onLogout }: AppShellProps) {
-  const isClientRole = user.role === 'client-public' || user.role === 'client-chues';
+  const isClientRole = user.role === 'client-public' || user.role === 'client-fonctionnaire';
   return (
     <NavigationProvider defaultPage="dashboard">
     <ClientProvider allClients={CLIENT_SUMMARIES} initialId="c-aissatou" locked={isClientRole}>

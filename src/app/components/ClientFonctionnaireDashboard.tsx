@@ -5,7 +5,7 @@ import {
   Calendar, Phone, Home, Info, ShieldCheck
 } from 'lucide-react';
 import type { AuthUser } from '../App';
-import ConventionCBAOPage from './ConventionCBAOPage';
+import ConventionBancairePage from './ConventionBancairePage';
 
 interface Props { user: AuthUser }
 
@@ -31,7 +31,7 @@ const STATUS_ORDER: LoanStatus[] = ['draft', 'submitted', 'reviewing', 'approved
 const DOCUMENTS = [
   { name: 'Pièce d\'identité (CNI)', status: 'ok', date: '12 juin 2026' },
   { name: 'Justificatif de salaire (3 derniers mois)', status: 'ok', date: '12 juin 2026' },
-  { name: 'Attestation d\'adhésion CHUES', status: 'ok', date: '12 juin 2026' },
+  { name: 'Attestation de fonction (fonction publique)', status: 'ok', date: '12 juin 2026' },
   { name: 'Plan de masse du terrain', status: 'pending', date: null },
   { name: 'Devis de construction', status: 'pending', date: null },
   { name: 'Titre foncier ou bail emphytéotique', status: 'missing', date: null },
@@ -43,7 +43,7 @@ const REPAYMENT_SCHEDULE = [
   { month: 'Oct. 2026', amount: '183 750', status: 'upcoming' },
 ];
 
-export default function ClientCHUESDashboard({ user }: Props) {
+export default function ClientFonctionnaireDashboard({ user }: Props) {
   const [loanStatus] = useState<LoanStatus>('reviewing');
   const [activeTab, setActiveTab] = useState<'apercu' | 'documents' | 'echeances' | 'convention'>('apercu');
 
@@ -69,7 +69,7 @@ export default function ClientCHUESDashboard({ user }: Props) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative">
           <div>
             <div className="text-[#F0B840] mb-1" style={{ fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              ✦ Adhérent CHUES · {user.memberNumber}
+              ✦ Fonctionnaire · {user.memberNumber}
             </div>
             <h2 className="text-white" style={{ fontFamily: 'var(--font-display)', fontSize: '1.375rem', fontWeight: 800 }}>
               Bonjour, {user.name.split(' ')[0]}
@@ -169,7 +169,7 @@ export default function ClientCHUESDashboard({ user }: Props) {
             ['apercu', 'Aperçu'],
             ['documents', 'Documents'],
             ['echeances', 'Échéancier'],
-            ['convention', 'Convention CBAO-CHUES'],
+            ['convention', 'Convention de financement'],
           ] as const).map(([id, label]) => (
             <button
               key={id}
@@ -195,11 +195,11 @@ export default function ClientCHUESDashboard({ user }: Props) {
                 <ShieldCheck size={18} style={{ color: '#C8921A', flexShrink: 0, marginTop: '2px' }} />
                 <div>
                   <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: '4px' }}>
-                    Votre accord de financement CHUES × CBAO Attijariwafa Bank
+                    Votre convention de financement Fonctionnaires
                   </div>
                   <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', lineHeight: 1.6, maxWidth: '680px' }}>
-                    En tant qu'adhérent CHUES, vous bénéficiez d'une convention exclusive signée entre votre syndicat et la CBAO Attijariwafa Bank.
-                    Elle vous ouvre l'accès à deux produits de financement immobilier à des conditions préférentielles réservées aux fonctionnaires membres.
+                    En tant que fonctionnaire, vous bénéficiez d'une convention négociée par CPI avec sa banque partenaire.
+                    Elle vous ouvre l'accès à deux produits de financement immobilier à des conditions préférentielles réservées aux agents de l'État.
                   </p>
                   <div style={{ display: 'flex', gap: '20px', marginTop: '10px', flexWrap: 'wrap' }}>
                     {[
@@ -216,7 +216,7 @@ export default function ClientCHUESDashboard({ user }: Props) {
                 </div>
               </div>
               {/* Full convention content */}
-              <ConventionCBAOPage />
+              <ConventionBancairePage />
             </div>
           )}
 
@@ -242,7 +242,7 @@ export default function ClientCHUESDashboard({ user }: Props) {
                 <h4 className="text-[#1C0810]" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.9375rem' }}>Contact & accompagnement</h4>
                 <div className="p-4 bg-[#F5ECEE] border border-[rgba(123,26,46,0.12)]">
                   <div className="text-[#1C0810] mb-1" style={{ fontSize: '0.875rem', fontWeight: 600 }}>Mme Fatou Sarr</div>
-                  <div className="text-[#6B4A52]" style={{ fontSize: '0.8125rem' }}>Chargée de dossiers CHUES</div>
+                  <div className="text-[#6B4A52]" style={{ fontSize: '0.8125rem' }}>Chargée de dossiers Fonctionnaires</div>
                   <div className="flex items-center gap-2 mt-3 text-[#7B1A2E]" style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
                     <Phone className="w-3.5 h-3.5" />
                     +221 33 822 00 00
@@ -251,7 +251,7 @@ export default function ClientCHUESDashboard({ user }: Props) {
                 <div className="p-4 bg-[rgba(26,107,68,0.06)] border border-[rgba(26,107,68,0.15)]">
                   <div className="flex items-center gap-2 mb-2">
                     <CheckCircle2 className="w-4 h-4 text-[#1A6B44]" />
-                    <span className="text-[#1A6B44]" style={{ fontSize: '0.8125rem', fontWeight: 700 }}>Avantages CHUES actifs</span>
+                    <span className="text-[#1A6B44]" style={{ fontSize: '0.8125rem', fontWeight: 700 }}>Avantages Fonctionnaire actifs</span>
                   </div>
                   <ul className="space-y-1">
                     {['Taux préférentiel 6,5%', 'Frais réduits de 50%', 'Traitement prioritaire', 'Accompagnement dédié'].map(a => (
@@ -337,7 +337,7 @@ export default function ClientCHUESDashboard({ user }: Props) {
               </div>
               <div className="p-4 bg-[#F5ECEE] border border-[rgba(123,26,46,0.12)]">
                 <div className="text-[#6B4A52]" style={{ fontSize: '0.8125rem' }}>
-                  L'échéancier définitif sera établi à la signature du contrat de prêt avec la CBAO Attijariwafa Bank.
+                  L'échéancier définitif sera établi à la signature du contrat de prêt avec notre banque partenaire.
                 </div>
               </div>
             </div>

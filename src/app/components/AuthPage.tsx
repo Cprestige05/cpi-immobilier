@@ -189,7 +189,7 @@ function WelcomeScreen({ onNavigate, onLogin, onProfileSelect }: {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '20px 40px',
       }}>
-        <img src={cpiLogo} alt="CPI CHUES" style={{ height: '52px', width: 'auto' }} />
+        <img src={cpiLogo} alt="CPI" style={{ height: '52px', width: 'auto' }} />
         <div style={{
           display: 'flex', alignItems: 'center', gap: '8px',
           background: 'rgba(255,255,255,0.95)',
@@ -339,7 +339,7 @@ function WelcomeScreen({ onNavigate, onLogin, onProfileSelect }: {
             { icon: Zap,        label: 'Processus simple',         sub: 'Des étapes claires à chaque stade',       color: '#7B1A2E', bg: 'var(--secondary)' },
             { icon: Shield,     label: 'Données sécurisées',       sub: 'Chiffrement SSL — confidentialité totale', color: '#1E4D8C', bg: 'rgba(30,77,140,0.08)' },
             { icon: Headphones, label: 'Support dédié',            sub: "Une équipe disponible à chaque étape",    color: 'var(--success)', bg: 'rgba(26,107,68,0.08)' },
-            { icon: Handshake,  label: 'Partenaires officiels',    sub: 'CPI · CHUES · CBAO Attijariwafa Bank',    color: 'var(--accent)', bg: 'rgba(200,146,26,0.10)' },
+            { icon: Handshake,  label: 'Partenaires officiels',    sub: 'CPI · Banques partenaires',    color: 'var(--accent)', bg: 'rgba(200,146,26,0.10)' },
           ] as const).map((b, i) => {
             const Icon = b.icon;
             return (
@@ -392,11 +392,11 @@ function WelcomeScreen({ onNavigate, onLogin, onProfileSelect }: {
           )}
         </div>
 
-        <a href="https://cpi-chues.com" target="_blank" rel="noopener noreferrer"
+        <a href="https://cpi.sn" target="_blank" rel="noopener noreferrer"
           style={{ marginTop: '12px', fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', color: 'var(--muted-foreground)', textDecoration: 'none' }}
           onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--primary)'; }}
           onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--muted-foreground)'; }}>
-          ← Retour sur cpi-chues.com
+          ← Retour sur cpi.sn
         </a>
       </main>
 
@@ -553,7 +553,8 @@ function RegisterScreen({ onLogin, onNavigate, initialProfile }: {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      onLogin({ role: 'client-public', name: form.nom || 'Nouveau client' });
+      const role: UserRole = profil === 'fonctionnaire' ? 'client-fonctionnaire' : 'client-public';
+      onLogin({ role, name: form.nom || 'Nouveau client' });
     }, 900);
   };
 
@@ -622,7 +623,7 @@ function RegisterScreen({ onLogin, onNavigate, initialProfile }: {
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', padding: '10px 16px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--radius)' }}>
             <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent)' }} />
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.06em' }}>
-              CBAO — Partenariat officiel de CPI
+              Banques partenaires agréées de CPI
             </span>
           </div>
         </div>
@@ -658,7 +659,7 @@ function RegisterScreen({ onLogin, onNavigate, initialProfile }: {
                     onMouseLeave={() => setHovered(null)}
                     style={{
                       background: p.cardBg,
-                      border: `1.5px solid ${isHov ? (p.type === 'chues' ? 'var(--primary)' : p.color) : p.borderColor}`,
+                      border: `1.5px solid ${isHov ? p.color : p.borderColor}`,
                       borderRadius: '10px',
                       padding: '16px 14px',
                       cursor: 'pointer',
