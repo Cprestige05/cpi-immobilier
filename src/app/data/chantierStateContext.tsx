@@ -248,8 +248,8 @@ const ALL_CLIENT_IDS = Object.keys(INITIAL_STATE_BY_CLIENT);
 
 // ─── localStorage ─────────────────────────────────────────────────────────────
 
-const LS_KEY_ALL = 'cpi_chantier_all_state';
-const LS_KEY_LEGACY = 'cpi_chantier_aissatou_state';
+// Préfixe v2 : invalide toute donnée de démo persistée avant la purge CHUES/CBAO.
+const LS_KEY_ALL = 'cpi_chantier_all_state_v2';
 
 const loadAllChantierState = (): Record<string, PersistedState> => {
   try {
@@ -259,18 +259,7 @@ const loadAllChantierState = (): Record<string, PersistedState> => {
       if (parsed['c-aissatou']?.info) return parsed;
     }
   } catch {}
-
-  // Migrate from legacy single-client key
-  const result: Record<string, PersistedState> = {};
-  try {
-    const s = localStorage.getItem(LS_KEY_LEGACY);
-    if (s) {
-      const parsed = JSON.parse(s) as PersistedState;
-      if (parsed.info) result['c-aissatou'] = parsed;
-    }
-  } catch {}
-
-  return result;
+  return {};
 };
 
 // ─── Provider ─────────────────────────────────────────────────────────────────

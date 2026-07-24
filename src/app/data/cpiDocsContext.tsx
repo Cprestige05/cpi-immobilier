@@ -44,15 +44,17 @@ export interface CpiDoc {
 interface CpiDocsCtx {
   cpiDocs: CpiDoc[];
   cpiHistory: HistoEntry[];
-  publishDoc: (docId: string, agentName: string) => void;
-  archiveDoc: (docId: string, agentName: string) => void;
-  requestSignature: (docId: string, agentName: string) => void;
-  markSigned: (docId: string, agentName: string) => void;
-  retireFromClient: (docId: string, agentName: string) => void;
+  allCpiDocsByClient: Record<string, CpiDoc[]>;
+  publishDoc: (docId: string, agentName: string, clientId?: string) => void;
+  archiveDoc: (docId: string, agentName: string, clientId?: string) => void;
+  requestSignature: (docId: string, agentName: string, clientId?: string) => void;
+  markSigned: (docId: string, agentName: string, clientId?: string) => void;
+  retireFromClient: (docId: string, agentName: string, clientId?: string) => void;
   createDoc: (
     fields: Omit<CpiDoc, 'id' | 'dateCreation' | 'datePublication' | 'status' | 'visibleClient'>,
     agentName: string,
     publishNow: boolean,
+    clientId?: string,
   ) => void;
 }
 
@@ -90,43 +92,30 @@ const ALL_CLIENT_IDS = Object.keys(INITIAL_DOCS_BY_CLIENT);
 
 // ─── localStorage helpers ──────────────────────────────────────────────────────
 
-const LS_CPIDOCS_KEY    = (id: string) => `cpi_cpidocs_${id}`;
-const LS_CPIHISTORY_KEY = (id: string) => `cpi_cpihistory_${id}`;
+// Préfixe v2 : invalide toute donnée de démo persistée avant la purge CHUES/CBAO.
+const LS_CPIDOCS_KEY    = (id: string) => `cpi_cpidocs_v2_${id}`;
+const LS_CPIHISTORY_KEY = (id: string) => `cpi_cpihistory_v2_${id}`;
 
 const loadAllCpiDocs = (): Record<string, CpiDoc[]> => {
-  let aissatouLegacy: CpiDoc[] | null = null;
-  try {
-    const s = localStorage.getItem('cpi_demo_cpi_docs');
-    if (s) aissatouLegacy = JSON.parse(s) as CpiDoc[];
-  } catch {}
-
   const result: Record<string, CpiDoc[]> = {};
   for (const clientId of ALL_CLIENT_IDS) {
     try {
       const s = localStorage.getItem(LS_CPIDOCS_KEY(clientId));
       if (s) { result[clientId] = JSON.parse(s) as CpiDoc[]; continue; }
     } catch {}
-    result[clientId] = clientId === 'c-aissatou' && aissatouLegacy
-      ? aissatouLegacy
-      : [...(INITIAL_DOCS_BY_CLIENT[clientId] ?? [])];
+    result[clientId] = [...(INITIAL_DOCS_BY_CLIENT[clientId] ?? [])];
   }
   return result;
 };
 
 const loadAllCpiHistory = (): Record<string, HistoEntry[]> => {
-  let aissatouLegacy: HistoEntry[] | null = null;
-  try {
-    const s = localStorage.getItem('cpi_demo_cpi_history');
-    if (s) aissatouLegacy = JSON.parse(s) as HistoEntry[];
-  } catch {}
-
   const result: Record<string, HistoEntry[]> = {};
   for (const clientId of ALL_CLIENT_IDS) {
     try {
       const s = localStorage.getItem(LS_CPIHISTORY_KEY(clientId));
       if (s) { result[clientId] = JSON.parse(s) as HistoEntry[]; continue; }
     } catch {}
-    result[clientId] = clientId === 'c-aissatou' && aissatouLegacy ? aissatouLegacy : [];
+    result[clientId] = [];
   }
   return result;
 };
@@ -154,7 +143,7 @@ export function CpiDocsProvider({ children }: { children: React.ReactNode }) {
   const cpiDocs:    CpiDoc[]     = allCpiDocs[selectedClientId]    ?? INITIAL_DOCS_BY_CLIENT[selectedClientId] ?? [];
   const cpiHistory: HistoEntry[] = allCpiHistory[selectedClientId] ?? [];
 
-  const clientName = allClients.find(c => c.id === selectedClientId)?.name ?? selectedClientId;
+  const nameFor = (clientId: string) => allClients.find(c => c.id === clientId)?.name ?? clientId;
 
   const nowStamp = () => {
     const d = new Date();
@@ -164,54 +153,56 @@ export function CpiDocsProvider({ children }: { children: React.ReactNode }) {
     };
   };
 
-  const pushHistory = (entry: Omit<HistoEntry, 'id'>) =>
+  const pushHistoryFor = (clientId: string, entry: Omit<HistoEntry, 'id'>) =>
     setAllCpiHistory(prev => ({
       ...prev,
-      [selectedClientId]: [{ ...entry, id: 'hcpi-' + Date.now() }, ...(prev[selectedClientId] ?? [])],
+      [clientId]: [{ ...entry, id: 'hcpi-' + Date.now() }, ...(prev[clientId] ?? [])],
     }));
 
-  const updateDoc = (docId: string, patch: Partial<CpiDoc>) =>
+  const updateDocFor = (clientId: string, docId: string, patch: Partial<CpiDoc>) =>
     setAllCpiDocs(prev => ({
       ...prev,
-      [selectedClientId]: (prev[selectedClientId] ?? []).map(d => d.id !== docId ? d : { ...d, ...patch }),
+      [clientId]: (prev[clientId] ?? []).map(d => d.id !== docId ? d : { ...d, ...patch }),
     }));
 
-  const docNom = (docId: string) => cpiDocs.find(d => d.id === docId)?.nom ?? docId;
+  const docNomFor = (clientId: string, docId: string) =>
+    (allCpiDocs[clientId] ?? []).find(d => d.id === docId)?.nom ?? docId;
 
-  const publishDoc = (docId: string, agentName: string) => {
+  const publishDoc = (docId: string, agentName: string, clientId: string = selectedClientId) => {
     const { date, heure } = nowStamp();
-    updateDoc(docId, { status: 'disponible', visibleClient: true, datePublication: date });
-    pushHistory({ date, heure, utilisateur: agentName, role: 'Agent CPI', action: `Document publié — ${docNom(docId)}`, type: 'document' as HistoActionType, cible: clientName });
+    updateDocFor(clientId, docId, { status: 'disponible', visibleClient: true, datePublication: date });
+    pushHistoryFor(clientId, { date, heure, utilisateur: agentName, role: 'Agent CPI', action: `Document publié — ${docNomFor(clientId, docId)}`, type: 'document' as HistoActionType, cible: nameFor(clientId) });
   };
 
-  const archiveDoc = (docId: string, agentName: string) => {
+  const archiveDoc = (docId: string, agentName: string, clientId: string = selectedClientId) => {
     const { date, heure } = nowStamp();
-    updateDoc(docId, { status: 'archive', visibleClient: false });
-    pushHistory({ date, heure, utilisateur: agentName, role: 'Agent CPI', action: `Document archivé — ${docNom(docId)}`, type: 'document' as HistoActionType, cible: clientName });
+    updateDocFor(clientId, docId, { status: 'archive', visibleClient: false });
+    pushHistoryFor(clientId, { date, heure, utilisateur: agentName, role: 'Agent CPI', action: `Document archivé — ${docNomFor(clientId, docId)}`, type: 'document' as HistoActionType, cible: nameFor(clientId) });
   };
 
-  const requestSignature = (docId: string, agentName: string) => {
+  const requestSignature = (docId: string, agentName: string, clientId: string = selectedClientId) => {
     const { date, heure } = nowStamp();
-    updateDoc(docId, { status: 'a-signer', signatureRequise: true, visibleClient: true });
-    pushHistory({ date, heure, utilisateur: agentName, role: 'Agent CPI', action: `Signature demandée — ${docNom(docId)}`, type: 'document' as HistoActionType, cible: clientName });
+    updateDocFor(clientId, docId, { status: 'a-signer', signatureRequise: true, visibleClient: true });
+    pushHistoryFor(clientId, { date, heure, utilisateur: agentName, role: 'Agent CPI', action: `Signature demandée — ${docNomFor(clientId, docId)}`, type: 'document' as HistoActionType, cible: nameFor(clientId) });
   };
 
-  const markSigned = (docId: string, agentName: string) => {
+  const markSigned = (docId: string, agentName: string, clientId: string = selectedClientId) => {
     const { date, heure } = nowStamp();
-    updateDoc(docId, { status: 'signe', signatureRequise: false, datePublication: date });
-    pushHistory({ date, heure, utilisateur: agentName, role: 'Agent CPI', action: `Document signé — ${docNom(docId)}`, type: 'validation' as HistoActionType, cible: clientName });
+    updateDocFor(clientId, docId, { status: 'signe', signatureRequise: false, datePublication: date });
+    pushHistoryFor(clientId, { date, heure, utilisateur: agentName, role: 'Agent CPI', action: `Document signé — ${docNomFor(clientId, docId)}`, type: 'validation' as HistoActionType, cible: nameFor(clientId) });
   };
 
-  const retireFromClient = (docId: string, agentName: string) => {
+  const retireFromClient = (docId: string, agentName: string, clientId: string = selectedClientId) => {
     const { date, heure } = nowStamp();
-    updateDoc(docId, { visibleClient: false });
-    pushHistory({ date, heure, utilisateur: agentName, role: 'Agent CPI', action: `Document retiré de l'espace client — ${docNom(docId)}`, type: 'document' as HistoActionType, cible: clientName });
+    updateDocFor(clientId, docId, { visibleClient: false });
+    pushHistoryFor(clientId, { date, heure, utilisateur: agentName, role: 'Agent CPI', action: `Document retiré de l'espace client — ${docNomFor(clientId, docId)}`, type: 'document' as HistoActionType, cible: nameFor(clientId) });
   };
 
   const createDoc = (
     fields: Omit<CpiDoc, 'id' | 'dateCreation' | 'datePublication' | 'status' | 'visibleClient'>,
     agentName: string,
     publishNow: boolean,
+    clientId: string = selectedClientId,
   ) => {
     const { date, heure } = nowStamp();
     const newDoc: CpiDoc = {
@@ -221,13 +212,13 @@ export function CpiDocsProvider({ children }: { children: React.ReactNode }) {
     };
     setAllCpiDocs(prev => ({
       ...prev,
-      [selectedClientId]: [newDoc, ...(prev[selectedClientId] ?? [])],
+      [clientId]: [newDoc, ...(prev[clientId] ?? [])],
     }));
-    pushHistory({ date, heure, utilisateur: agentName, role: 'Agent CPI', action: publishNow ? `Document publié — ${fields.nom}` : `Brouillon créé — ${fields.nom}`, type: 'document' as HistoActionType, cible: clientName });
+    pushHistoryFor(clientId, { date, heure, utilisateur: agentName, role: 'Agent CPI', action: publishNow ? `Document publié — ${fields.nom}` : `Brouillon créé — ${fields.nom}`, type: 'document' as HistoActionType, cible: nameFor(clientId) });
   };
 
   return (
-    <CpiDocsContext.Provider value={{ cpiDocs, cpiHistory, publishDoc, archiveDoc, requestSignature, markSigned, retireFromClient, createDoc }}>
+    <CpiDocsContext.Provider value={{ cpiDocs, cpiHistory, allCpiDocsByClient: allCpiDocs, publishDoc, archiveDoc, requestSignature, markSigned, retireFromClient, createDoc }}>
       {children}
     </CpiDocsContext.Provider>
   );

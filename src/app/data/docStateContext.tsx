@@ -33,8 +33,9 @@ const DocStateContext = createContext<DocStateCtx | null>(null);
 
 // ─── Per-client localStorage keys ────────────────────────────────────────────
 
-const LS_DOCS_KEY    = (id: string) => `cpi_docs_${id}`;
-const LS_HISTORY_KEY = (id: string) => `cpi_history_${id}`;
+// Préfixe v2 : invalide toute donnée de démo persistée avant la purge CHUES/CBAO.
+const LS_DOCS_KEY    = (id: string) => `cpi_docs_v2_${id}`;
+const LS_HISTORY_KEY = (id: string) => `cpi_history_v2_${id}`;
 
 const ALL_CLIENT_IDS = Object.keys(ALL_REQUIS_DOCS);
 
@@ -49,42 +50,25 @@ const getInitialDocs = (clientId: string): SharedDoc[] => {
 };
 
 const loadAllDocs = (): Record<string, SharedDoc[]> => {
-  // Migrate legacy single-client key for Aïssatou
-  let aissatouLegacy: SharedDoc[] | null = null;
-  try {
-    const s = localStorage.getItem('cpi_demo_requis_docs');
-    if (s) aissatouLegacy = JSON.parse(s) as SharedDoc[];
-  } catch {}
-
   const result: Record<string, SharedDoc[]> = {};
   for (const clientId of ALL_CLIENT_IDS) {
     try {
       const s = localStorage.getItem(LS_DOCS_KEY(clientId));
       if (s) { result[clientId] = JSON.parse(s) as SharedDoc[]; continue; }
     } catch {}
-    result[clientId] = clientId === 'c-aissatou' && aissatouLegacy
-      ? aissatouLegacy
-      : getInitialDocs(clientId);
+    result[clientId] = getInitialDocs(clientId);
   }
   return result;
 };
 
 const loadAllHistory = (): Record<string, HistoEntry[]> => {
-  let aissatouLegacy: HistoEntry[] | null = null;
-  try {
-    const s = localStorage.getItem('cpi_demo_requis_history');
-    if (s) aissatouLegacy = JSON.parse(s) as HistoEntry[];
-  } catch {}
-
   const result: Record<string, HistoEntry[]> = {};
   for (const clientId of ALL_CLIENT_IDS) {
     try {
       const s = localStorage.getItem(LS_HISTORY_KEY(clientId));
       if (s) { result[clientId] = JSON.parse(s) as HistoEntry[]; continue; }
     } catch {}
-    result[clientId] = clientId === 'c-aissatou' && aissatouLegacy
-      ? aissatouLegacy
-      : [...(ALL_HISTORIQUE[clientId] ?? [])];
+    result[clientId] = [...(ALL_HISTORIQUE[clientId] ?? [])];
   }
   return result;
 };
