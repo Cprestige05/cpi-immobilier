@@ -161,7 +161,7 @@ export default function StatisticsDashboard({ user }: Props) {
               Tableau de bord statistique
             </h2>
             <p style={{ fontSize: '0.8125rem', color: C.muted, marginTop: '2px' }}>
-              {isAdmin ? 'Plateforme CPI — Vue globale' : `Espace ${user.name} · ${user.role === 'agent-cpi' ? 'CPI' : 'Banque'}`}
+              {isAdmin ? 'Plateforme CPI — Vue globale' : `Espace ${user.name} · CPI`}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">

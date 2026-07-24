@@ -47,7 +47,7 @@ const TONE_BG: Record<string, string> = {
 };
 
 // Phase 1 acquisition journey steps
-const JOURNEY = [
+const STATIC_JOURNEY = [
   { id: 1, label: 'Dossier soumis',     sub: '03 juin 2026',       done: true  },
   { id: 2, label: 'Validation CPI',     sub: '18 juin 2026',       done: true  },
   { id: 3, label: 'Accord bancaire',    sub: 'En cours · Banque',  done: false, active: true },
@@ -69,15 +69,24 @@ export default function ClientDashboardHome({ user }: Props) {
 
   const { montantFinance, echeanceMensuelle, moisPayes, montantPaye, moisRestants, dureeTotal } = client.finance;
   const recentActivities = client.historique.slice(0, 5);
-  // Reflects the refused document flagged below in "Prochaine étape" — keep both in sync.
-  const alerteBadge: 'none' | 'warning' | 'danger' = 'warning';
+  const isNewClient = client.conseiller === 'Non assigné';
+  const issueDoc = client.requisDocs.find((d: any) => d.status === 'refuse' || d.status === 'a-remplacer');
+  const alerteBadge: 'none' | 'warning' | 'danger' = issueDoc ? 'warning' : 'none';
+  const journey = isNewClient
+    ? [
+        { id: 1, label: 'Dossier soumis',      sub: client.dateOuverture, done: false, active: true },
+        { id: 2, label: 'Validation CPI',      sub: 'À venir',            done: false },
+        { id: 3, label: 'Accord bancaire',     sub: 'À venir',            done: false },
+        { id: 4, label: 'Acquisition terrain', sub: 'À venir',            done: false },
+      ]
+    : STATIC_JOURNEY;
 
   const animFinance  = useCountUp(montantFinance);
   const animEcheance = useCountUp(echeanceMensuelle, 1000);
   const animPaye     = useCountUp(moisPayes, 900);
   const animMontPaye = useCountUp(montantPaye, 1100);
   const animRestants = useCountUp(moisRestants, 950);
-  const progression  = Math.round((moisPayes / dureeTotal) * 100);
+  const progression  = dureeTotal > 0 ? Math.round((moisPayes / dureeTotal) * 100) : 0;
 
   const endDate = new Date(Date.now() + moisRestants * 30 * 86400000)
     .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
@@ -87,6 +96,11 @@ export default function ClientDashboardHome({ user }: Props) {
 
   return (
     <div style={{ fontFamily: 'var(--font-sans)', color: 'var(--foreground)', maxWidth: 1100, margin: '0 auto', padding: '0 0 64px' }}>
+      <style>{`
+        @media (max-width: 760px) {
+          .cdh-main-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
 
       {/* ── GREETING HEADER ──────────────────────────────────────────────────── */}
       <div style={{
@@ -203,7 +217,7 @@ export default function ClientDashboardHome({ user }: Props) {
                   Parcours acquisition
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {JOURNEY.map((step, i) => (
+                  {journey.map((step, i) => (
                     <div key={step.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{
                         width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
@@ -221,7 +235,7 @@ export default function ClientDashboardHome({ user }: Props) {
                         </div>
                         <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.5625rem', color: 'rgba(255,255,255,0.3)', marginTop: '1px' }}>{step.sub}</div>
                       </div>
-                      {i < JOURNEY.length - 1 && (
+                      {i < journey.length - 1 && (
                         <div style={{ position: 'absolute', left: 9, width: 2, height: 6, background: 'rgba(255,255,255,0.12)', marginTop: 20 }} />
                       )}
                     </div>
@@ -287,7 +301,7 @@ export default function ClientDashboardHome({ user }: Props) {
       )}
 
       {/* ── MAIN CONTENT ─────────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1.5fr)', gap: 16, alignItems: 'start' }}>
+      <div className="cdh-main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1.5fr)', gap: 16, alignItems: 'start' }}>
 
         {/* Quick actions */}
         <SmartCard padding="0">
@@ -315,7 +329,7 @@ export default function ClientDashboardHome({ user }: Props) {
             </div>
             <ProgressBar value={progression} color="var(--primary)" showLabel />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 7 }}>
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>Démarré · sept. 2024</span>
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>Démarré · {client.dateOuverture}</span>
               <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>Fin · {endDate}</span>
             </div>
           </div>
@@ -367,8 +381,8 @@ export default function ClientDashboardHome({ user }: Props) {
             subtitle="Phase 1 — Terrain"
           />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-            {JOURNEY.map((step, i) => (
-              <div key={step.id} style={{ display: 'flex', gap: 12, paddingBottom: i < JOURNEY.length - 1 ? 14 : 0 }}>
+            {journey.map((step, i) => (
+              <div key={step.id} style={{ display: 'flex', gap: 12, paddingBottom: i < journey.length - 1 ? 14 : 0 }}>
                 {/* Connector */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
                   <div style={{
@@ -385,7 +399,7 @@ export default function ClientDashboardHome({ user }: Props) {
                       : <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--border)' }} />
                     }
                   </div>
-                  {i < JOURNEY.length - 1 && (
+                  {i < journey.length - 1 && (
                     <div style={{ width: 2, flex: 1, background: step.done ? 'rgba(26,107,68,0.2)' : 'var(--border)', marginTop: 4 }} />
                   )}
                 </div>
@@ -413,14 +427,18 @@ export default function ClientDashboardHome({ user }: Props) {
             action={<ChevronRight size={15} style={{ color: 'var(--muted-foreground)' }} />} />
           <div style={{ padding: '12px 16px', background: 'var(--secondary)', borderRadius: DS.radius.lg, marginBottom: 12 }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 700, color: 'var(--primary)', marginBottom: 4 }}>
-              Relevé bancaire à remplacer
+              {issueDoc ? `${issueDoc.label} à remplacer` : isNewClient ? 'Déposer votre dossier' : 'Aucune action requise'}
             </div>
             <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', lineHeight: 1.5 }}>
-              Votre relevé bancaire du mois 6 a été refusé. Veuillez en déposer un nouveau pour débloquer l'accord bancaire.
+              {issueDoc
+                ? (issueDoc.commentaire || 'Ce document a été refusé. Veuillez en déposer un nouveau pour poursuivre votre dossier.')
+                : isNewClient
+                ? 'Déposez vos premiers documents pour lancer l’étude de votre dossier.'
+                : 'Votre dossier est à jour, aucune action de votre part n’est nécessaire pour le moment.'}
             </div>
           </div>
           <Btn variant="primary" size="sm" icon={<FileUp size={13} />} fullWidth onClick={() => navigate('mon-dossier')}>
-            Déposer le document
+            {issueDoc ? 'Déposer le document' : isNewClient ? 'Compléter mon dossier' : 'Voir mon dossier'}
           </Btn>
         </SmartCard>
 

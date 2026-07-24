@@ -2,19 +2,17 @@ import { useState } from 'react';
 import {
   Building2, LayoutDashboard, FileText, Bell, UserCircle,
   LogOut, ChevronRight, Menu, X, Users,
-  BarChart3, ShieldCheck, CreditCard, BookOpen, FolderOpen, HardHat, LifeBuoy,
+  BarChart3, ShieldCheck, CreditCard, BookOpen, FolderOpen, LifeBuoy,
   Phone, Mail, Banknote, ScrollText, History, Settings, MessageSquare,
 } from 'lucide-react';
 import cpiLogo from '../../imports/image.png';
 import type { AuthUser, UserRole } from '../App';
 import { ClientProvider } from '../contexts/ClientContext';
 import { NavigationProvider, useNavigate } from '../contexts/NavigationContext';
-import { CLIENT_SUMMARIES } from '../data/demoStore';
+import { CLIENT_SUMMARIES, type ClientSummary } from '../data/demoStore';
 import { DocStateProvider } from '../data/docStateContext';
 import { CpiDocsProvider } from '../data/cpiDocsContext';
 import { ChantierStateProvider } from '../data/chantierStateContext';
-import ClientFonctionnaireDashboard from './ClientFonctionnaireDashboard';
-import ClientPublicDashboard from './ClientPublicDashboard';
 import ClientDashboardHome from './ClientDashboardHome';
 import AgentDashboard from './AgentDashboard';
 import AdminDashboard from './AdminDashboard';
@@ -36,7 +34,6 @@ const ROLE_LABELS: Record<UserRole, string> = {
   'client-fonctionnaire': 'Fonctionnaire',
   'client-public': 'Client',
   'agent-cpi': 'Agent CPI',
-  'agent-banque': 'Agent Banque',
   'admin': 'Administrateur',
 };
 
@@ -44,35 +41,27 @@ const ROLE_COLORS: Record<UserRole, { bg: string; text: string }> = {
   'client-fonctionnaire': { bg: 'rgba(200,146,26,0.15)', text: '#C8921A' },
   'client-public': { bg: 'var(--secondary)', text: 'var(--primary)' },
   'agent-cpi': { bg: 'var(--secondary)', text: 'var(--primary)' },
-  'agent-banque': { bg: 'rgba(200,146,26,0.15)', text: '#C8921A' },
   'admin': { bg: 'rgba(139,92,246,0.12)', text: '#7C3AED' },
 };
 
 type NavItem = { id: string; label: string; icon: React.ComponentType<{ className?: string }> };
 
 function getNavItems(role: UserRole): NavItem[] {
-  if (role === 'client-fonctionnaire') return [
-    { id: 'dashboard',   label: 'Tableau de bord', icon: LayoutDashboard },
-    { id: 'ma-demande',  label: 'Ma demande',       icon: FileText        },
-    { id: 'documents',   label: 'Documents',        icon: FileText        },
-    { id: 'notifications', label: 'Notifications', icon: Bell            },
-  ];
-  if (role === 'client-public') return [
+  if (role === 'client-fonctionnaire' || role === 'client-public') return [
+    { id: 'simulateur',   label: 'Simulateur',       icon: CreditCard      },
     { id: 'dashboard',    label: 'Tableau de bord', icon: LayoutDashboard },
     { id: 'ma-demande',   label: 'Ma demande',       icon: FileText        },
     { id: 'mon-dossier',  label: 'Mon dossier',      icon: FolderOpen      },
-    { id: 'simulateur',   label: 'Simulateur',       icon: CreditCard      },
     { id: 'notifications', label: 'Notifications',  icon: Bell            },
     { id: 'support',      label: 'Support',          icon: LifeBuoy        },
   ];
-  if (role === 'agent-cpi' || role === 'agent-banque') return [
+  if (role === 'agent-cpi') return [
     { id: 'dashboard',          label: 'Tableau de bord',    icon: LayoutDashboard },
     { id: 'dossiers',           label: 'Dossiers en cours',  icon: FileText        },
     { id: 'traites',            label: 'Dossiers traités',   icon: ShieldCheck     },
     { id: 'clients',            label: 'Clients',            icon: Users           },
     { id: 'documents-clients',  label: 'Documents clients',  icon: FolderOpen      },
     { id: 'documents-admin',    label: 'Documents admin',    icon: ScrollText      },
-    { id: 'chantier',           label: 'Suivi chantier',     icon: HardHat         },
     { id: 'convention',         label: 'Produits financiers',icon: BookOpen        },
     { id: 'decaissements',      label: 'Décaissements bancaires', icon: Banknote   },
     { id: 'notifications-agent',label: 'Notifications',      icon: Bell            },
@@ -86,7 +75,6 @@ function getNavItems(role: UserRole): NavItem[] {
     { id: 'partenaires',        label: 'Partenaires',        icon: Building2       },
     { id: 'documents-clients',  label: 'Documents clients',  icon: FolderOpen      },
     { id: 'documents-admin',    label: 'Documents admin',    icon: ScrollText      },
-    { id: 'chantier',           label: 'Suivi chantier',     icon: HardHat         },
     { id: 'decaissements',      label: 'Décaissements bancaires', icon: Banknote   },
     { id: 'notifications-agent',label: 'Notifications',      icon: Bell            },
     { id: 'historique',         label: 'Historique',         icon: History         },
@@ -373,12 +361,10 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
     if (activeNav === 'notifications') return <NotificationsPage />;
     if (activeNav === 'mon-profil')    return <MonProfilPage user={user} />;
 
-    if (user.role === 'client-fonctionnaire')  return <ClientFonctionnaireDashboard user={user} />;
-    if (user.role === 'client-public') {
-      if (activeNav === 'dashboard') return <ClientDashboardHome user={user} />;
-      return <ClientPublicDashboard user={user} />;
+    if (user.role === 'client-fonctionnaire' || user.role === 'client-public') {
+      return <ClientDashboardHome user={user} />;
     }
-    if (user.role === 'agent-cpi' || user.role === 'agent-banque') return <AgentDashboard user={user} activeNav={activeNav} />;
+    if (user.role === 'agent-cpi') return <AgentDashboard user={user} activeNav={activeNav} />;
     if (user.role === 'admin') return <AdminDashboard user={user} activeNav={activeNav} />;
     return null;
   };
@@ -498,7 +484,7 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto p-5 lg:p-7">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-5 lg:p-7">
           {renderDashboard()}
         </main>
       </div>
@@ -547,6 +533,14 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
               </div>
             </nav>
             <div className="px-3 py-4 border-t" style={{ borderColor: 'var(--sidebar-border)' }}>
+              <button
+                onClick={() => { navigate('mon-profil'); setSidebarOpen(false); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 hover:text-white hover:bg-white/5 transition-all"
+                style={{ fontSize: '0.875rem', color: activeNav === 'mon-profil' ? 'var(--sidebar-accent-foreground)' : 'var(--sidebar-foreground)', background: activeNav === 'mon-profil' ? 'var(--sidebar-accent)' : 'transparent' }}
+              >
+                <UserCircle className="w-4 h-4" />
+                Mon profil
+              </button>
               <button onClick={onLogout} className="w-full flex items-center gap-3 px-3 py-2.5 hover:text-red-400 transition-all" style={{ fontSize: '0.875rem', color: 'var(--sidebar-foreground)' }}>
                 <LogOut className="w-4 h-4" />
                 Se déconnecter
@@ -563,9 +557,23 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
 
 export default function AppShell({ user, onLogout }: AppShellProps) {
   const isClientRole = user.role === 'client-public' || user.role === 'client-fonctionnaire';
+  const isNewClient = !!user.clientId && !CLIENT_SUMMARIES.some(c => c.id === user.clientId);
+  const freshClient: ClientSummary | null = isNewClient
+    ? {
+        id: user.clientId!,
+        name: user.name,
+        ref: '—',
+        statut: 'Dossier en préparation',
+        progression: 0,
+        projectNom: '—',
+        adresse: '—',
+      }
+    : null;
+  const allClients = freshClient ? [...CLIENT_SUMMARIES, freshClient] : CLIENT_SUMMARIES;
+  const defaultPage = isClientRole ? 'simulateur' : 'dashboard';
   return (
-    <NavigationProvider defaultPage="dashboard">
-    <ClientProvider allClients={CLIENT_SUMMARIES} initialId="c-aissatou" locked={isClientRole}>
+    <NavigationProvider defaultPage={defaultPage}>
+    <ClientProvider allClients={allClients} initialId={user.clientId ?? 'c-aissatou'} locked={isClientRole}>
     <DocStateProvider>
     <CpiDocsProvider>
     <ChantierStateProvider>

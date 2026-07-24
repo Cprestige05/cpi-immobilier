@@ -90,52 +90,84 @@ function isKnownClientId(id: string): id is ClientId {
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
+const ZERO_FINANCE = {
+  montantFinance:    0,
+  echeanceMensuelle: 0,
+  moisPayes:         0,
+  montantPaye:       0,
+  moisRestants:      0,
+  dureeTotal:        0,
+};
+
 export function useClientData() {
-  const { selectedClientId } = useClientContext();
+  const { selectedClientId, allClients } = useClientContext();
 
   return useMemo(() => {
-    const id: ClientId = isKnownClientId(selectedClientId)
-      ? selectedClientId
-      : 'c-aissatou';
+    if (isKnownClientId(selectedClientId)) {
+      const id = selectedClientId;
+      const client   = ALL_CLIENTS[id];
+      const chantier = ALL_CHANTIERS[id as keyof typeof ALL_CHANTIERS];
+      const tranches = ALL_TRANCHES[id as keyof typeof ALL_TRANCHES] as typeof TRANCHES_AISSATOU | typeof TRANCHES_MAMADOU | [];
+      const disbursements = ALL_DISBURSEMENTS[id as keyof typeof ALL_DISBURSEMENTS];
+      const notifications = ALL_NOTIFICATIONS[id as keyof typeof ALL_NOTIFICATIONS];
+      const historique    = ALL_HISTO[id as keyof typeof ALL_HISTO];
+      const requisDocs    = ALL_REQUIS_DOCS[id] ?? [];
 
-    const client   = ALL_CLIENTS[id];
-    const chantier = ALL_CHANTIERS[id as keyof typeof ALL_CHANTIERS];
-    const tranches = ALL_TRANCHES[id as keyof typeof ALL_TRANCHES] as typeof TRANCHES_AISSATOU | typeof TRANCHES_MAMADOU | [];
-    const disbursements = ALL_DISBURSEMENTS[id as keyof typeof ALL_DISBURSEMENTS];
-    const notifications = ALL_NOTIFICATIONS[id as keyof typeof ALL_NOTIFICATIONS];
-    const historique    = ALL_HISTO[id as keyof typeof ALL_HISTO];
-    const requisDocs    = ALL_REQUIS_DOCS[id] ?? [];
+      // Derived loan finance figures (static demo values for Aïssatou)
+      const finance = id === 'c-aissatou'
+        ? {
+            montantFinance:    25_000_000,
+            echeanceMensuelle:    208_400,
+            moisPayes:                 14,
+            montantPaye:        2_917_600,
+            moisRestants:             166,
+            dureeTotal:               180,
+          }
+        : ZERO_FINANCE;
 
-    // Derived loan finance figures (static demo values for Aïssatou)
-    const finance = id === 'c-aissatou'
-      ? {
-          montantFinance:    25_000_000,
-          echeanceMensuelle:    208_400,
-          moisPayes:                 14,
-          montantPaye:        2_917_600,
-          moisRestants:             166,
-          dureeTotal:               180,
-        }
-      : {
-          montantFinance:    0,
-          echeanceMensuelle: 0,
-          moisPayes:         0,
-          montantPaye:       0,
-          moisRestants:      0,
-          dureeTotal:        0,
-        };
+      return {
+        ...client,
+        chantier,
+        tranches,
+        disbursements,
+        notifications,
+        historique,
+        requisDocs,
+        finance,
+      };
+    }
+
+    // Nouveau client inscrit — aucune donnée démo, tout part de zéro.
+    const summary = allClients.find(c => c.id === selectedClientId);
+    const today = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
 
     return {
-      ...client,
-      chantier,
-      tranches,
-      disbursements,
-      notifications,
-      historique,
-      requisDocs,
-      finance,
+      id: selectedClientId,
+      name: summary?.name ?? 'Nouveau client',
+      projectNom: summary?.projectNom ?? '—',
+      adresse: summary?.adresse ?? '—',
+      ref: summary?.ref ?? selectedClientId,
+      dateOuverture: today,
+      conseiller: 'Non assigné',
+      banque: '—',
+      statut: summary?.statut ?? 'Dossier en préparation',
+      nextEtape: 'Dépôt du dossier',
+      progression: summary?.progression ?? 0,
+      phone: '—',
+      email: '—',
+      address: '—',
+      employer: '—',
+      fonction: '—',
+      adhesionDate: today,
+      chantier: null,
+      tranches: [] as typeof TRANCHES_AISSATOU | typeof TRANCHES_MAMADOU | [],
+      disbursements: [] as typeof DISBURSEMENTS_AISSATOU | [],
+      notifications: [] as typeof NOTIFICATIONS_AISSATOU | [],
+      historique: [] as typeof HISTORIQUE_AISSATOU | [],
+      requisDocs: [] as typeof ALL_REQUIS_DOCS[ClientId],
+      finance: ZERO_FINANCE,
     };
-  }, [selectedClientId]);
+  }, [selectedClientId, allClients]);
 }
 
 export type ClientData = ReturnType<typeof useClientData>;

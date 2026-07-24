@@ -22,10 +22,11 @@ export interface SharedDoc {
 interface DocStateCtx {
   requisDocs: SharedDoc[];
   history: HistoEntry[];
-  acceptDoc: (docId: string, agentName: string) => void;
-  refuseDoc: (docId: string, agentName: string, comment: string) => void;
-  requestReplacement: (docId: string, agentName: string, comment: string) => void;
-  remettreVerification: (docId: string, agentName: string) => void;
+  allDocsByClient: Record<string, SharedDoc[]>;
+  acceptDoc: (docId: string, agentName: string, clientId?: string) => void;
+  refuseDoc: (docId: string, agentName: string, comment: string, clientId?: string) => void;
+  requestReplacement: (docId: string, agentName: string, comment: string, clientId?: string) => void;
+  remettreVerification: (docId: string, agentName: string, clientId?: string) => void;
 }
 
 const DocStateContext = createContext<DocStateCtx | null>(null);
@@ -113,7 +114,7 @@ export function DocStateProvider({ children }: { children: React.ReactNode }) {
   const requisDocs: SharedDoc[] = allDocs[selectedClientId] ?? getInitialDocs(selectedClientId);
   const history:    HistoEntry[] = allHistory[selectedClientId] ?? [];
 
-  const clientName = allClients.find(c => c.id === selectedClientId)?.name ?? selectedClientId;
+  const nameFor = (clientId: string) => allClients.find(c => c.id === clientId)?.name ?? clientId;
 
   const nowStamp = () => {
     const d = new Date();
@@ -123,68 +124,68 @@ export function DocStateProvider({ children }: { children: React.ReactNode }) {
     };
   };
 
-  const pushHistory = (entry: Omit<HistoEntry, 'id'>) => {
+  const pushHistoryFor = (clientId: string, entry: Omit<HistoEntry, 'id'>) => {
     setAllHistory(prev => ({
       ...prev,
-      [selectedClientId]: [{ ...entry, id: 'h-live-' + Date.now() }, ...(prev[selectedClientId] ?? [])],
+      [clientId]: [{ ...entry, id: 'h-live-' + Date.now() }, ...(prev[clientId] ?? [])],
     }));
   };
 
-  const docLabel = (docId: string) =>
-    requisDocs.find(d => d.id === docId)?.label ?? docId;
+  const docLabelFor = (clientId: string, docId: string) =>
+    (allDocs[clientId] ?? getInitialDocs(clientId)).find(d => d.id === docId)?.label ?? docId;
 
-  const updateDocs = (docId: string, patch: Partial<SharedDoc>) => {
+  const updateDocs = (clientId: string, docId: string, patch: Partial<SharedDoc>) => {
     setAllDocs(prev => ({
       ...prev,
-      [selectedClientId]: (prev[selectedClientId] ?? getInitialDocs(selectedClientId)).map(d =>
+      [clientId]: (prev[clientId] ?? getInitialDocs(clientId)).map(d =>
         d.id !== docId ? d : { ...d, ...patch }
       ),
     }));
   };
 
-  const acceptDoc = (docId: string, agentName: string) => {
+  const acceptDoc = (docId: string, agentName: string, clientId: string = selectedClientId) => {
     const { date, heure } = nowStamp();
-    updateDocs(docId, { status: 'accepte', dateValidation: date, agentName });
-    pushHistory({
+    updateDocs(clientId, docId, { status: 'accepte', dateValidation: date, agentName });
+    pushHistoryFor(clientId, {
       date, heure, utilisateur: agentName, role: 'Agent CPI',
-      action: `${docLabel(docId)} validé${docId === 'identite' ? 'e' : ''}`,
-      type: 'validation' as HistoActionType, cible: clientName,
+      action: `${docLabelFor(clientId, docId)} validé${docId === 'identite' ? 'e' : ''}`,
+      type: 'validation' as HistoActionType, cible: nameFor(clientId),
     });
   };
 
-  const refuseDoc = (docId: string, agentName: string, comment: string) => {
+  const refuseDoc = (docId: string, agentName: string, comment: string, clientId: string = selectedClientId) => {
     const { date, heure } = nowStamp();
-    updateDocs(docId, { status: 'refuse', commentaire: comment, agentName });
-    pushHistory({
+    updateDocs(clientId, docId, { status: 'refuse', commentaire: comment, agentName });
+    pushHistoryFor(clientId, {
       date, heure, utilisateur: agentName, role: 'Agent CPI',
-      action: `${docLabel(docId)} refusé${docId === 'identite' ? 'e' : ''}`,
-      type: 'refus' as HistoActionType, cible: clientName,
+      action: `${docLabelFor(clientId, docId)} refusé${docId === 'identite' ? 'e' : ''}`,
+      type: 'refus' as HistoActionType, cible: nameFor(clientId),
     });
   };
 
-  const requestReplacement = (docId: string, agentName: string, comment: string) => {
+  const requestReplacement = (docId: string, agentName: string, comment: string, clientId: string = selectedClientId) => {
     const { date, heure } = nowStamp();
-    updateDocs(docId, { status: 'a-remplacer', commentaire: comment, agentName });
-    pushHistory({
+    updateDocs(clientId, docId, { status: 'a-remplacer', commentaire: comment, agentName });
+    pushHistoryFor(clientId, {
       date, heure, utilisateur: agentName, role: 'Agent CPI',
-      action: `Remplacement demandé — ${docLabel(docId)}`,
-      type: 'refus' as HistoActionType, cible: clientName,
+      action: `Remplacement demandé — ${docLabelFor(clientId, docId)}`,
+      type: 'refus' as HistoActionType, cible: nameFor(clientId),
     });
   };
 
-  const remettreVerification = (docId: string, agentName: string) => {
+  const remettreVerification = (docId: string, agentName: string, clientId: string = selectedClientId) => {
     const { date, heure } = nowStamp();
-    updateDocs(docId, { status: 'verification', agentName });
-    pushHistory({
+    updateDocs(clientId, docId, { status: 'verification', agentName });
+    pushHistoryFor(clientId, {
       date, heure, utilisateur: agentName, role: 'Agent CPI',
-      action: `${docLabel(docId)} remis en vérification`,
-      type: 'document' as HistoActionType, cible: clientName,
+      action: `${docLabelFor(clientId, docId)} remis en vérification`,
+      type: 'document' as HistoActionType, cible: nameFor(clientId),
     });
   };
 
   return (
     <DocStateContext.Provider value={{
-      requisDocs, history,
+      requisDocs, history, allDocsByClient: allDocs,
       acceptDoc, refuseDoc, requestReplacement, remettreVerification,
     }}>
       {children}

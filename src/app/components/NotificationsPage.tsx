@@ -323,7 +323,7 @@ export default function NotificationsPage() {
 
       {/* ── Filter tabs ────────────────────────────────────────────────────── */}
       <div style={{
-        display: 'flex', gap: '6px',
+        display: 'flex', gap: '6px', overflowX: 'auto',
         background: 'var(--card)', border: '1px solid var(--border)',
         borderRadius: '12px', padding: '5px',
       }}>
@@ -335,7 +335,7 @@ export default function NotificationsPage() {
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
               style={{
-                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                flex: '1 0 auto', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                 padding: '8px 10px', borderRadius: '8px', border: 'none', cursor: 'pointer',
                 background: active ? 'var(--primary)' : 'transparent',
                 color: active ? '#fff' : 'var(--muted-foreground)',

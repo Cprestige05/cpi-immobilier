@@ -81,8 +81,13 @@ const CSS = `
     box-shadow: 0 2px 8px rgba(26,58,110,0.35); cursor: pointer;
   }
   .sim-grid { display: grid; grid-template-columns: 360px 1fr; gap: 20px; align-items: start; }
+  .sim-grid > * { min-width: 0; }
+  .sim-left-sticky { position: sticky; top: 16px; }
   .sim-tr:hover td { background: var(--secondary) !important; }
-  @media (max-width: 900px) { .sim-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 900px) {
+    .sim-grid { grid-template-columns: 1fr; }
+    .sim-left-sticky { position: static; }
+  }
   @media print {
     .sim-no-print { display: none !important; }
     .sim-print-full { max-width: 100% !important; }
@@ -246,9 +251,9 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
         <div className="sim-grid">
 
           {/* ── LEFT: Inputs ────────────────────────────────────────────── */}
-          <div style={{
+          <div className="sim-left-sticky" style={{
             background: 'var(--card)', border: '1px solid var(--border)',
-            borderRadius: '14px', padding: '24px', position: 'sticky', top: '16px',
+            borderRadius: '14px', padding: '24px',
           }}>
             <div style={{
               display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px',
@@ -511,7 +516,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
             <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '14px', overflow: 'hidden' }}>
 
               {/* Tab bar */}
-              <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', padding: '0 20px', gap: '0', background: 'var(--card)' }}>
+              <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', padding: '0 20px', gap: '0', background: 'var(--card)', overflowX: 'auto' }}>
                 {[
                   { id: 'chart', label: "Graphique d'évolution", icon: BarChart3 },
                   { id: 'table', label: "Tableau d'amortissement", icon: Table2 },
@@ -520,7 +525,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
                   return (
                     <button key={tab.id} onClick={() => setView(tab.id as any)} style={{
                       display: 'flex', alignItems: 'center', gap: '6px', padding: '13px 16px',
-                      background: 'none', border: 'none', cursor: 'pointer',
+                      background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0,
                       borderBottom: active ? '2px solid var(--primary)' : '2px solid transparent',
                       marginBottom: '-1px',
                       fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: active ? 700 : 400,
@@ -531,11 +536,11 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
                     </button>
                   );
                 })}
-                <div style={{ flex: 1 }} />
+                <div style={{ flex: 1, minWidth: '12px' }} />
                 <button
                   onClick={() => window.print()}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: '6px', padding: '13px 16px',
+                    display: 'flex', alignItems: 'center', gap: '6px', padding: '13px 16px', flexShrink: 0,
                     background: 'none', border: 'none', cursor: 'pointer',
                     fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600,
                     color: 'var(--muted-foreground)', transition: 'color 0.12s',

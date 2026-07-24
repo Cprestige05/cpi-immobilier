@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Eye, Download, CheckCircle2, XCircle, AlertCircle, MessageSquare, ChevronDown, ChevronUp, FileText, Clock, RefreshCw } from 'lucide-react';
-import { useDocState } from '../data/docStateContext';
-import { CLIENT_AISSATOU } from '../data/demoStore';
+import { Eye, Download, CheckCircle2, XCircle, AlertCircle, MessageSquare, ChevronDown, ChevronUp, FileText, RefreshCw } from 'lucide-react';
+import { useDocState, type SharedDoc } from '../data/docStateContext';
 import { useClientContext } from '../contexts/ClientContext';
 
 type DocStatus = 'accepte' | 'en-analyse' | 'a-remplacer' | 'refuse' | 'manquant';
@@ -46,37 +45,17 @@ function toModuleStatus(s: StoreDocStatus): DocStatus {
   return 'manquant';
 }
 
-// Aïssatou's additional (non-required) docs — kept local
-const AISSATOU_EXTRA_DOCS: ClientDoc[] = [
-  { id: 'd4', label: 'Plan de masse',          file: '—', date: '—', size: '—', status: 'manquant' },
-  { id: 'd5', label: 'Devis de construction',  file: '—', date: '—', size: '—', status: 'manquant' },
-];
-
-const OTHER_CLIENTS: ClientEntry[] = [
-  {
-    id: 'c-mamadou', name: 'Mamadou Diallo', ref: 'CPI-2026-04698', project: 'Villa F3 — Thiès Nord',
-    docs: [
-      { id: 'd1', label: "Pièce d'identité",       file: 'Passeport.pdf',            date: '05 juin 2026', size: '1.8 Mo', status: 'accepte'    },
-      { id: 'd2', label: 'Justificatifs de revenus', file: 'Bulletins_x3.pdf',         date: '05 juin 2026', size: '3.9 Mo', status: 'en-analyse' },
-      { id: 'd3', label: 'Relevés bancaires',       file: 'Releves_x3.pdf',           date: '05 juin 2026', size: '2.8 Mo', status: 'en-analyse' },
-      { id: 'd4', label: 'Permis de construire',    file: '—',                        date: '—',            size: '—',      status: 'manquant'   },
-      { id: 'd5', label: 'Compromis de vente',      file: 'Compromis.pdf',            date: '06 juin 2026', size: '1.2 Mo', status: 'en-analyse' },
-    ],
-  },
-  {
-    id: 'c-fatou', name: 'Fatou Mbaye', ref: 'CPI-2026-04712', project: 'Appartement T3 — Dakar (Plateau)',
-    docs: [
-      { id: 'd1', label: "Pièce d'identité",       file: 'CNI.pdf',                  date: '12 juin 2026', size: '1.5 Mo', status: 'en-analyse' },
-      { id: 'd2', label: 'Justificatifs de revenus', file: 'Bulletins.pdf',            date: '12 juin 2026', size: '5.1 Mo', status: 'en-analyse' },
-      { id: 'd3', label: 'Relevés bancaires',       file: 'Releves.pdf',              date: '12 juin 2026', size: '2.4 Mo', status: 'en-analyse' },
-      { id: 'd4', label: 'Plan de masse',           file: 'Plan.pdf',                 date: '13 juin 2026', size: '0.9 Mo', status: 'en-analyse' },
-      { id: 'd5', label: 'Devis de construction',  file: '—',                        date: '—',            size: '—',      status: 'manquant'   },
-    ],
-  },
-];
-
-// Doc IDs that are backed by shared context (Aïssatou's required docs)
-const AISSATOU_REQUIRED_IDS = new Set(['identite', 'revenus', 'bancaires']);
+function toClientDoc(d: SharedDoc): ClientDoc {
+  return {
+    id: d.id,
+    label: d.label,
+    file: d.submittedLabel ? `${d.submittedLabel}.pdf` : '—',
+    date: d.date ?? '—',
+    size: d.taille ?? '—',
+    status: toModuleStatus(d.status as StoreDocStatus),
+    comment: d.commentaire,
+  };
+}
 
 function DocStatusBadge({ status }: { status: DocStatus }) {
   const cfg = DOC_STATUS_CFG[status];
@@ -89,7 +68,7 @@ function DocStatusBadge({ status }: { status: DocStatus }) {
 
 export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Props) {
   const {
-    requisDocs,
+    allDocsByClient,
     acceptDoc: ctxAcceptDoc,
     refuseDoc: ctxRefuseDoc,
     requestReplacement: ctxRequestReplacement,
@@ -97,82 +76,37 @@ export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Prop
   } = useDocState();
 
   const { selectedClientId, allClients: allClientSummaries } = useClientContext();
-  const selectedClientInfo = allClientSummaries.find(c => c.id === selectedClientId);
 
-  // Build selected-client entry from live context data
-  const contextDocs: ClientDoc[] = requisDocs.map(d => ({
-    id: d.id,
-    label: d.label,
-    file: d.submittedLabel ? `${d.submittedLabel}.pdf` : '—',
-    date: d.date ?? '—',
-    size: d.taille ?? '—',
-    status: toModuleStatus(d.status as StoreDocStatus),
-    comment: d.commentaire,
+  // Toujours afficher les 4 clients, chacun avec ses vrais documents partagés —
+  // indépendamment du client actuellement sélectionné dans le sélecteur du haut.
+  const allClients: ClientEntry[] = allClientSummaries.map(c => ({
+    id: c.id,
+    name: c.name,
+    ref: c.ref,
+    project: `${c.projectNom} — ${c.adresse}`,
+    docs: (allDocsByClient[c.id] ?? []).map(toClientDoc),
   }));
 
-  const selectedEntry: ClientEntry = {
-    id: selectedClientId,
-    name: selectedClientInfo?.name ?? CLIENT_AISSATOU.name,
-    ref: selectedClientInfo?.ref ?? CLIENT_AISSATOU.ref,
-    project: selectedClientInfo
-      ? `${selectedClientInfo.projectNom} — ${selectedClientInfo.adresse}`
-      : `${CLIENT_AISSATOU.projectNom} — ${CLIENT_AISSATOU.adresse}`,
-    docs: [
-      ...contextDocs,
-      ...(selectedClientId === CLIENT_AISSATOU.id ? AISSATOU_EXTRA_DOCS : []),
-    ],
-  };
-
-  // Local state for OTHER_CLIENTS (exclude the currently selected client to avoid duplicates)
-  const [otherClients, setOtherClients] = useState<ClientEntry[]>(OTHER_CLIENTS);
   const [expanded, setExpanded] = useState<string | null>(selectedClientId);
   const [commentModal, setCommentModal] = useState<{ clientId: string; docId: string; mode: 'complement' | 'refus' } | null>(null);
   const [commentText, setCommentText] = useState('');
   const [toast, setToast] = useState<string | null>(null);
 
-  // Filter out any OTHER_CLIENTS entry that matches the selected client to avoid duplicates
-  const filteredOther = otherClients.filter(c => c.id !== selectedClientId);
-  const allClients = [selectedEntry, ...filteredOther];
-
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2800); };
 
-  // Context docs are those belonging to the selected client's required IDs
-  const isContextDoc = (clientId: string, docId: string) =>
-    clientId === selectedClientId && AISSATOU_REQUIRED_IDS.has(docId);
-
-  const updateLocalDocStatus = (clientId: string, docId: string, newStatus: DocStatus, comment?: string) => {
-    setOtherClients(prev => prev.map(c => c.id !== clientId ? c : {
-      ...c,
-      docs: c.docs.map(d => d.id !== docId ? d : { ...d, status: newStatus, ...(comment !== undefined ? { comment } : {}) }),
-    }));
-  };
-
   const handleAction = (clientId: string, docId: string, action: 'accepter' | 'refuser' | 'complement' | 'verification') => {
-    if (isContextDoc(clientId, docId)) {
-      if (action === 'accepter') {
-        ctxAcceptDoc(docId, agentName);
-        showToast('Document accepté — visible dans le dossier client.');
-      } else if (action === 'refuser') {
-        setCommentModal({ clientId, docId, mode: 'refus' });
-        setCommentText('');
-      } else if (action === 'complement') {
-        setCommentModal({ clientId, docId, mode: 'complement' });
-        setCommentText('');
-      } else if (action === 'verification') {
-        ctxRemettreVerification(docId, agentName);
-        showToast('Document remis en vérification.');
-      }
-    } else {
-      if (action === 'accepter') {
-        updateLocalDocStatus(clientId, docId, 'accepte');
-        showToast('Document accepté.');
-      } else if (action === 'refuser') {
-        updateLocalDocStatus(clientId, docId, 'refuse');
-        showToast('Document refusé.');
-      } else if (action === 'complement') {
-        setCommentModal({ clientId, docId, mode: 'complement' });
-        setCommentText('');
-      }
+    if (action === 'accepter') {
+      ctxAcceptDoc(docId, agentName, clientId);
+      showToast('Document accepté — visible dans le dossier client.');
+    } else if (action === 'refuser') {
+      setCommentModal({ clientId, docId, mode: 'refus' });
+      setCommentText('');
+    } else if (action === 'complement') {
+      setCommentModal({ clientId, docId, mode: 'complement' });
+      setCommentText('');
+    } else if (action === 'verification') {
+      ctxRemettreVerification(docId, agentName, clientId);
+      showToast('Document remis en vérification.');
     }
   };
 
@@ -180,17 +114,12 @@ export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Prop
     if (!commentModal || !commentText.trim()) return;
     const { clientId, docId, mode } = commentModal;
 
-    if (isContextDoc(clientId, docId)) {
-      if (mode === 'complement') {
-        ctxRequestReplacement(docId, agentName, commentText.trim());
-        showToast('Remplacement demandé — commentaire visible dans le dossier client.');
-      } else {
-        ctxRefuseDoc(docId, agentName, commentText.trim());
-        showToast('Document refusé — commentaire enregistré.');
-      }
+    if (mode === 'complement') {
+      ctxRequestReplacement(docId, agentName, commentText.trim(), clientId);
+      showToast('Remplacement demandé — commentaire visible dans le dossier client.');
     } else {
-      updateLocalDocStatus(clientId, docId, mode === 'refus' ? 'refuse' : 'a-remplacer', commentText.trim());
-      showToast(mode === 'complement' ? 'Complément demandé.' : 'Document refusé.');
+      ctxRefuseDoc(docId, agentName, commentText.trim(), clientId);
+      showToast('Document refusé — commentaire enregistré.');
     }
     setCommentModal(null);
     setCommentText('');
@@ -211,9 +140,8 @@ export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Prop
       {/* Client list */}
       {allClients.map(client => {
         const isOpen = expanded === client.id;
-        const requiredDocs = client.id === CLIENT_AISSATOU.id ? client.docs.slice(0, 3) : client.docs;
-        const accepted = requiredDocs.filter(d => d.status === 'accepte').length;
-        const total = requiredDocs.length;
+        const total = client.docs.length;
+        const accepted = client.docs.filter(d => d.status === 'accepte').length;
         return (
           <div key={client.id} style={card}>
             <button
@@ -229,9 +157,9 @@ export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Prop
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: accepted === total ? 'var(--success)' : 'var(--muted-foreground)', fontWeight: 600 }}>{accepted}/{total} validés</span>
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: total > 0 && accepted === total ? 'var(--success)' : 'var(--muted-foreground)', fontWeight: 600 }}>{accepted}/{total} validés</span>
                   <div style={{ width: '60px', height: '4px', background: 'var(--muted)', borderRadius: '2px', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${(accepted / total) * 100}%`, background: accepted === total ? 'var(--success)' : 'var(--primary)', borderRadius: '2px' }} />
+                    <div style={{ height: '100%', width: `${total > 0 ? (accepted / total) * 100 : 0}%`, background: total > 0 && accepted === total ? 'var(--success)' : 'var(--primary)', borderRadius: '2px' }} />
                   </div>
                 </div>
                 {isOpen ? <ChevronUp size={15} style={{ color: 'var(--muted-foreground)' }} /> : <ChevronDown size={15} style={{ color: 'var(--muted-foreground)' }} />}
@@ -274,12 +202,12 @@ export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Prop
                             <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', fontStyle: 'italic' }}>Non déposé</span>
                           ) : (
                             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                              <button title="Voir" style={btnSm('var(--primary)', 'var(--secondary)')}><Eye size={12} /> Voir</button>
-                              <button title="Télécharger" style={btnSm('var(--muted-foreground)', 'var(--muted)')}><Download size={12} /> Télécharger</button>
+                              <button title="Voir" onClick={() => showToast('Aperçu non disponible en démo.')} style={btnSm('var(--primary)', 'var(--secondary)')}><Eye size={12} /> Voir</button>
+                              <button title="Télécharger" onClick={() => showToast('Téléchargement non disponible en démo.')} style={btnSm('var(--muted-foreground)', 'var(--muted)')}><Download size={12} /> Télécharger</button>
                               {doc.status !== 'accepte' && (
                                 <button onClick={() => handleAction(client.id, doc.id, 'accepter')} style={btnSm('var(--success)', 'rgba(26,107,68,0.10)')}><CheckCircle2 size={12} /> Accepter</button>
                               )}
-                              {(doc.status === 'refuse' || doc.status === 'a-remplacer') && isContextDoc(client.id, doc.id) && (
+                              {(doc.status === 'refuse' || doc.status === 'a-remplacer') && (
                                 <button onClick={() => handleAction(client.id, doc.id, 'verification')} style={btnSm('#C8921A', 'rgba(200,146,26,0.10)')}><RefreshCw size={12} /> Vérification</button>
                               )}
                               {doc.status !== 'refuse' && (

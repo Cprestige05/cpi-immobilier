@@ -683,7 +683,7 @@ export default function MonProfilPage({ user }: MonProfilPageProps) {
         editing={editing === 'pro'}
       >
         {/* Type badge banner */}
-        <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: '10px',
             padding: '10px 18px',
@@ -708,7 +708,7 @@ export default function MonProfilPage({ user }: MonProfilPageProps) {
             </div>
           </div>
 
-          <div style={{ height: '40px', width: '1px', background: 'var(--border)' }} />
+          <div style={{ height: '40px', width: '1px', background: 'var(--border)', flexShrink: 0 }} />
 
           <div>
             <div style={{

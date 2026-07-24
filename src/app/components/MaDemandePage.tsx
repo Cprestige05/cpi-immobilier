@@ -153,6 +153,14 @@ const TIMELINE = [
   { date: '—',            hour: '—',     text: 'Validation bancaire (prochaine étape)',     type: 'pending' },
 ];
 
+function blankDocs(): DocItem[] {
+  return DOCS_INITIAL.map(d => ({
+    id: d.id, label: d.label, description: d.description,
+    obligatoire: d.obligatoire, formats: d.formats,
+    statut: 'non-envoye', version: 0,
+  }));
+}
+
 // ── Design tokens ──────────────────────────────────────────────────
 const CARD_RADIUS = 20;
 const CARD_SHADOW = '0 1px 4px rgba(0,0,0,0.05), 0 8px 32px rgba(0,0,0,0.04)';
@@ -608,28 +616,50 @@ function Btn({ label, icon, variant = 'ghost', onClick }: {
 export default function MaDemandePage({ user: _user }: Props) {
   const client = useClientData();
   const { navigate } = useNavigate();
+  const isNewClient = client.conseiller === 'Non assigné';
 
   const DEMO_REF      = client.ref;
   const DEMO_DATE     = client.dateOuverture;
 
+  const timeline = isNewClient
+    ? [{
+        date: client.dateOuverture,
+        hour: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        text: 'Compte créé — complétez votre dossier pour le soumettre.',
+        type: 'success',
+      }]
+    : TIMELINE;
+
   const [isEditing, setIsEditing] = useState(false);
-  const [statut]    = useState<DemandStatut>('en-cours');
-  const [docs, setDocs] = useState<DocItem[]>(DOCS_INITIAL);
+  const [statut]    = useState<DemandStatut>(isNewClient ? 'brouillon' : 'en-cours');
+  const [docs, setDocs] = useState<DocItem[]>(isNewClient ? blankDocs() : DOCS_INITIAL);
   const [toasts, setToasts]   = useState<ToastItem[]>([]);
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const uploadTimers = useRef<Record<string, ReturnType<typeof setInterval>>>({});
 
-  const [form, setForm] = useState({
-    typeProjet:    'financement',
-    natureProjet:  'acquisition',
-    montant:       '6 500 000',
-    duree:         '15',
-    apport:        '3 000 000',
-    region:        'Thiès',
-    commune:       client.adresse.split('(')[0].trim(),
-    adresseProjet: `Cité Résidentielle ${client.adresse.split('(')[0].trim()}, Lot 47`,
-    description:   `${client.projectNom} — terrain de 300 m², viabilisé. Construction prévue Q4 2026.`,
-  });
+  const [form, setForm] = useState(isNewClient
+    ? {
+        typeProjet:    'financement',
+        natureProjet:  'acquisition',
+        montant:       '',
+        duree:         '15',
+        apport:        '',
+        region:        'Dakar',
+        commune:       '',
+        adresseProjet: '',
+        description:   '',
+      }
+    : {
+        typeProjet:    'financement',
+        natureProjet:  'acquisition',
+        montant:       '6 500 000',
+        duree:         '15',
+        apport:        '3 000 000',
+        region:        'Thiès',
+        commune:       client.adresse.split('(')[0].trim(),
+        adresseProjet: `Cité Résidentielle ${client.adresse.split('(')[0].trim()}, Lot 47`,
+        description:   `${client.projectNom} — terrain de 300 m², viabilisé. Construction prévue Q4 2026.`,
+      });
 
   const set = (k: keyof typeof form) => (v: string) => setForm(f => ({ ...f, [k]: v }));
   const sc  = STATUT_CONFIG[statut];
@@ -977,7 +1007,7 @@ export default function MaDemandePage({ user: _user }: Props) {
               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>Historique de traitement</h3>
             </div>
             <div style={{ padding: '20px 28px 24px' }}>
-              {TIMELINE.map((ev, i) => {
+              {timeline.map((ev, i) => {
                 const color = ev.type === 'success' ? 'var(--success)' : ev.type === 'warning' ? 'var(--destructive)' : 'var(--muted-foreground)';
                 const bg    = ev.type === 'success' ? 'rgba(26,107,68,0.12)' : ev.type === 'warning' ? 'rgba(192,57,43,0.1)' : 'var(--muted)';
                 const bdr   = ev.type === 'success' ? 'rgba(26,107,68,0.2)' : ev.type === 'warning' ? 'rgba(192,57,43,0.2)' : 'var(--border)';
@@ -989,11 +1019,11 @@ export default function MaDemandePage({ user: _user }: Props) {
                       <div style={{ width: 36, height: 36, borderRadius: '50%', background: bg, border: `1.5px solid ${bdr}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color, flexShrink: 0 }}>
                         <Icon size={16} />
                       </div>
-                      {i < TIMELINE.length - 1 && (
-                        <div style={{ width: 1.5, flex: 1, minHeight: 16, background: i < TIMELINE.length - 2 ? 'var(--border)' : 'linear-gradient(to bottom, var(--border), transparent)', marginTop: 4 }} />
+                      {i < timeline.length - 1 && (
+                        <div style={{ width: 1.5, flex: 1, minHeight: 16, background: i < timeline.length - 2 ? 'var(--border)' : 'linear-gradient(to bottom, var(--border), transparent)', marginTop: 4 }} />
                       )}
                     </div>
-                    <div style={{ paddingBottom: i < TIMELINE.length - 1 ? 22 : 0, flex: 1, minWidth: 0, paddingTop: 4 }}>
+                    <div style={{ paddingBottom: i < timeline.length - 1 ? 22 : 0, flex: 1, minWidth: 0, paddingTop: 4 }}>
                       <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9rem', fontWeight: isPending ? 400 : 500, color: isPending ? 'var(--muted-foreground)' : 'var(--foreground)', lineHeight: 1.4, fontStyle: isPending ? 'italic' : 'normal' }}>
                         {ev.text}
                       </div>

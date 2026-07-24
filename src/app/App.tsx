@@ -2,12 +2,13 @@ import { useState } from 'react';
 import AuthPage from './components/AuthPage';
 import AppShell from './components/AppShell';
 
-export type UserRole = 'client-fonctionnaire' | 'client-public' | 'agent-cpi' | 'agent-banque' | 'admin';
+export type UserRole = 'client-fonctionnaire' | 'client-public' | 'agent-cpi' | 'admin';
 
 export interface AuthUser {
   role: UserRole;
   name: string;
   memberNumber?: string;
+  clientId?: string;
 }
 
 export type AppPage = 'welcome' | 'login' | 'register' | 'dashboard';

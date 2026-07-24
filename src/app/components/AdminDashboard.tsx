@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   TrendingUp, Users, FileText, Building2, CheckCircle2,
-  Clock, AlertCircle, XCircle, BarChart3, ArrowUpRight,
+  Clock, AlertCircle, XCircle, BarChart3, ArrowUpRight, ArrowDownRight,
   Shield, Banknote, RefreshCw
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
@@ -24,6 +24,12 @@ const MONTHLY_DATA = [
   { mois: 'Mai', approuvés: 27, refusés: 5, montant: 347 },
   { mois: 'Jun', approuvés: 31, refusés: 4, montant: 418 },
 ];
+
+const totalApprouves = MONTHLY_DATA.reduce((sum, m) => sum + m.approuvés, 0);
+const totalRefuses = MONTHLY_DATA.reduce((sum, m) => sum + m.refusés, 0);
+const totalDossiersDecides = totalApprouves + totalRefuses;
+const montantTotalAccorde = MONTHLY_DATA.reduce((sum, m) => sum + m.montant, 0);
+const tauxApprobationGlobal = Math.round((totalApprouves / totalDossiersDecides) * 100);
 
 const PIE_DATA = [
   { name: 'AM SA KER (Fonctionnaire)', value: 58, color: '#C8921A' },
@@ -49,6 +55,8 @@ const USERS_BY_ROLE = [
   { role: 'Agents CPI', count: 13, color: '#6B4A52' },
   { role: 'Agents Banque', count: 12, color: '#C8921A' },
 ];
+
+const maxUserCount = Math.max(...USERS_BY_ROLE.map(r => r.count));
 
 export default function AdminDashboard({ user, activeNav }: Props) {
   const [activeSection, setActiveSection] = useState<'overview' | 'users' | 'partners'>('overview');
@@ -87,19 +95,20 @@ export default function AdminDashboard({ user, activeNav }: Props) {
           {/* KPIs */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: 'Dossiers totaux', value: '131', sub: '+12 ce mois', icon: FileText, color: '#7B1A2E', positive: true },
-              { label: 'Montant total accordé', value: '1 749 M', sub: 'FCFA engagés', icon: Banknote, color: '#1A6B44', positive: true },
-              { label: 'Taux d\'approbation', value: '82%', sub: '↑ 4 pts vs M-1', icon: TrendingUp, color: '#1A6B44', positive: true },
-              { label: 'Délai moyen de traitement', value: '4,2 j', sub: '↓ 0,8 j vs M-1', icon: Clock, color: '#C8921A', positive: true },
+              { label: 'Dossiers totaux', value: `${totalDossiersDecides}`, sub: '+12 ce mois', icon: FileText, color: '#7B1A2E', trend: 'up' as const },
+              { label: 'Montant total accordé', value: `${montantTotalAccorde} M`, sub: 'FCFA engagés', icon: Banknote, color: '#1A6B44', trend: 'up' as const },
+              { label: 'Taux d\'approbation', value: `${tauxApprobationGlobal}%`, sub: '↑ 4 pts vs M-1', icon: TrendingUp, color: '#1A6B44', trend: 'up' as const },
+              { label: 'Délai moyen de traitement', value: '4,2 j', sub: '↓ 0,8 j vs M-1', icon: Clock, color: '#C8921A', trend: 'down' as const },
             ].map((kpi) => {
               const Icon = kpi.icon;
+              const TrendIcon = kpi.trend === 'up' ? ArrowUpRight : ArrowDownRight;
               return (
                 <div key={kpi.label} className="bg-white border border-[rgba(123,26,46,0.1)] p-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="w-8 h-8 flex items-center justify-center" style={{ background: `${kpi.color}12` }}>
                       <Icon className="w-4 h-4" style={{ color: kpi.color }} />
                     </div>
-                    <ArrowUpRight className="w-4 h-4 text-[#1A6B44]" />
+                    <TrendIcon className="w-4 h-4 text-[#1A6B44]" />
                   </div>
                   <div className="text-[#1C0810]" style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem', fontWeight: 800 }}>{kpi.value}</div>
                   <div className="text-[#6B4A52] mt-0.5" style={{ fontSize: '0.75rem', fontWeight: 500 }}>{kpi.label}</div>
@@ -217,7 +226,7 @@ export default function AdminDashboard({ user, activeNav }: Props) {
                       <span className="text-[#1C0810]" style={{ fontSize: '0.875rem', fontWeight: 700 }}>{r.count.toLocaleString('fr-FR')}</span>
                     </div>
                     <div className="h-1.5 bg-[#EDE4E6] w-full">
-                      <div className="h-full transition-all" style={{ width: `${Math.min((r.count / 1247) * 100, 100)}%`, background: r.color }} />
+                      <div className="h-full transition-all" style={{ width: `${Math.min((r.count / maxUserCount) * 100, 100)}%`, background: r.color }} />
                     </div>
                   </div>
                 </div>

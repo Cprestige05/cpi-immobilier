@@ -1114,12 +1114,20 @@ export default function MonDossierPage({ user }: { user: AuthUser }) {
 
   return (
     <div style={{ fontFamily: 'var(--font-sans)' }}>
+      <style>{`
+        .dossier-layout { display: flex; gap: 0; align-items: flex-start; }
+        .dossier-nav { width: 216px; flex-shrink: 0; padding-right: 18px; position: sticky; top: 0; }
+        @media (max-width: 860px) {
+          .dossier-layout { flex-direction: column; }
+          .dossier-nav { width: 100%; padding-right: 0; padding-bottom: 14px; position: static; }
+        }
+      `}</style>
       {/* ── Full-width journey banner — spans nav + content ── */}
       <DossierJourneyBanner />
 
       {/* ── 2-column layout: nav sidebar + main content ── */}
-      <div style={{ display: 'flex', gap: '0', alignItems: 'flex-start' }}>
-      <div style={{ width: '216px', flexShrink: 0, paddingRight: '18px', position: 'sticky', top: '0' }}>
+      <div className="dossier-layout">
+      <div className="dossier-nav">
         <NavTree
           nav={nav} onNav={handleNav}
           requisOpen={requisOpen} cpiOpen={cpiOpen}

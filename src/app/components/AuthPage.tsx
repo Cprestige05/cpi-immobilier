@@ -554,7 +554,8 @@ function RegisterScreen({ onLogin, onNavigate, initialProfile }: {
     setTimeout(() => {
       setLoading(false);
       const role: UserRole = profil === 'fonctionnaire' ? 'client-fonctionnaire' : 'client-public';
-      onLogin({ role, name: form.nom || 'Nouveau client' });
+      const clientId = `c-new-${Date.now()}`;
+      onLogin({ role, name: form.nom || 'Nouveau client', clientId });
     }, 900);
   };
 
