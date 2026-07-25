@@ -12,6 +12,7 @@
   --popover-foreground: #1C0810;
   --primary: #7B1A2E;
   --primary-foreground: #ffffff;
+  --primary-hover: #671528;
   --secondary: #F5ECEE;
   --secondary-foreground: #7B1A2E;
   --muted: #EDE4E6;
@@ -195,4 +196,103 @@
 
 html {
   font-size: var(--font-size);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   CPI — DESIGN SYSTEM : échelles de tokens (additif)
+   Ne modifie AUCUNE couleur de marque. Namespacé pour ne pas heurter Tailwind.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+:root {
+  /* Espacements — base 4px */
+  --space-1: 4px;   --space-2: 8px;   --space-3: 12px;  --space-4: 16px;
+  --space-5: 20px;  --space-6: 24px;  --space-8: 32px;  --space-10: 40px;
+  --space-12: 48px; --space-16: 64px; --space-20: 80px;
+
+  /* Rayons — conserve le langage « cartes fines » actuel */
+  --r-xs: 6px;  --r-sm: 8px;  --r-md: 12px;
+  --r-lg: 16px; --r-xl: 20px; --r-2xl: 24px; --r-full: 9999px;
+
+  /* Élévations — discrètes, premium, teinte bordeaux très légère (jamais de marine) */
+  --elev-xs: 0 1px 2px rgba(28,8,16,0.04);
+  --elev-sm: 0 1px 3px rgba(28,8,16,0.05), 0 1px 2px rgba(28,8,16,0.04);
+  --elev-md: 0 4px 12px rgba(28,8,16,0.06), 0 2px 6px rgba(28,8,16,0.04);
+  --elev-lg: 0 8px 24px rgba(28,8,16,0.08), 0 4px 12px rgba(28,8,16,0.05);
+  --elev-xl: 0 16px 48px rgba(28,8,16,0.10), 0 8px 24px rgba(28,8,16,0.06);
+  --shadow-hover: 0 6px 22px rgba(123,26,46,0.10);
+  --ring-focus: 0 0 0 3px rgba(123,26,46,0.30);
+
+  /* Échelle typographique */
+  --fs-display: clamp(2rem, 4vw, 2.75rem);
+  --fs-h1: clamp(1.625rem, 3vw, 2rem);
+  --fs-h2: 1.5rem;
+  --fs-h3: 1.25rem;
+  --fs-h4: 1.0625rem;
+  --fs-body-xl: 1.125rem;
+  --fs-body: 0.9375rem;
+  --fs-small: 0.8125rem;
+  --fs-caption: 0.75rem;
+  --fs-label: 0.6875rem;
+  --lh-tight: 1.15;
+  --lh-snug: 1.35;
+  --lh-normal: 1.55;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-1: 150ms; --dur-2: 220ms; --dur-3: 300ms;
+
+  /* Empilement */
+  --z-dropdown: 50; --z-sticky: 100; --z-drawer: 200; --z-modal: 300; --z-toast: 400;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   CPI — POLISH GLOBAL : rendu premium, accessibilité, motion
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Rendu net et typographie soignée */
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; scroll-behavior: smooth; }
+body { text-rendering: optimizeLegibility; }
+
+/* Titres display — léger resserrement premium (identité conservée) */
+h1, h2, h3, h4, .font-display { letter-spacing: -0.02em; }
+
+/* Sélection à la marque */
+::selection { background: rgba(123,26,46,0.14); color: var(--foreground); }
+
+/* Focus visible accessible (clavier uniquement) — anneau bordeaux */
+:where(a, button, input, select, textarea, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+}
+:where(a, button, input, select, textarea):focus:not(:focus-visible) { outline: none; }
+
+/* Transitions douces par défaut (les styles inline des composants restent prioritaires) */
+a, button, [role="button"], input, select, textarea, summary, label {
+  transition: color var(--dur-1) var(--ease-out),
+              background-color var(--dur-1) var(--ease-out),
+              border-color var(--dur-1) var(--ease-out),
+              box-shadow var(--dur-2) var(--ease-out),
+              transform var(--dur-1) var(--ease-out);
+}
+
+/* Scrollbars fines et discrètes */
+* { scrollbar-width: thin; scrollbar-color: rgba(123,26,46,0.20) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: rgba(123,26,46,0.16); border-radius: 9999px; border: 2px solid transparent; background-clip: padding-box; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(123,26,46,0.30); background-clip: padding-box; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+/* Entrée de contenu élégante */
+@keyframes cpi-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.cpi-animate-in { animation: cpi-fade-in var(--dur-3) var(--ease-out) both; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Respect du mouvement réduit */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

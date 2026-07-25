@@ -5,13 +5,18 @@ import {
   Phone, Mail, Building2, Calendar, Clock,
   Copy, Check, TrendingUp, TrendingDown, Minus,
   AlertCircle, Shield, BadgeCheck,
+  LogOut, KeyRound, Monitor, Trash2,
 } from 'lucide-react';
 import type { AuthUser } from '../App';
 import { useClientData } from '../data/useClientData';
+import { useDocState } from '../data/docStateContext';
 import { useNavigate } from '../contexts/NavigationContext';
+import { loadStaff, BUILTIN_STAFF } from '../data/clientRegistry';
+import { loadActivityLog } from '../data/activityLog';
 
 interface MonProfilPageProps {
   user: AuthUser;
+  onLogout?: () => void;
 }
 
 const fmt = (n: number) =>
@@ -233,51 +238,68 @@ function ProgressRing({ value, size = 56, stroke = 4 }: { value: number; size?: 
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-export default function MonProfilPage({ user }: MonProfilPageProps) {
+export default function MonProfilPage({ user, onLogout }: MonProfilPageProps) {
+  // Le personnel CPI (Admin / Agent) a un profil de compte professionnel, pas un
+  // profil client (ni CNI, ni revenus, ni dossier).
+  if (user.role === 'admin' || user.role === 'agent-cpi') {
+    return <StaffProfile user={user} onLogout={onLogout} />;
+  }
+  return <ClientProfile user={user} />;
+}
+
+function ClientProfile({ user }: { user: AuthUser }) {
   const clientData = useClientData();
+  const { requisDocs } = useDocState();
   const { navigate } = useNavigate();
 
-  // Build PROFILE from single source of truth, keep static fields as-is
+  // Compteur RÉEL de pièces déposées (aucune valeur inventée).
+  const docsTotalReal = requisDocs.length;
+  const docsDeposesReal = requisDocs.filter(d => d.status !== 'en-attente').length;
+  const docsLabel = docsTotalReal ? `${docsDeposesReal} / ${docsTotalReal}` : '—';
+
+  // Profil réel du client : les informations connues viennent de son compte,
+  // le reste reste à compléter (aucune donnée fictive).
   const PROFILE = {
-    nom: clientData.name.split(' ').slice(1).join(' ').toUpperCase() || 'NDIAYE',
-    prenom: clientData.name.split(' ')[0] || 'Aïssatou',
-    dateNaissance: '14 mars 1985',
-    lieuNaissance: 'Thiès, Sénégal',
-    nationalite: 'Sénégalaise',
-    sexe: 'Féminin',
-    situationMatrimoniale: 'Mariée',
-    numeroPiece: 'CNIE 2019 47821',
-    expirationPiece: '14 mars 2029',
+    nom: clientData.name.split(' ').slice(1).join(' ').toUpperCase() || '—',
+    prenom: clientData.name.split(' ')[0] || '—',
+    dateNaissance: '—',
+    lieuNaissance: '—',
+    nationalite: '—',
+    sexe: '—',
+    situationMatrimoniale: '—',
+    numeroPiece: '—',
+    expirationPiece: '—',
     telPrincipal: clientData.phone,
-    telSecondaire: '+221 33 951 00 12',
+    telSecondaire: '—',
     email: clientData.email,
     adresse: clientData.address,
-    ville: 'Dakar',
-    region: 'Dakar',
-    pays: 'Sénégal',
-    codePostal: 'BP 15421',
-    typeProfile: 'Fonctionnaire',
+    ville: '—',
+    region: '—',
+    pays: '—',
+    codePostal: '—',
+    typeProfile: user.role === 'client-fonctionnaire' ? 'Fonctionnaire' : 'Secteur privé / Autre',
     employeur: clientData.employer,
-    ministere: "Ministère de l'Éducation Nationale",
+    ministere: '—',
     fonction: clientData.fonction,
-    typeContrat: 'CDI — Fonctionnaire titulaire',
-    dateEmbauche: '01 septembre 2010',
-    anciennete: '15 ans',
-    secteur: 'Éducation / Service public',
-    revenus: 485000,
-    autresRevenus: 50000,
-    charges: 120000,
+    typeContrat: '—',
+    dateEmbauche: '—',
+    anciennete: '—',
+    secteur: '—',
+    revenus: 0,
+    autresRevenus: 0,
+    charges: 0,
     banque: clientData.banque,
-    iban: 'SN28 A000 0010 0100 1234 5678 901',
-    modePaiement: 'Virement bancaire',
-    clientNumber: 'CPI-CLI-00421',
+    iban: '—',
+    modePaiement: '—',
+    clientNumber: clientData.ref,
     dossierNumber: clientData.ref,
     dateInscription: clientData.adhesionDate,
     progression: clientData.progression,
-    docsDeposes: 6,
-    docsTotal: 8,
-    lastLogin: '22 juillet 2026 · 09:14',
+    docsDeposes: docsDeposesReal,
+    docsTotal: docsTotalReal,
+    lastLogin: '—',
   };
+  const hasPiece = PROFILE.numeroPiece !== '—';
 
   const [editing, setEditing] = useState<string | null>(null);
   const toggle = (s: string) => setEditing(prev => prev === s ? null : s);
@@ -285,11 +307,11 @@ export default function MonProfilPage({ user }: MonProfilPageProps) {
   const initials = user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
   const revenuTotal = PROFILE.revenus + PROFILE.autresRevenus;
   const capacite = revenuTotal - PROFILE.charges;
-  const tauxEndettement = Math.round((PROFILE.charges / revenuTotal) * 100);
+  const tauxEndettement = revenuTotal > 0 ? Math.round((PROFILE.charges / revenuTotal) * 100) : 0;
 
   return (
     <div style={{
-      maxWidth: '900px',
+      width: '100%',
       display: 'flex', flexDirection: 'column', gap: '20px',
       fontFamily: 'var(--font-sans)',
       paddingBottom: '48px',
@@ -366,7 +388,7 @@ export default function MonProfilPage({ user }: MonProfilPageProps) {
                 padding: '3px 10px', borderRadius: '99px',
               }}>
                 <BadgeCheck size={11} />
-                Compte vérifié
+                Compte actif
               </span>
             </div>
 
@@ -433,6 +455,7 @@ export default function MonProfilPage({ user }: MonProfilPageProps) {
             </div>
 
             <button
+              onClick={() => setEditing('identite')}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: '8px',
                 padding: '9px 16px', borderRadius: '10px',
@@ -465,10 +488,10 @@ export default function MonProfilPage({ user }: MonProfilPageProps) {
           padding: '0 36px',
         }}>
           {[
-            { label: 'Dernière connexion', value: '22 juil. · 09:14', icon: Clock },
-            { label: 'Documents déposés', value: `${PROFILE.docsDeposes} / ${PROFILE.docsTotal}`, icon: Shield },
+            { label: 'Dernière connexion', value: '—', icon: Clock },
+            { label: 'Documents déposés', value: docsLabel, icon: Shield },
             { label: 'Progression dossier', value: `${PROFILE.progression} %`, icon: TrendingUp },
-            { label: 'Conseillère', value: 'Mme Thiombane', icon: User },
+            { label: 'Conseiller', value: clientData.conseiller, icon: User },
           ].map((s, i, arr) => (
             <div key={s.label} style={{
               display: 'flex', alignItems: 'center', gap: '10px',
@@ -548,19 +571,30 @@ export default function MonProfilPage({ user }: MonProfilPageProps) {
                 <CopyButton value={PROFILE.numeroPiece} />
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{
-                  background: 'rgba(26,107,68,0.1)', color: '#1A6B44',
-                  fontFamily: 'var(--font-sans)', fontSize: '0.6875rem',
-                  fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
-                  padding: '2px 8px', borderRadius: '99px',
-                  display: 'inline-flex', alignItems: 'center', gap: '4px',
-                }}>
-                  <CheckCircle size={9} /> Valide
-                </span>
-                <span style={{
-                  fontFamily: 'var(--font-sans)', fontSize: '0.8125rem',
-                  color: 'var(--muted-foreground)',
-                }}>expire le {PROFILE.expirationPiece}</span>
+                {hasPiece ? (
+                  <>
+                    <span style={{
+                      background: 'rgba(26,107,68,0.1)', color: '#1A6B44',
+                      fontFamily: 'var(--font-sans)', fontSize: '0.6875rem',
+                      fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
+                      padding: '2px 8px', borderRadius: '99px',
+                      display: 'inline-flex', alignItems: 'center', gap: '4px',
+                    }}>
+                      <CheckCircle size={9} /> Valide
+                    </span>
+                    <span style={{
+                      fontFamily: 'var(--font-sans)', fontSize: '0.8125rem',
+                      color: 'var(--muted-foreground)',
+                    }}>expire le {PROFILE.expirationPiece}</span>
+                  </>
+                ) : (
+                  <span style={{
+                    background: 'var(--muted)', color: 'var(--muted-foreground)',
+                    fontFamily: 'var(--font-sans)', fontSize: '0.6875rem',
+                    fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
+                    padding: '2px 8px', borderRadius: '99px',
+                  }}>Non renseignée</span>
+                )}
               </div>
             </div>
           </div>
@@ -580,7 +614,7 @@ export default function MonProfilPage({ user }: MonProfilPageProps) {
               fontFamily: 'var(--font-sans)', fontSize: '0.8125rem',
               color: '#C8921A', fontWeight: 500,
             }}>
-              Toute modification des données d'identité est soumise à validation par votre conseillère CPI.
+              Toute modification des données d'identité est soumise à validation par votre conseiller CPI.
             </span>
           </div>
         )}
@@ -900,6 +934,175 @@ export default function MonProfilPage({ user }: MonProfilPageProps) {
         </div>
       </SectionCard>
 
+    </div>
+  );
+}
+
+// ─── Profil professionnel (Admin / Agent CPI) ─────────────────────────────────
+
+const AVATAR_KEY = (email: string) => `cpi_staff_avatar_${email}`;
+
+function deviceLabel(): string {
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+  const os = /Windows/.test(ua) ? 'Windows' : /Mac OS X|Macintosh/.test(ua) ? 'macOS'
+    : /Android/.test(ua) ? 'Android' : /iPhone|iPad|iPod/.test(ua) ? 'iOS'
+    : /Linux/.test(ua) ? 'Linux' : 'Appareil';
+  const br = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /Chrome\//.test(ua) ? 'Chrome'
+    : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Navigateur';
+  return `${br} · ${os}`;
+}
+
+function StaffProfile({ user, onLogout }: { user: AuthUser; onLogout?: () => void }) {
+  const roleLabel = user.role === 'admin' ? 'Administrateur' : 'Agent CPI';
+  const account = loadStaff().find(s => s.name === user.name && s.role === user.role)
+    ?? BUILTIN_STAFF.find(s => s.role === user.role);
+  const email = account?.email ?? '—';
+  const isBuiltin = BUILTIN_STAFF.some(s => s.email === email);
+  const createdAt = account?.createdAt ?? (isBuiltin ? 'Compte système' : '—');
+
+  const httpsOk = typeof window !== 'undefined' && window.location.protocol === 'https:';
+  const actionsCount = loadActivityLog().filter(e => e.role === roleLabel).length;
+
+  const [avatar, setAvatar] = useState<string | null>(() => {
+    try { return localStorage.getItem(AVATAR_KEY(email)); } catch { return null; }
+  });
+  const [toast, setToast] = useState<string | null>(null);
+  const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2600); };
+
+  const onPickAvatar = (file: File) => {
+    if (!file.type.startsWith('image/')) { showToast('Veuillez choisir une image.'); return; }
+    if (file.size > 2 * 1024 * 1024) { showToast('Image trop lourde (max 2 Mo).'); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const url = String(reader.result);
+      setAvatar(url);
+      try { localStorage.setItem(AVATAR_KEY(email), url); } catch {}
+      showToast('Photo de profil mise à jour.');
+    };
+    reader.readAsDataURL(file);
+  };
+  const removeAvatar = () => {
+    setAvatar(null);
+    try { localStorage.removeItem(AVATAR_KEY(email)); } catch {}
+    showToast('Photo retirée.');
+  };
+
+  const initials = user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+
+  return (
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '20px', fontFamily: 'var(--font-sans)', paddingBottom: '48px' }}>
+
+      {/* HERO */}
+      <div style={{ background: 'var(--primary)', borderRadius: '20px', overflow: 'hidden', position: 'relative' }}>
+        <div style={{ position: 'absolute', top: '-60px', right: '-60px', width: '260px', height: '260px', borderRadius: '50%', background: 'rgba(255,255,255,0.04)', pointerEvents: 'none' }} />
+        <div style={{ padding: '32px 36px', display: 'flex', alignItems: 'center', gap: '28px', flexWrap: 'wrap', position: 'relative' }}>
+          {/* Avatar */}
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <div style={{ width: '88px', height: '88px', borderRadius: '50%', overflow: 'hidden', background: 'rgba(255,255,255,0.12)', border: '2.5px solid rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {avatar
+                ? <img src={avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem', fontWeight: 800, color: '#fff' }}>{initials}</span>}
+            </div>
+            <label style={{ position: 'absolute', bottom: '2px', right: '2px', width: '26px', height: '26px', borderRadius: '50%', background: 'var(--accent)', border: '2px solid var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} title="Changer la photo">
+              <Camera size={12} style={{ color: '#fff' }} />
+              <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) onPickAvatar(f); e.currentTarget.value = ''; }} />
+            </label>
+          </div>
+
+          {/* Identity */}
+          <div style={{ flex: 1, minWidth: '200px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '6px' }}>
+              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 800, color: '#fff', margin: 0, lineHeight: 1.2 }}>{user.name}</h1>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(200,146,26,0.22)', color: '#FFC65A', fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: '99px' }}>
+                <Shield size={11} /> {roleLabel}
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <Mail size={14} style={{ color: 'rgba(255,255,255,0.55)' }} />
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.75)' }}>{email}</span>
+              <span style={{ color: 'rgba(255,255,255,0.3)' }}>·</span>
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'rgba(255,255,255,0.55)' }}>{isBuiltin ? 'Compte intégré' : 'Compte créé'}</span>
+            </div>
+          </div>
+
+          {avatar && (
+            <button onClick={removeAvatar} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '10px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              <Trash2 size={13} /> Retirer la photo
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* COMPTE */}
+      <SectionCard icon={User} title="Compte" subtitle="Informations de votre compte professionnel">
+        <FieldsGrid>
+          <FieldRow label="Nom" value={user.name} accent />
+          <FieldRow label="E-mail / identifiant" value={email} icon={Mail} copyable />
+          <FieldRow label="Rôle" value={roleLabel} accent />
+          <FieldRow label="Type de compte" value={isBuiltin ? 'Compte intégré' : 'Compte créé'} />
+          <FieldRow label="Créé le" value={createdAt} icon={Calendar} />
+          <FieldRow label="Statut" value="Actif" />
+        </FieldsGrid>
+      </SectionCard>
+
+      {/* SÉCURITÉ */}
+      <SectionCard icon={KeyRound} title="Sécurité" subtitle="Accès et protection du compte">
+        <div style={{ padding: '8px 24px 16px' }}>
+          {/* Mot de passe */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 0', flexWrap: 'wrap' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><KeyRound size={14} style={{ color: 'var(--primary)' }} /></div>
+            <div style={{ flex: 1, minWidth: 140 }}>
+              <div style={{ fontSize: '0.6875rem', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--muted-foreground)', marginBottom: '3px' }}>Mot de passe</div>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', fontWeight: 500, color: 'var(--foreground)', letterSpacing: '0.15em' }}>••••••••</div>
+            </div>
+            <button onClick={() => showToast('Le changement de mot de passe sera disponible une fois le backend connecté.')} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '9px', border: '1px solid var(--border)', background: 'transparent', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--muted-foreground)', cursor: 'pointer' }}>
+              <Edit3 size={13} /> Modifier
+              <span style={{ fontSize: '0.5625rem', fontWeight: 700, color: 'var(--muted-foreground)', background: 'rgba(107,74,82,0.10)', padding: '2px 7px', borderRadius: 99 }}>backend</span>
+            </button>
+          </div>
+          <Divider />
+          {/* Connexion sécurisée */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 0' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Shield size={14} style={{ color: 'var(--primary)' }} /></div>
+            <div style={{ flex: 1, minWidth: 140 }}>
+              <div style={{ fontSize: '0.6875rem', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--muted-foreground)', marginBottom: '3px' }}>Connexion sécurisée</div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', fontWeight: 600, color: httpsOk ? '#1A6B44' : '#C0392B' }}>
+                <span style={{ width: 7, height: 7, borderRadius: 99, background: httpsOk ? '#1A6B44' : '#C0392B' }} /> {httpsOk ? 'HTTPS actif' : 'Non sécurisé'}
+              </div>
+            </div>
+          </div>
+          <Divider />
+          {/* Dernière connexion */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 0', flexWrap: 'wrap' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Clock size={14} style={{ color: 'var(--primary)' }} /></div>
+            <div style={{ flex: 1, minWidth: 140 }}>
+              <div style={{ fontSize: '0.6875rem', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--muted-foreground)', marginBottom: '3px' }}>Dernière connexion</div>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', fontWeight: 500, color: 'var(--muted-foreground)' }}>Historisée côté serveur</div>
+            </div>
+            <span style={{ fontSize: '0.5625rem', fontWeight: 700, color: 'var(--muted-foreground)', background: 'rgba(107,74,82,0.10)', padding: '2px 7px', borderRadius: 99 }}>backend</span>
+          </div>
+        </div>
+      </SectionCard>
+
+      {/* JOURNALISATION & DÉCONNEXION */}
+      <SectionCard icon={Monitor} title="Session & déconnexion" subtitle="Appareil, activité et fin de session">
+        <FieldsGrid>
+          <FieldRow label="Appareil actuel" value={deviceLabel()} icon={Monitor} />
+          <FieldRow label="Session" value={`Connecté · ${roleLabel}`} />
+          <FieldRow label="Actions enregistrées" value={`${actionsCount} dans le journal d'audit`} icon={CheckCircle} />
+        </FieldsGrid>
+        <div style={{ padding: '4px 24px 22px' }}>
+          <button
+            onClick={() => onLogout?.()}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 18px', borderRadius: '10px', border: '1px solid rgba(192,57,43,0.3)', background: 'rgba(192,57,43,0.06)', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700, color: '#C0392B', cursor: 'pointer' }}>
+            <LogOut size={15} /> Se déconnecter
+          </button>
+        </div>
+      </SectionCard>
+
+      {toast && (
+        <div style={{ position: 'fixed', bottom: 24, right: 24, background: 'var(--foreground)', color: 'var(--background)', padding: '12px 18px', borderRadius: 10, fontSize: '0.875rem', fontWeight: 600, zIndex: 300, maxWidth: 360 }}>{toast}</div>
+      )}
     </div>
   );
 }

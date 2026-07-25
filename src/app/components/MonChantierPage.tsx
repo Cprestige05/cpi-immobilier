@@ -25,52 +25,25 @@ interface Tranche {
 }
 
 
-const FEED_STATIC = [
-  { date: '18 juin 2026', entries: [
-    { icon: Camera, text: '14 nouvelles photos ajoutées — Tranche T2 (élévation)', type: 'photo' },
-    { icon: CheckCircle2, text: 'Inspection CPI réalisée — rapport disponible dans les documents', type: 'validation' },
-  ]},
-  { date: '10 juin 2026', entries: [
-    { icon: HardHat, text: 'Livraison matériaux de construction (lot 2) — 8 tonnes de ciment', type: 'livraison' },
-    { icon: FileText, text: 'PV de réunion de chantier — semaine du 9 juin', type: 'document' },
-  ]},
-  { date: '15 mai 2026', entries: [
-    { icon: CheckCircle2, text: 'Tranche T2 démarrée — poteaux en cours de coulage', type: 'etape' },
-    { icon: Banknote, text: 'Décaissement T1 confirmé — 6 475 000 FCFA versés par la banque', type: 'finance' },
-  ]},
-  { date: '10 mars 2026', entries: [
-    { icon: CheckCircle2, text: 'Fondations terminées — T1 validée par CPI et la banque', type: 'validation' },
-    { icon: Camera, text: '8 photos de la phase fondations disponibles dans la galerie', type: 'photo' },
-  ]},
-];
+// Base vide : aucun contenu de chantier fictif. Ces collections restent vides et
+// ne sont utilisées qu'en repli si le contexte chantier réel est vide.
+const FEED_STATIC: { date: string; entries: { icon: typeof Camera; text: string; type: string }[] }[] = [];
 
-const GALLERY_ITEMS = [
-  { bg: 'linear-gradient(135deg,#7B1A2E,#B05070)', label: 'Fondations J+3', tranche: 'T1', date: '12 mars 2026' },
-  { bg: 'linear-gradient(135deg,#38080F,#7B1A2E)', label: 'Coulage béton', tranche: 'T1', date: '14 mars 2026' },
-  { bg: 'linear-gradient(135deg,#5C1224,#A04060)', label: 'Fondations T1 ✓', tranche: 'T1', date: '18 mars 2026' },
-  { bg: 'linear-gradient(135deg,#1E4D8C,#2D6BC4)', label: 'Poteaux J+1', tranche: 'T2', date: '17 mai 2026' },
-  { bg: 'linear-gradient(135deg,#163B6E,#1E4D8C)', label: 'Élévation Nord', tranche: 'T2', date: '22 mai 2026' },
-  { bg: 'linear-gradient(135deg,#1A6B44,#2A9B64)', label: 'Matériaux livrés', tranche: 'T2', date: '10 juin 2026' },
-  { bg: 'linear-gradient(135deg,#1A4D2E,#1A6B44)', label: 'Façade Est', tranche: 'T2', date: '14 juin 2026' },
-  { bg: 'linear-gradient(135deg,#C8921A,#E0B030)', label: 'Vue aérienne', tranche: 'T2', date: '18 juin 2026' },
-];
+const GALLERY_ITEMS: { bg: string; label: string; tranche: string; date: string }[] = [];
 
-const CALENDAR_EVENTS = [
-  { id: 'e1', titre: 'Inspection CPI — Gros œuvre T2', type: 'inspection', date: '28 juil. 2026', statut: 'confirme', color: 'var(--primary)' },
-  { id: 'e2', titre: 'Réunion de chantier hebdomadaire', type: 'rdv-client', date: '01 août 2026', statut: 'prevu', color: '#1E4D8C' },
-  { id: 'e3', titre: 'Livraison matériaux toiture', type: 'livraison-materiaux', date: '05 août 2026', statut: 'prevu', color: 'var(--accent)' },
-  { id: 'e4', titre: 'Fin prévue toiture T2', type: 'fin-etape', date: '30 juil. 2026', statut: 'prevu', color: 'var(--success)' },
-  { id: 'e5', titre: 'Décaissement T2 — Banque', type: 'rdv-client', date: 'Août 2026', statut: 'prevu', color: 'var(--accent)' },
-];
+const CALENDAR_EVENTS: { id: string; titre: string; type: string; date: string; statut: string; color: string }[] = [];
 
+// Feuille de route standard de la construction (labels/roadmap uniquement).
+// Aucun avancement fictif : statut « à venir », pct 0, date « — » tant que le
+// chantier n'a pas démarré / qu'aucune donnée réelle n'est disponible.
 const PHASES = [
-  { id: 'etudes',     label: 'Études',       icon: Ruler,        status: 'done',    pct: 100, date: 'Jan. 2026' },
-  { id: 'fondations', label: 'Fondations',   icon: Layers,       status: 'done',    pct: 100, date: 'Mars 2026' },
-  { id: 'elevation',  label: 'Élévation',    icon: Building2,    status: 'active',  pct: 80,  date: 'En cours'  },
-  { id: 'toiture',    label: 'Toiture',      icon: Home,         status: 'pending', pct: 0,   date: 'Juil. 2026'},
-  { id: 'secondoeuvre',label: 'Second œuvre',icon: Wrench,       status: 'pending', pct: 0,   date: 'Oct. 2026' },
-  { id: 'finitions',  label: 'Finitions',    icon: Star,         status: 'pending', pct: 0,   date: 'Nov. 2026' },
-  { id: 'reception',  label: 'Réception',    icon: Key,          status: 'pending', pct: 0,   date: 'Jan. 2027' },
+  { id: 'etudes',     label: 'Études',        icon: Ruler,     status: 'pending', pct: 0, date: '—' },
+  { id: 'fondations', label: 'Fondations',    icon: Layers,    status: 'pending', pct: 0, date: '—' },
+  { id: 'elevation',  label: 'Élévation',     icon: Building2,  status: 'pending', pct: 0, date: '—' },
+  { id: 'toiture',    label: 'Toiture',       icon: Home,      status: 'pending', pct: 0, date: '—' },
+  { id: 'secondoeuvre',label: 'Second œuvre', icon: Wrench,    status: 'pending', pct: 0, date: '—' },
+  { id: 'finitions',  label: 'Finitions',     icon: Star,      status: 'pending', pct: 0, date: '—' },
+  { id: 'reception',  label: 'Réception',     icon: Key,       status: 'pending', pct: 0, date: '—' },
 ];
 
 // ─── Micro components ─────────────────────────────────────────────────────────
@@ -272,12 +245,14 @@ function TrancheCard({ t }: { t: Tranche }) {
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-// Detail/label fallbacks keyed by tranche num (static presentation data)
-const TRANCHE_DETAILS: Record<number, { detail: string; montantDec?: string; cpiOk?: boolean; banqueOk?: boolean; photos?: number; commentaire?: string }> = {
-  1: { detail: 'Terrassement, fondations, infrastructure', montantDec: '6 475 000', cpiOk: true, banqueOk: true, photos: 8, commentaire: 'Fondations coulées et inspectées. Chantier conforme au plan approuvé.' },
-  2: { detail: 'Poteaux, dalle, élévation, toiture', montantDec: '5 550 000', cpiOk: true, banqueOk: false, photos: 14, commentaire: "Élévation des murs à 80% — toiture prévue fin juillet 2026. Décaissement banque en attente d'inspection." },
-  3: { detail: 'Menuiseries, plomberie, électricité, carrelage, peinture', montantDec: '—', cpiOk: false, banqueOk: false, photos: 0, commentaire: 'Cette tranche débutera après validation complète de la T2.' },
-  4: { detail: 'Inspection finale, PV de réception, remise des clés', montantDec: '—', cpiOk: false, banqueOk: false, photos: 0, commentaire: 'Remise des clés prévue pour janvier 2027 selon le planning contractuel.' },
+// Libellés descriptifs des tranches (structure du modèle de construction 35/30/30/5).
+// Aucun montant/commentaire/statut fictif : ceux-ci viennent des données réelles du
+// chantier lorsqu'elles existent.
+const TRANCHE_DETAILS: Record<number, { detail: string }> = {
+  1: { detail: 'Terrassement, fondations, infrastructure' },
+  2: { detail: 'Poteaux, dalle, élévation, toiture' },
+  3: { detail: 'Menuiseries, plomberie, électricité, carrelage, peinture' },
+  4: { detail: 'Inspection finale, PV de réception, remise des clés' },
 };
 
 export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
@@ -291,17 +266,18 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
   const { chantierInfo, tranches: ctxTranches, publications, medias, events, chantierHistory } = useChantierState();
   const heroProgress = chantierInfo.progression;
 
-  // TEAM derived from store + context
+  // Équipe réelle uniquement : renseignée par le CPI au fil du chantier. Aucun
+  // membre fictif tant que les vraies informations ne sont pas saisies.
   const TEAM = useMemo(() => {
-    const chefNom = clientData.chantier?.chefChantier ?? 'Chef de chantier';
-    const chefInitials = chefNom.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
-    return [
-      { initials: chefInitials, nom: chefNom, role: 'Chef de chantier', tel: '+221 77 401 22 14', email: 'chantier@cpi-chantiers.sn', color: 'var(--primary)' },
-      { initials: 'MF', nom: 'Mamadou Fall', role: 'Conducteur de travaux', tel: '+221 77 532 08 91', email: 'm.fall@cpi-chantiers.sn', color: '#1E4D8C' },
-      { initials: 'OD', nom: 'Oumar Diallo', role: 'Architecte', tel: '+221 77 643 17 55', email: 'o.diallo@arch-dakar.sn', color: 'var(--success)' },
-      { initials: clientData.conseiller.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase(), nom: clientData.conseiller, role: 'Conseillère CPI', tel: '+221 77 201 44 03', email: 'thiombane@cpi.sn', color: 'var(--primary)' },
-      { initials: 'PB', nom: 'Pierre Bassène', role: 'Conseiller bancaire', tel: '+221 77 318 90 22', email: 'p.bassene@banque-partenaire.sn', color: 'var(--accent)' },
-    ];
+    const members: { initials: string; nom: string; role: string; tel: string; email: string; color: string }[] = [];
+    const chef = clientData.chantier?.chefChantier;
+    if (chef && chef !== '—') {
+      members.push({ initials: chef.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase(), nom: chef, role: 'Chef de chantier', tel: '—', email: '—', color: 'var(--primary)' });
+    }
+    if (clientData.conseiller && clientData.conseiller !== 'Non assigné' && clientData.conseiller !== '—') {
+      members.push({ initials: clientData.conseiller.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase(), nom: clientData.conseiller, role: 'Conseiller CPI', tel: '—', email: '—', color: 'var(--primary)' });
+    }
+    return members;
   }, [clientData]);
 
   // TRANCHES_LIVE: merge demoStore base data with context overrides
@@ -318,13 +294,13 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
         detail: extra.detail ?? t.description ?? '',
         pct: t.pct,
         montant: t.montant,
-        montantDec: etat === 'terminee' ? (extra.montantDec ?? t.montant) : '—',
+        montantDec: etat === 'terminee' ? t.montant : '—',
         date: (ctx?.date || t.date) ?? '—',
         etat,
-        cpiOk: extra.cpiOk ?? etat === 'terminee',
-        banqueOk: extra.banqueOk ?? etat === 'terminee',
-        commentaire: ctx?.comment || extra.commentaire || '',
-        photos: extra.photos ?? 0,
+        cpiOk: etat === 'terminee',
+        banqueOk: etat === 'terminee',
+        commentaire: ctx?.comment || '',
+        photos: 0,
       } as Tranche;
     });
   }, [clientData.tranches, ctxTranches]);
@@ -375,15 +351,8 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
       date: h.date, heure: h.heure, auteur: h.auteur, role: h.role, action: h.action,
       icon: h.action.includes('photo') ? Camera : h.action.includes('décaiss') ? Banknote : h.action.includes('validée') ? CheckCircle2 : HardHat,
     }));
-    return [
-      { date: '18 juin 2026', heure: '14:32', auteur: 'Aliou Koné', role: 'Chef de chantier', action: '14 nouvelles photos ajoutées — Tranche T2', icon: Camera },
-      { date: '18 juin 2026', heure: '09:10', auteur: 'Mme Thiombane', role: 'Conseillère CPI', action: 'Inspection CPI réalisée — rapport disponible', icon: CheckCircle2 },
-      { date: '10 juin 2026', heure: '11:00', auteur: 'Aliou Koné', role: 'Chef de chantier', action: 'Livraison matériaux lot 2 — 8 tonnes de ciment', icon: HardHat },
-      { date: '15 mai 2026', heure: '08:00', auteur: 'Mamadou Fall', role: 'Conducteur de travaux', action: 'Tranche T2 démarrée — poteaux en cours de coulage', icon: Zap },
-      { date: '15 mai 2026', heure: '16:15', auteur: 'Pierre Bassène', role: 'Conseiller bancaire', action: 'Décaissement T1 confirmé — 6 475 000 FCFA versés', icon: Banknote },
-      { date: '10 mars 2026', heure: '15:00', auteur: 'Mme Thiombane', role: 'Conseillère CPI', action: 'T1 validée — fondations conformes au plan approuvé', icon: CheckCircle2 },
-      { date: '10 mars 2026', heure: '10:00', auteur: 'Oumar Diallo', role: 'Architecte', action: 'Plans validés et transmis au chef de chantier', icon: FileText },
-    ];
+    // Base vide : aucun historique fictif.
+    return [] as { date: string; heure: string; auteur: string; role: string; action: string; icon: typeof Camera }[];
   }, [chantierHistory]);
 
   const statut = chantierInfo.statut;
@@ -463,7 +432,6 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
                 { icon: Calendar,  label: 'Démarrage',          value: chantierInfo.dateDebut     },
                 { icon: Calendar,  label: 'Livraison estimée',  value: chantierInfo.dateLivraison  },
                 { icon: HardHat,   label: 'Chef de chantier',   value: chantierInfo.chefChantier   },
-                { icon: Wrench,    label: 'Conducteur travaux', value: 'Mamadou Fall'              },
                 { icon: Building2, label: 'Entreprise',         value: chantierInfo.entreprise     },
               ].map(info => (
                 <div key={info.label} style={{
@@ -631,9 +599,9 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
           <div style={{ display: 'flex', gap: '2px', borderBottom: '1px solid var(--border)' }}>
             {[
               { id: 'photos', label: 'Photos', icon: Image, count: photoCount },
-              { id: 'plans', label: 'Plans', icon: Layers, count: 4 },
-              { id: 'documents', label: 'Documents', icon: FileText, count: 7 },
-              { id: 'drone', label: 'Drone', icon: Video, count: 2 },
+              { id: 'plans', label: 'Plans', icon: Layers, count: 0 },
+              { id: 'documents', label: 'Documents', icon: FileText, count: 0 },
+              { id: 'drone', label: 'Drone', icon: Video, count: 0 },
             ].map(tab => {
               const active = galleryTab === tab.id;
               return (

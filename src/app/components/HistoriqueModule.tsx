@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
-import { CheckCircle2, FileText, Bell, Camera, Banknote, MessageSquare, Upload, Send, AlertCircle, Filter } from 'lucide-react';
-import { HISTORIQUE_AISSATOU } from '../data/demoStore';
+import React, { useState, useMemo } from 'react';
+import { CheckCircle2, FileText, Bell, Camera, Banknote, MessageSquare, Upload, AlertCircle, Filter, Search, UserPlus, Landmark, Download } from 'lucide-react';
+import { useDocState } from '../data/docStateContext';
+import { useCpiDocs } from '../data/cpiDocsContext';
+import { useClientContext } from '../contexts/ClientContext';
+import { loadActivityLog } from '../data/activityLog';
 
-type ActionType = 'validation' | 'document' | 'notification' | 'photo' | 'decaissement' | 'commentaire' | 'depot' | 'refus';
+type ActionType = 'validation' | 'document' | 'notification' | 'photo' | 'decaissement' | 'commentaire' | 'depot' | 'refus' | 'compte' | 'banque';
 
 interface HistoryEntry {
   id: string;
@@ -24,25 +27,22 @@ const TYPE_CFG: Record<ActionType, { icon: React.ComponentType<{ size?: number }
   commentaire:   { icon: MessageSquare, color: 'var(--muted-foreground)',  bg: 'var(--muted)'            },
   depot:         { icon: Upload,        color: 'var(--primary)',           bg: 'var(--secondary)'        },
   refus:         { icon: AlertCircle,   color: '#C0392B',                  bg: 'rgba(192,57,43,0.08)'    },
+  compte:        { icon: UserPlus,      color: '#0E7490',                  bg: 'rgba(14,116,144,0.10)'   },
+  banque:        { icon: Landmark,      color: '#B45309',                  bg: 'rgba(180,83,9,0.10)'     },
 };
 
-// Non-Aïssatou entries kept inline; Aïssatou entries come from the central store.
-const OTHER_ENTRIES: HistoryEntry[] = [
-  { id: 'h6',  date: '16 juin 2026', heure: '09:48', utilisateur: 'I. Fall', role: 'Agent CPI', action: 'Justificatifs de revenus validés',  type: 'validation',   cible: 'Mamadou Diallo'   },
-  { id: 'h7',  date: '16 juin 2026', heure: '11:20', utilisateur: 'I. Fall', role: 'Agent CPI', action: 'Photo chantier ajoutée (Villa F3)', type: 'photo',        cible: 'Villa F3 — Thiès' },
-  { id: 'h11', date: '12 juin 2026', heure: '11:00', utilisateur: 'Mme Thiombane', role: 'Agent CPI', action: 'Notification SMS envoyée',    type: 'notification', cible: 'Fatou Mbaye'      },
-];
+// Convertit une date FR (« 18 juin 2026 ») + heure en clé triable.
+const MONTHS_FR = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+function sortKey(date: string, heure: string): string {
+  const m = date.match(/(\d{1,2})\s+([^\s]+)\s+(\d{4})/);
+  if (!m) return date + ' ' + heure;
+  const day = m[1].padStart(2, '0');
+  const monthIdx = MONTHS_FR.findIndex(x => m[2].toLowerCase().startsWith(x.slice(0, 4)));
+  const month = String((monthIdx < 0 ? 0 : monthIdx) + 1).padStart(2, '0');
+  return `${m[3]}-${month}-${day} ${heure || '00:00'}`;
+}
 
-const ENTRIES: HistoryEntry[] = [
-  ...HISTORIQUE_AISSATOU,
-  ...OTHER_ENTRIES,
-].sort((a, b) => {
-  const dateA = a.date + ' ' + a.heure;
-  const dateB = b.date + ' ' + b.heure;
-  return dateB.localeCompare(dateA);
-});
-
-const ALL_TYPES: (ActionType | 'all')[] = ['all', 'validation', 'document', 'notification', 'photo', 'decaissement', 'commentaire', 'depot', 'refus'];
+const ALL_TYPES: (ActionType | 'all')[] = ['all', 'validation', 'document', 'depot', 'refus', 'decaissement', 'banque', 'notification', 'photo', 'commentaire', 'compte'];
 const TYPE_LABELS: Record<ActionType | 'all', string> = {
   all:          'Tous',
   validation:   'Validations',
@@ -53,37 +53,182 @@ const TYPE_LABELS: Record<ActionType | 'all', string> = {
   commentaire:  'Commentaires',
   depot:        'Dépôts',
   refus:        'Refus',
+  compte:       'Comptes',
+  banque:       'Banques',
 };
+
+const ROLES: string[] = ['Client', 'Agent CPI', 'Administrateur'];
+type Periode = 'all' | 'jour' | '7j' | '30j';
+const PERIODES: { key: Periode; label: string; days: number }[] = [
+  { key: 'all',  label: 'Tout',        days: 0 },
+  { key: 'jour', label: "Aujourd'hui", days: 1 },
+  { key: '7j',   label: '7 jours',     days: 7 },
+  { key: '30j',  label: '30 jours',    days: 30 },
+];
+
+// Classe une entrée d'historique chantier (qui n'a pas de champ « type ») par mots-clés.
+function classifyChantier(action: string): ActionType {
+  const a = action.toLowerCase();
+  if (/photo|vidéo/.test(a)) return 'photo';
+  if (/termin|validé|valider|progression/.test(a)) return 'validation';
+  if (/commentaire/.test(a)) return 'commentaire';
+  return 'document';
+}
 
 export default function HistoriqueModule() {
   const [filterType, setFilterType] = useState<ActionType | 'all'>('all');
+  const [filterRole, setFilterRole] = useState<string>('all');
+  const [filterClient, setFilterClient] = useState<string>('all');
+  const [periode, setPeriode] = useState<Periode>('all');
+  const [query, setQuery] = useState('');
+  const { allHistoryByClient } = useDocState();
+  const { allCpiHistoryByClient } = useCpiDocs();
+  const { allClients } = useClientContext();
 
-  const visible = filterType === 'all' ? ENTRIES : ENTRIES.filter(e => e.type === filterType);
+  const clientName = (cid: string) => allClients.find(c => c.id === cid)?.name ?? cid;
+
+  // Historique réel agrégé : pièces + documents CPI + chantier + journal d'activité global.
+  const ENTRIES = useMemo<HistoryEntry[]>(() => {
+    const docEntries = Object.values(allHistoryByClient).flat() as HistoryEntry[];
+    const cpiEntries = Object.values(allCpiHistoryByClient).flat() as HistoryEntry[];
+
+    // Journal d'activité transverse (décaissements, orientations banque, comptes…).
+    const actEntries: HistoryEntry[] = loadActivityLog().map(e => ({
+      id: e.id, date: e.date, heure: e.heure, utilisateur: e.utilisateur,
+      role: e.role, action: e.action, type: e.type as ActionType, cible: e.cible,
+    }));
+
+    // Historique chantier (stocké hors contexte).
+    const chantierEntries: HistoryEntry[] = [];
+    try {
+      const s = localStorage.getItem('cpi_chantier_all_state_v3');
+      if (s) {
+        const all = JSON.parse(s) as Record<string, { history?: any[] }>;
+        for (const [cid, cs] of Object.entries(all)) {
+          for (const h of (cs.history ?? [])) {
+            chantierEntries.push({
+              id: h.id, date: h.date, heure: h.heure, utilisateur: h.auteur,
+              role: h.role || 'Agent CPI', action: h.action, type: classifyChantier(h.action || ''),
+              cible: clientName(cid),
+            });
+          }
+        }
+      }
+    } catch {}
+
+    const live = [...docEntries, ...cpiEntries, ...actEntries, ...chantierEntries];
+    const seen = new Set<string>();
+    const unique = live.filter(e => (e.id && seen.has(e.id) ? false : (seen.add(e.id), true)));
+    return unique.sort((a, b) => sortKey(b.date, b.heure).localeCompare(sortKey(a.date, a.heure)));
+  }, [allHistoryByClient, allCpiHistoryByClient, allClients]);
+
+  // Liste des dossiers présents dans le journal (pour le filtre).
+  const clientOptions = useMemo(() => {
+    const set = new Set<string>();
+    ENTRIES.forEach(e => { if (e.cible) set.add(e.cible); });
+    return Array.from(set).sort();
+  }, [ENTRIES]);
+
+  // Seuil de période (date locale au format YYYY-MM-DD HH:MM).
+  const periodeThreshold = useMemo(() => {
+    const cfg = PERIODES.find(p => p.key === periode);
+    if (!cfg || cfg.days === 0) return null;
+    const d = new Date();
+    d.setDate(d.getDate() - (cfg.days - 1));
+    const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day} 00:00`;
+  }, [periode]);
+
+  const q = query.trim().toLowerCase();
+  const visible = ENTRIES.filter(e => {
+    if (filterType !== 'all' && e.type !== filterType) return false;
+    if (filterRole !== 'all' && e.role !== filterRole) return false;
+    if (filterClient !== 'all' && e.cible !== filterClient) return false;
+    if (periodeThreshold && sortKey(e.date, e.heure) < periodeThreshold) return false;
+    if (q && !(`${e.action} ${e.utilisateur} ${e.role} ${e.cible ?? ''}`.toLowerCase().includes(q))) return false;
+    return true;
+  });
+
+  // KPI par rôle (sur le journal complet, hors filtres).
+  const countByRole = (r: string) => ENTRIES.filter(e => e.role === r).length;
+
+  const exportCSV = () => {
+    const esc = (v: string) => `"${(v ?? '').replace(/"/g, '""')}"`;
+    const rows = [
+      ['Date', 'Heure', 'Utilisateur', 'Rôle', 'Action', 'Type', 'Dossier'].join(','),
+      ...visible.map(e => [e.date, e.heure, e.utilisateur, e.role, e.action, TYPE_LABELS[e.type], e.cible ?? ''].map(esc).join(',')),
+    ].join('\n');
+    const blob = new Blob(['﻿' + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'historique-cpi.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
 
   // Group by date
   const grouped: { date: string; entries: HistoryEntry[] }[] = [];
   for (const e of visible) {
     const last = grouped[grouped.length - 1];
-    if (last && last.date === e.date) {
-      last.entries.push(e);
-    } else {
-      grouped.push({ date: e.date, entries: [e] });
-    }
+    if (last && last.date === e.date) last.entries.push(e);
+    else grouped.push({ date: e.date, entries: [e] });
   }
 
+  const selectStyle: React.CSSProperties = { padding: '6px 10px', border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', borderRadius: 8 };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Header */}
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', padding: '18px 20px' }}>
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, color: 'var(--foreground)', margin: '0 0 4px' }}>Historique des activités</h2>
-        <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--muted-foreground)', margin: 0 }}>Toutes les actions effectuées sur la plateforme. Aucune action ne peut être supprimée.</p>
+      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', padding: '18px 20px', display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+        <div>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, color: 'var(--foreground)', margin: '0 0 4px' }}>Journal d'audit — toutes les activités</h2>
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--muted-foreground)', margin: 0 }}>Traçabilité complète de la plateforme : clients, agents CPI et administrateurs. Aucune action ne peut être supprimée.</p>
+        </div>
+        <button onClick={exportCSV} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer', borderRadius: 8, flexShrink: 0 }}>
+          <Download size={14} /> Exporter (CSV)
+        </button>
       </div>
 
-      {/* Filter */}
+      {/* KPI */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
+        {[
+          { l: 'Actions au total', v: ENTRIES.length, c: 'var(--foreground)' },
+          { l: 'Clients', v: countByRole('Client'), c: '#0E7490' },
+          { l: 'Agents CPI', v: countByRole('Agent CPI'), c: 'var(--primary)' },
+          { l: 'Administrateurs', v: countByRole('Administrateur'), c: '#B45309' },
+        ].map(s => (
+          <div key={s.l} style={{ background: 'var(--card)', border: '1px solid var(--border)', padding: '13px 16px', borderRadius: 12 }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 800, color: s.c }}>{s.v}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: 2 }}>{s.l}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Recherche + filtres rôle / dossier / période */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--card)', flex: 1, minWidth: 200 }}>
+          <Search size={15} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Rechercher (action, utilisateur, dossier)…" style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: '0.875rem', color: 'var(--foreground)' }} />
+        </div>
+        <select value={filterRole} onChange={e => setFilterRole(e.target.value)} style={selectStyle}>
+          <option value="all">Tous les rôles</option>
+          {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+        </select>
+        <select value={filterClient} onChange={e => setFilterClient(e.target.value)} style={selectStyle}>
+          <option value="all">Tous les dossiers</option>
+          {clientOptions.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <div style={{ display: 'flex', gap: 4 }}>
+          {PERIODES.map(p => (
+            <button key={p.key} onClick={() => setPeriode(p.key)} style={{ padding: '6px 10px', border: '1px solid var(--border)', background: periode === p.key ? 'var(--primary)' : 'transparent', color: periode === p.key ? 'var(--primary-foreground)' : 'var(--muted-foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: periode === p.key ? 700 : 500, cursor: 'pointer', borderRadius: 8 }}>{p.label}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Filtre par type */}
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
         <Filter size={14} style={{ color: 'var(--muted-foreground)' }} />
         {ALL_TYPES.map(t => (
-          <button key={t} onClick={() => setFilterType(t)} style={{ padding: '5px 12px', border: '1px solid var(--border)', background: filterType === t ? 'var(--primary)' : 'transparent', color: filterType === t ? 'var(--primary-foreground)' : 'var(--muted-foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: filterType === t ? 700 : 500, cursor: 'pointer' }}>
+          <button key={t} onClick={() => setFilterType(t)} style={{ padding: '5px 12px', border: '1px solid var(--border)', background: filterType === t ? 'var(--primary)' : 'transparent', color: filterType === t ? 'var(--primary-foreground)' : 'var(--muted-foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: filterType === t ? 700 : 500, cursor: 'pointer', borderRadius: 8 }}>
             {TYPE_LABELS[t]}
           </button>
         ))}
@@ -99,12 +244,12 @@ export default function HistoriqueModule() {
             </div>
 
             {group.entries.map((e, i) => {
-              const cfg = TYPE_CFG[e.type];
+              const cfg = TYPE_CFG[e.type] ?? TYPE_CFG.document;
               const Icon = cfg.icon;
               return (
                 <div key={e.id} style={{ display: 'flex', gap: '14px', padding: '13px 18px', borderBottom: i < group.entries.length - 1 ? '1px solid var(--border)' : 'none', alignItems: 'flex-start' }}>
                   {/* Icon */}
-                  <div style={{ width: '32px', height: '32px', background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '1px' }}>
+                  <div style={{ width: '32px', height: '32px', background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '1px', borderRadius: 8 }}>
                     <Icon size={14} style={{ color: cfg.color }} />
                   </div>
 
@@ -127,7 +272,9 @@ export default function HistoriqueModule() {
         ))}
 
         {visible.length === 0 && (
-          <div style={{ padding: '32px', textAlign: 'center', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>Aucune activité dans cette catégorie.</div>
+          <div style={{ padding: '32px', textAlign: 'center', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
+            {ENTRIES.length === 0 ? 'Aucune activité enregistrée pour le moment.' : 'Aucune activité ne correspond à ces filtres.'}
+          </div>
         )}
       </div>
     </div>

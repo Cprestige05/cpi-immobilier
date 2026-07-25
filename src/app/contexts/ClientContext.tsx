@@ -11,7 +11,7 @@ interface ClientContextValue {
 }
 
 const ClientContext = createContext<ClientContextValue>({
-  selectedClientId: 'c-aissatou',
+  selectedClientId: 'c-none',
   setSelectedClientId: () => {},
   allClients: [],
   isLocked: false,
@@ -24,7 +24,7 @@ interface ProviderProps {
   allClients: ClientSummary[];
 }
 
-export function ClientProvider({ children, initialId = 'c-aissatou', locked = false, allClients }: ProviderProps) {
+export function ClientProvider({ children, initialId = 'c-none', locked = false, allClients }: ProviderProps) {
   const [selectedClientId, setSelectedClientIdRaw] = useState(initialId);
 
   const setSelectedClientId = (id: string) => {

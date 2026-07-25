@@ -4,11 +4,13 @@ import {
   AlertTriangle, FileUp, ClipboardList, FolderOpen,
   Phone, Bell, CheckCircle, FileText, MessageSquare,
   ArrowUpRight, TrendingUp, ChevronRight, Sparkles,
-  MapPin, User, Calculator, CircleDot, Image as ImageIcon,
+  MapPin, User, UserPlus, Calculator, CircleDot, Image as ImageIcon,
 } from 'lucide-react';
 import type { AuthUser } from '../App';
 import type { HistoActionType } from '../data/demoStore';
 import { useClientData } from '../data/useClientData';
+import { useDocState } from '../data/docStateContext';
+import { useDossierJourney } from '../data/dossierJourney';
 import { useNavigate } from '../contexts/NavigationContext';
 import {
   KPICard, SmartCard, CardHeader, CardDivider,
@@ -46,14 +48,6 @@ const TONE_BG: Record<string, string> = {
   danger: 'rgba(192,57,43,0.1)',
 };
 
-// Phase 1 acquisition journey steps
-const STATIC_JOURNEY = [
-  { id: 1, label: 'Dossier soumis',     sub: '03 juin 2026',       done: true  },
-  { id: 2, label: 'Validation CPI',     sub: '18 juin 2026',       done: true  },
-  { id: 3, label: 'Accord bancaire',    sub: 'En cours · Banque',  done: false, active: true },
-  { id: 4, label: 'Acquisition terrain',sub: 'Prévu · sept. 2026', done: false },
-];
-
 const fmt  = (n: number) => Math.round(n).toLocaleString('fr-FR') + ' FCFA';
 const fmtN = (n: number) => Math.round(n).toLocaleString('fr-FR');
 
@@ -68,18 +62,34 @@ export default function ClientDashboardHome({ user }: Props) {
   useEffect(() => { const t = setTimeout(() => setHeroVisible(true), 60); return () => clearTimeout(t); }, []);
 
   const { montantFinance, echeanceMensuelle, moisPayes, montantPaye, moisRestants, dureeTotal } = client.finance;
-  const recentActivities = client.historique.slice(0, 5);
-  const isNewClient = client.conseiller === 'Non assigné';
-  const issueDoc = client.requisDocs.find((d: any) => d.status === 'refuse' || d.status === 'a-remplacer');
+
+  // État live des pièces + activité (même source que « Mon dossier ») pour une cohérence totale.
+  const { requisDocs, history } = useDocState();
+  const recentActivities = history.slice(0, 5);
+  const unreadCount = history.filter(h => h.type === 'notification').length;
+  const issueDoc  = requisDocs.find(d => d.status === 'refuse' || d.status === 'a-remplacer');
+  const validDocs = requisDocs.filter(d => d.status === 'accepte').length;
+  const totalDocs = requisDocs.length;
   const alerteBadge: 'none' | 'warning' | 'danger' = issueDoc ? 'warning' : 'none';
-  const journey = isNewClient
-    ? [
-        { id: 1, label: 'Dossier soumis',      sub: client.dateOuverture, done: false, active: true },
-        { id: 2, label: 'Validation CPI',      sub: 'À venir',            done: false },
-        { id: 3, label: 'Accord bancaire',     sub: 'À venir',            done: false },
-        { id: 4, label: 'Acquisition terrain', sub: 'À venir',            done: false },
-      ]
-    : STATIC_JOURNEY;
+
+  // Parcours du dossier (6 étapes) — étape active dérivée de l'état réel.
+  const { activeStep, nextEtape, steps, submitted, reachedSignature } = useDossierJourney();
+  const journey = steps.map((s, i) => ({
+    id: i + 1, label: s.label, sub: s.sub,
+    done: i < activeStep, active: i === activeStep,
+  }));
+  const dossierPct = Math.round((activeStep / (steps.length - 1)) * 100);
+
+  // Conseiller — un nouveau client n'en a pas encore ; le genre est déduit de la civilité.
+  const hasConseiller     = !!client.conseiller && client.conseiller !== 'Non assigné';
+  const conseillerFeminin = /^\s*mme/i.test(client.conseiller ?? '');
+  const conseillerTitre   = conseillerFeminin ? 'Votre conseillère' : 'Votre conseiller';
+  const conseillerRole    = conseillerFeminin ? 'Conseillère CPI Immobilier' : 'Conseiller CPI Immobilier';
+
+  // Option B : les indicateurs de remboursement ne s'affichent qu'une fois le dossier
+  // arrivé à l'étape « Signature » (prêt réellement contractualisé). Avant, on montre
+  // l'avancement du dossier.
+  const hasFinancement = reachedSignature && montantFinance > 0;
 
   const animFinance  = useCountUp(montantFinance);
   const animEcheance = useCountUp(echeanceMensuelle, 1000);
@@ -95,7 +105,7 @@ export default function ClientDashboardHome({ user }: Props) {
   const alertBg    = alerteBadge === 'danger' ? 'rgba(192,57,43,0.1)' : alerteBadge === 'warning' ? 'rgba(200,146,26,0.1)' : 'rgba(26,107,68,0.1)';
 
   return (
-    <div style={{ fontFamily: 'var(--font-sans)', color: 'var(--foreground)', maxWidth: 1100, margin: '0 auto', padding: '0 0 64px' }}>
+    <div style={{ fontFamily: 'var(--font-sans)', color: 'var(--foreground)', width: '100%', padding: '0 0 64px' }}>
       <style>{`
         @media (max-width: 760px) {
           .cdh-main-grid { grid-template-columns: 1fr !important; }
@@ -132,9 +142,11 @@ export default function ClientDashboardHome({ user }: Props) {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Btn variant="ghost" size="sm" icon={<Bell size={15} />} onClick={() => navigate('notifications')}>
-            <span style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', top: -6, right: -8, width: 7, height: 7, borderRadius: '50%', background: 'var(--success)', border: '1.5px solid var(--card)' }} />
-            </span>
+            {unreadCount > 0 && (
+              <span style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', top: -6, right: -8, width: 7, height: 7, borderRadius: '50%', background: 'var(--success)', border: '1.5px solid var(--card)' }} />
+              </span>
+            )}
           </Btn>
           <Btn variant="secondary" size="sm" icon={<User size={14} />} onClick={() => navigate('mon-profil')}>
             Mon profil
@@ -163,9 +175,15 @@ export default function ClientDashboardHome({ user }: Props) {
             <div style={{ flex: 1, minWidth: 240 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                 <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>
-                  Phase 1 · Acquisition terrain
+                  Étape {activeStep + 1}/{steps.length} · {steps[activeStep].label}
                 </span>
-                <StatusBadge variant="success" dot>En cours</StatusBadge>
+                {!submitted
+                  ? <StatusBadge variant="warning" dot>À déposer</StatusBadge>
+                  : reachedSignature
+                  ? <StatusBadge variant="success" dot>Finalisé</StatusBadge>
+                  : issueDoc
+                  ? <StatusBadge variant="danger" dot>Action requise</StatusBadge>
+                  : <StatusBadge variant="success" dot>En cours</StatusBadge>}
               </div>
 
               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.125rem,2vw,1.5rem)', fontWeight: 800, color: '#fff', margin: '0 0 6px', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
@@ -178,33 +196,38 @@ export default function ClientDashboardHome({ user }: Props) {
                 </span>
                 <span style={{ color: 'rgba(255,255,255,0.25)' }}>·</span>
                 <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'rgba(255,255,255,0.55)' }}>
-                  {client.nextEtape}
+                  Prochaine étape : {nextEtape}
                 </span>
               </div>
 
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
-                {[client.ref, client.conseiller, client.banque].map(chip => (
-                  <span key={chip} style={{
-                    fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600,
-                    color: 'rgba(255,255,255,0.7)', background: 'rgba(255,255,255,0.1)',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    padding: '3px 10px', borderRadius: DS.radius.full,
-                  }}>{chip}</span>
-                ))}
+                {[client.ref, client.conseiller, client.banque]
+                  .filter(chip => chip && chip !== '—' && chip !== 'Non assigné')
+                  .map(chip => (
+                    <span key={chip} style={{
+                      fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600,
+                      color: 'rgba(255,255,255,0.7)', background: 'rgba(255,255,255,0.1)',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      padding: '3px 10px', borderRadius: DS.radius.full,
+                    }}>{chip}</span>
+                  ))}
               </div>
 
-              {/* Loan repayment progress */}
+              {/* Progression : remboursement si prêt accordé, sinon avancement du dossier */}
               <div style={{ maxWidth: 360 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
                   <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'rgba(255,255,255,0.45)' }}>
-                    Remboursement prêt
+                    {hasFinancement ? 'Remboursement prêt' : 'Avancement du dossier'}
                   </span>
                   <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 800, color: 'var(--accent)' }}>
-                    {progression}% <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 400, color: 'rgba(255,255,255,0.45)' }}>· fin {endDate}</span>
+                    {hasFinancement ? progression : dossierPct}%{' '}
+                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 400, color: 'rgba(255,255,255,0.45)' }}>
+                      {hasFinancement ? `· fin ${endDate}` : `· ${steps[activeStep].label}`}
+                    </span>
                   </span>
                 </div>
                 <div style={{ height: 7, background: 'rgba(255,255,255,0.12)', borderRadius: DS.radius.full, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${progression}%`, background: 'linear-gradient(90deg, var(--accent) 0%, #FFC65A 100%)', borderRadius: DS.radius.full, transition: 'width 1.4s cubic-bezier(0.22,1,0.36,1)' }} />
+                  <div style={{ height: '100%', width: `${hasFinancement ? progression : dossierPct}%`, background: 'linear-gradient(90deg, var(--accent) 0%, #FFC65A 100%)', borderRadius: DS.radius.full, transition: 'width 1.4s cubic-bezier(0.22,1,0.36,1)' }} />
                 </div>
               </div>
             </div>
@@ -214,7 +237,7 @@ export default function ClientDashboardHome({ user }: Props) {
               {/* Journey steps mini */}
               <div style={{ padding: '14px 18px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: DS.radius.lg, minWidth: 220 }}>
                 <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.5625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.4)', marginBottom: 10 }}>
-                  Parcours acquisition
+                  Parcours du dossier
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {journey.map((step, i) => (
@@ -266,29 +289,53 @@ export default function ClientDashboardHome({ user }: Props) {
       </div>
 
       {/* ── KPI GRID ──────────────────────────────────────────────────────────── */}
+      {/* Prêt accordé → indicateurs de remboursement. Sinon → suivi du dossier. */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(168px, 1fr))', gap: 12, marginBottom: 24 }}>
-        <KPICard icon={<Banknote size={19} />} label="Montant financé"
-          value={fmt(animFinance)} sub="Financement accordé"
-          accentColor="var(--primary)" accentBg="rgba(26,58,110,0.08)" delay={0}
-          onClick={() => navigate('ma-demande')} />
-        <KPICard icon={<Calendar size={19} />} label="Échéance mensuelle"
-          value={fmt(animEcheance)} sub="Prélèvement automatique"
-          accentColor="var(--accent)" accentBg="rgba(200,146,26,0.10)"
-          trend="neutral" trendLabel="À jour" delay={80} />
-        <KPICard icon={<CheckCircle2 size={19} />} label="Mois payés"
-          value={`${fmtN(animPaye)} / ${dureeTotal}`} sub={`Soit ${progression}% du prêt`}
-          accentColor="var(--success)" accentBg="rgba(26,107,68,0.10)"
-          trend="up" trendLabel={`+${fmtN(animPaye)}`} delay={160} />
-        <KPICard icon={<CreditCard size={19} />} label="Montant remboursé"
-          value={fmt(animMontPaye)} sub="Depuis le début du prêt"
-          accentColor="var(--primary)" accentBg="rgba(26,58,110,0.08)" delay={240} />
-        <KPICard icon={<Clock size={19} />} label="Mois restants"
-          value={`${fmtN(animRestants)} mois`} sub={`Fin : ${endDate}`}
-          accentColor="var(--muted-foreground)" accentBg="var(--muted)" delay={320} />
-        <KPICard icon={<AlertTriangle size={19} />} label="Alertes"
-          value={alerteBadge === 'none' ? 'Aucune alerte' : '1 alerte'}
-          sub={alerteBadge === 'none' ? 'Statut en temps réel' : 'Action requise'}
-          accentColor={alertColor} accentBg={alertBg} delay={400} />
+        {hasFinancement ? (
+          <>
+            <KPICard icon={<Banknote size={19} />} label="Montant financé"
+              value={fmt(animFinance)} sub="Financement accordé"
+              accentColor="var(--primary)" accentBg="rgba(26,58,110,0.08)" delay={0}
+              onClick={() => navigate('ma-demande')} />
+            <KPICard icon={<Calendar size={19} />} label="Échéance mensuelle"
+              value={fmt(animEcheance)} sub="Prélèvement automatique"
+              accentColor="var(--accent)" accentBg="rgba(200,146,26,0.10)"
+              trend="neutral" trendLabel="À jour" delay={80} />
+            <KPICard icon={<CheckCircle2 size={19} />} label="Mois payés"
+              value={`${fmtN(animPaye)} / ${dureeTotal}`} sub={`Soit ${progression}% du prêt`}
+              accentColor="var(--success)" accentBg="rgba(26,107,68,0.10)"
+              trend="up" trendLabel={`+${fmtN(animPaye)}`} delay={160} />
+            <KPICard icon={<CreditCard size={19} />} label="Montant remboursé"
+              value={fmt(animMontPaye)} sub="Depuis le début du prêt"
+              accentColor="var(--primary)" accentBg="rgba(26,58,110,0.08)" delay={240} />
+            <KPICard icon={<Clock size={19} />} label="Mois restants"
+              value={`${fmtN(animRestants)} mois`} sub={`Fin : ${endDate}`}
+              accentColor="var(--muted-foreground)" accentBg="var(--muted)" delay={320} />
+            <KPICard icon={<AlertTriangle size={19} />} label="Alertes"
+              value={alerteBadge === 'none' ? 'Aucune alerte' : '1 alerte'}
+              sub={alerteBadge === 'none' ? 'Statut en temps réel' : 'Action requise'}
+              accentColor={alertColor} accentBg={alertBg} delay={400} />
+          </>
+        ) : (
+          <>
+            <KPICard icon={<CircleDot size={19} />} label="Étape actuelle"
+              value={steps[activeStep].label} sub={steps[activeStep].sub}
+              accentColor="var(--primary)" accentBg="rgba(26,58,110,0.08)" delay={0}
+              onClick={() => navigate('mon-dossier')} />
+            <KPICard icon={<CheckCircle2 size={19} />} label="Pièces validées"
+              value={`${validDocs} / ${totalDocs}`}
+              sub={submitted ? 'Vérifiées par le CPI' : 'À déposer'}
+              accentColor="var(--success)" accentBg="rgba(26,107,68,0.10)" delay={80}
+              onClick={() => navigate('mon-dossier')} />
+            <KPICard icon={<Clock size={19} />} label="Prochaine étape"
+              value={nextEtape} sub="Suivi par votre conseiller"
+              accentColor="var(--accent)" accentBg="rgba(200,146,26,0.10)" delay={160} />
+            <KPICard icon={<AlertTriangle size={19} />} label="Alertes"
+              value={alerteBadge === 'none' ? 'Aucune alerte' : '1 alerte'}
+              sub={alerteBadge === 'none' ? 'Statut en temps réel' : 'Action requise'}
+              accentColor={alertColor} accentBg={alertBg} delay={240} />
+          </>
+        )}
       </div>
 
       {/* ── INLINE ALERT ──────────────────────────────────────────────────────── */}
@@ -320,17 +367,26 @@ export default function ClientDashboardHome({ user }: Props) {
             <ActionRow icon={<Calculator size={16} />} label="Simuler mon prêt"
               description="Tableau d'amortissement complet" onClick={() => navigate('simulateur')} />
             <ActionRow icon={<Phone size={16} />} label="Contacter mon conseiller"
-              description={`${client.conseiller} — CPI Immobilier`} onClick={() => navigate('support')} />
+              description={hasConseiller ? `${client.conseiller} — CPI Immobilier` : 'Support CPI Immobilier'} onClick={() => navigate('support')} />
           </div>
           <CardDivider />
           <div style={{ padding: '12px 20px' }}>
             <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--muted-foreground)', marginBottom: 10 }}>
-              Avancement du remboursement
+              {hasFinancement ? 'Avancement du remboursement' : 'Avancement du dossier'}
             </div>
-            <ProgressBar value={progression} color="var(--primary)" showLabel />
+            <ProgressBar value={hasFinancement ? progression : dossierPct} color="var(--primary)" showLabel />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 7 }}>
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>Démarré · {client.dateOuverture}</span>
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>Fin · {endDate}</span>
+              {hasFinancement ? (
+                <>
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>Démarré · {client.dateOuverture}</span>
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>Fin · {endDate}</span>
+                </>
+              ) : (
+                <>
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>Étape · {steps[activeStep].label}</span>
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>Suivante · {nextEtape}</span>
+                </>
+              )}
             </div>
           </div>
         </SmartCard>
@@ -377,8 +433,8 @@ export default function ClientDashboardHome({ user }: Props) {
         <SmartCard padding="20px 24px">
           <SectionHeader
             icon={<CircleDot size={16} />}
-            title="Parcours d'acquisition"
-            subtitle="Phase 1 — Terrain"
+            title="Parcours du dossier"
+            subtitle={`Étape ${activeStep + 1} sur ${steps.length} — ${steps[activeStep].label}`}
           />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {journey.map((step, i) => (
@@ -427,37 +483,62 @@ export default function ClientDashboardHome({ user }: Props) {
             action={<ChevronRight size={15} style={{ color: 'var(--muted-foreground)' }} />} />
           <div style={{ padding: '12px 16px', background: 'var(--secondary)', borderRadius: DS.radius.lg, marginBottom: 12 }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 700, color: 'var(--primary)', marginBottom: 4 }}>
-              {issueDoc ? `${issueDoc.label} à remplacer` : isNewClient ? 'Déposer votre dossier' : 'Aucune action requise'}
+              {issueDoc
+                ? `${issueDoc.label} à remplacer`
+                : !submitted
+                ? 'Envoyer votre demande'
+                : validDocs < totalDocs
+                ? 'Compléter vos pièces'
+                : `Étape suivante : ${nextEtape}`}
             </div>
             <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', lineHeight: 1.5 }}>
               {issueDoc
                 ? (issueDoc.commentaire || 'Ce document a été refusé. Veuillez en déposer un nouveau pour poursuivre votre dossier.')
-                : isNewClient
-                ? 'Déposez vos premiers documents pour lancer l’étude de votre dossier.'
-                : 'Votre dossier est à jour, aucune action de votre part n’est nécessaire pour le moment.'}
+                : !submitted
+                ? 'Complétez et envoyez votre demande dans « Ma demande » pour lancer l’étude de votre dossier.'
+                : validDocs < totalDocs
+                ? 'Certaines pièces ne sont pas encore validées. Déposez les documents manquants pour poursuivre.'
+                : 'Vos pièces sont conformes. Votre conseiller CPI poursuit le traitement de votre dossier.'}
             </div>
           </div>
-          <Btn variant="primary" size="sm" icon={<FileUp size={13} />} fullWidth onClick={() => navigate('mon-dossier')}>
-            {issueDoc ? 'Déposer le document' : isNewClient ? 'Compléter mon dossier' : 'Voir mon dossier'}
+          <Btn variant="primary" size="sm" icon={<FileUp size={13} />} fullWidth onClick={() => navigate(!submitted ? 'ma-demande' : 'mon-dossier')}>
+            {issueDoc ? 'Déposer le document' : !submitted ? 'Compléter ma demande' : validDocs < totalDocs ? 'Compléter mon dossier' : 'Voir mon dossier'}
           </Btn>
         </SmartCard>
 
         {/* Conseiller */}
         <SmartCard padding="20px 24px">
-          <SectionHeader icon={<User size={16} />} title="Votre conseillère" />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
-            <div style={{ width: 46, height: 46, borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: '#fff', flexShrink: 0 }}>
-              {client.conseiller.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase()}
-            </div>
-            <div>
-              <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', fontWeight: 700, color: 'var(--foreground)' }}>{client.conseiller}</div>
-              <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>Conseillère CPI Immobilier</div>
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Btn variant="secondary" size="sm" icon={<Phone size={13} />} fullWidth onClick={() => navigate('support')}>Appeler</Btn>
-            <Btn variant="outline" size="sm" icon={<MessageSquare size={13} />} fullWidth onClick={() => navigate('support')}>Message</Btn>
-          </div>
+          <SectionHeader icon={<User size={16} />} title={hasConseiller ? conseillerTitre : 'Votre conseiller'} />
+          {hasConseiller ? (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+                <div style={{ width: 46, height: 46, borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: '#fff', flexShrink: 0 }}>
+                  {client.conseiller.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', fontWeight: 700, color: 'var(--foreground)' }}>{client.conseiller}</div>
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>{conseillerRole}</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Btn variant="secondary" size="sm" icon={<Phone size={13} />} fullWidth onClick={() => navigate('support')}>Appeler</Btn>
+                <Btn variant="outline" size="sm" icon={<MessageSquare size={13} />} fullWidth onClick={() => navigate('support')}>Message</Btn>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+                <div style={{ width: 46, height: 46, borderRadius: '50%', background: 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <UserPlus size={20} style={{ color: 'var(--muted-foreground)' }} />
+                </div>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', fontWeight: 700, color: 'var(--foreground)' }}>En cours d’affectation</div>
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>Un conseiller CPI vous sera assigné après l’envoi de votre demande.</div>
+                </div>
+              </div>
+              <Btn variant="outline" size="sm" icon={<MessageSquare size={13} />} fullWidth onClick={() => navigate('support')}>Contacter le support</Btn>
+            </>
+          )}
         </SmartCard>
       </div>
 

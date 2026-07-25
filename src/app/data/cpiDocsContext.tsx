@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { HistoEntry, HistoActionType } from './demoStore';
+import { loadClients } from './clientRegistry';
 import { useClientContext } from '../contexts/ClientContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -45,10 +46,13 @@ interface CpiDocsCtx {
   cpiDocs: CpiDoc[];
   cpiHistory: HistoEntry[];
   allCpiDocsByClient: Record<string, CpiDoc[]>;
+  allCpiHistoryByClient: Record<string, HistoEntry[]>;
   publishDoc: (docId: string, agentName: string, clientId?: string) => void;
   archiveDoc: (docId: string, agentName: string, clientId?: string) => void;
   requestSignature: (docId: string, agentName: string, clientId?: string) => void;
   markSigned: (docId: string, agentName: string, clientId?: string) => void;
+  // Signature électronique par le client (depuis « Mon dossier »).
+  signDocByClient: (docId: string, clientId?: string) => void;
   retireFromClient: (docId: string, agentName: string, clientId?: string) => void;
   createDoc: (
     fields: Omit<CpiDoc, 'id' | 'dateCreation' | 'datePublication' | 'status' | 'visibleClient'>,
@@ -60,45 +64,24 @@ interface CpiDocsCtx {
 
 const CpiDocsContext = createContext<CpiDocsCtx | null>(null);
 
-// ─── Initial CPI documents (Aïssatou only — other clients start with empty set) ──
+// ─── Documents CPI initiaux ───────────────────────────────────────────────────
+// Base vide : aucun document fictif. Chaque dossier démarre sans document ; les
+// documents CPI sont créés par l'Agent CPI (createDoc) pour ses vrais clients.
 
-const INITIAL_CPI_DOCS_AISSATOU: CpiDoc[] = [
-  { id: 'cpi1', categorie: 'contrats',     nom: 'Contrat de réservation CPI — Réf. CV-2026-04721',  reference: 'CV-2026-04721', version: 'V2', status: 'signe',     visibleClient: true,  signatureRequise: false, dateCreation: '15 juin 2026', datePublication: '15 juin 2026', auteur: 'Mme Thiombane', format: 'PDF', taille: '1,2 Mo' },
-  { id: 'cpi2', categorie: 'contrats',     nom: 'Contrat de vente définitif',                       version: '—',               status: 'brouillon',  visibleClient: false, signatureRequise: false, dateCreation: '—',            auteur: 'Mme Thiombane' },
-  { id: 'cpi3', categorie: 'conventions',  nom: 'Convention de financement bancaire',               version: 'V1', status: 'a-signer',   visibleClient: true,  signatureRequise: true,  dateCreation: '18 juin 2026', datePublication: '18 juin 2026', auteur: 'Mme Thiombane', format: 'PDF', taille: '0,9 Mo' },
-  { id: 'cpi4', categorie: 'bancaires',    nom: 'Offre de prêt bancaire — Conditions personnalisées', version: 'V1', status: 'disponible', visibleClient: true,  signatureRequise: false, dateCreation: '20 juin 2026', datePublication: '20 juin 2026', auteur: 'Mme Thiombane', format: 'PDF', taille: '0,7 Mo' },
-  { id: 'cpi5', categorie: 'bancaires',    nom: 'Fiche conditions de prêt bancaire',                version: 'V1', status: 'disponible', visibleClient: true,  signatureRequise: false, dateCreation: '20 juin 2026', datePublication: '20 juin 2026', auteur: 'Mme Thiombane', format: 'PDF', taille: '0,5 Mo' },
-  { id: 'cpi6', categorie: 'courriers',    nom: "Accusé de réception du dossier",                   version: 'V1', status: 'disponible', visibleClient: true,  signatureRequise: false, dateCreation: '05 juin 2026', datePublication: '05 juin 2026', auteur: 'Mme Thiombane', format: 'PDF', taille: '0,3 Mo' },
-  { id: 'cpi7', categorie: 'courriers',    nom: 'Courrier de confirmation de réservation',          version: 'V1', status: 'disponible', visibleClient: true,  signatureRequise: false, dateCreation: '10 juin 2026', datePublication: '10 juin 2026', auteur: 'Mme Thiombane', format: 'PDF', taille: '0,4 Mo' },
-  { id: 'cpi8', categorie: 'pv',           nom: 'PV de réservation — Villa R+1, Ngolfagnick',       version: 'V1', status: 'signe',      visibleClient: true,  signatureRequise: false, dateCreation: '10 juin 2026', datePublication: '10 juin 2026', auteur: 'Mme Thiombane', format: 'PDF', taille: '0,8 Mo' },
-  { id: 'cpi9', categorie: 'pv',           nom: 'PV de réception des travaux',                      version: '—',  status: 'brouillon',  visibleClient: false, signatureRequise: false, dateCreation: '—',            auteur: 'Mme Thiombane' },
-  { id: 'cpi10',categorie: 'autorisations',nom: 'Autorisation de prélèvement sur salaire',          version: 'V1', status: 'a-signer',   visibleClient: true,  signatureRequise: true,  dateCreation: '20 juin 2026', datePublication: '20 juin 2026', auteur: 'Mme Thiombane', format: 'PDF', taille: '0,3 Mo' },
-  { id: 'cpi11',categorie: 'autorisations',nom: 'Autorisation de construire',                       version: 'V1', status: 'disponible', visibleClient: true,  signatureRequise: false, dateCreation: '08 juin 2026', datePublication: '08 juin 2026', auteur: 'Mme Thiombane', format: 'PDF', taille: '0,5 Mo' },
-];
+const INITIAL_DOCS_BY_CLIENT: Record<string, CpiDoc[]> = {};
 
-const INITIAL_CPI_DOCS_MAMADOU: CpiDoc[] = [
-  { id: 'cpi-m1', categorie: 'contrats', nom: 'Contrat de réservation — Villa F3', version: 'V1', status: 'signe', visibleClient: true, signatureRequise: false, dateCreation: '25 mai 2026', datePublication: '25 mai 2026', auteur: 'I. Fall', format: 'PDF', taille: '1,0 Mo' },
-  { id: 'cpi-m2', categorie: 'courriers', nom: "Accusé de réception du dossier", version: 'V1', status: 'disponible', visibleClient: true, signatureRequise: false, dateCreation: '21 mai 2026', datePublication: '21 mai 2026', auteur: 'I. Fall', format: 'PDF', taille: '0,2 Mo' },
-];
-
-const INITIAL_DOCS_BY_CLIENT: Record<string, CpiDoc[]> = {
-  'c-aissatou': INITIAL_CPI_DOCS_AISSATOU,
-  'c-mamadou':  INITIAL_CPI_DOCS_MAMADOU,
-  'c-fatou':    [],
-  'c-ibrahim':  [],
-};
-
-const ALL_CLIENT_IDS = Object.keys(INITIAL_DOCS_BY_CLIENT);
+// Ids recalculés à chaque appel (le registre grandit en cours de session).
+const clientIds = (): string[] => loadClients().map(c => c.id);
 
 // ─── localStorage helpers ──────────────────────────────────────────────────────
 
-// Préfixe v2 : invalide toute donnée de démo persistée avant la purge CHUES/CBAO.
-const LS_CPIDOCS_KEY    = (id: string) => `cpi_cpidocs_v2_${id}`;
-const LS_CPIHISTORY_KEY = (id: string) => `cpi_cpihistory_v2_${id}`;
+// Préfixe v3 : base vide — invalide toute donnée de démo persistée.
+const LS_CPIDOCS_KEY    = (id: string) => `cpi_cpidocs_v3_${id}`;
+const LS_CPIHISTORY_KEY = (id: string) => `cpi_cpihistory_v3_${id}`;
 
 const loadAllCpiDocs = (): Record<string, CpiDoc[]> => {
   const result: Record<string, CpiDoc[]> = {};
-  for (const clientId of ALL_CLIENT_IDS) {
+  for (const clientId of clientIds()) {
     try {
       const s = localStorage.getItem(LS_CPIDOCS_KEY(clientId));
       if (s) { result[clientId] = JSON.parse(s) as CpiDoc[]; continue; }
@@ -110,7 +93,7 @@ const loadAllCpiDocs = (): Record<string, CpiDoc[]> => {
 
 const loadAllCpiHistory = (): Record<string, HistoEntry[]> => {
   const result: Record<string, HistoEntry[]> = {};
-  for (const clientId of ALL_CLIENT_IDS) {
+  for (const clientId of clientIds()) {
     try {
       const s = localStorage.getItem(LS_CPIHISTORY_KEY(clientId));
       if (s) { result[clientId] = JSON.parse(s) as HistoEntry[]; continue; }
@@ -192,6 +175,12 @@ export function CpiDocsProvider({ children }: { children: React.ReactNode }) {
     pushHistoryFor(clientId, { date, heure, utilisateur: agentName, role: 'Agent CPI', action: `Document signé — ${docNomFor(clientId, docId)}`, type: 'validation' as HistoActionType, cible: nameFor(clientId) });
   };
 
+  const signDocByClient = (docId: string, clientId: string = selectedClientId) => {
+    const { date, heure } = nowStamp();
+    updateDocFor(clientId, docId, { status: 'signe', signatureRequise: false, datePublication: date });
+    pushHistoryFor(clientId, { date, heure, utilisateur: nameFor(clientId), role: 'Client', action: `Document signé — ${docNomFor(clientId, docId)}`, type: 'validation' as HistoActionType, cible: nameFor(clientId) });
+  };
+
   const retireFromClient = (docId: string, agentName: string, clientId: string = selectedClientId) => {
     const { date, heure } = nowStamp();
     updateDocFor(clientId, docId, { visibleClient: false });
@@ -205,9 +194,12 @@ export function CpiDocsProvider({ children }: { children: React.ReactNode }) {
     clientId: string = selectedClientId,
   ) => {
     const { date, heure } = nowStamp();
+    // Un document publié qui requiert une signature part directement en « à signer »
+    // (le client le voit et peut le signer dans « Mon dossier »).
+    const publishedStatus = fields.signatureRequise ? 'a-signer' : 'disponible';
     const newDoc: CpiDoc = {
       ...fields, id: 'cpi-' + Date.now(), dateCreation: date,
-      status: publishNow ? 'disponible' : 'brouillon',
+      status: publishNow ? publishedStatus : 'brouillon',
       visibleClient: publishNow, datePublication: publishNow ? date : undefined,
     };
     setAllCpiDocs(prev => ({
@@ -218,7 +210,7 @@ export function CpiDocsProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <CpiDocsContext.Provider value={{ cpiDocs, cpiHistory, allCpiDocsByClient: allCpiDocs, publishDoc, archiveDoc, requestSignature, markSigned, retireFromClient, createDoc }}>
+    <CpiDocsContext.Provider value={{ cpiDocs, cpiHistory, allCpiDocsByClient: allCpiDocs, allCpiHistoryByClient: allCpiHistory, publishDoc, archiveDoc, requestSignature, markSigned, signDocByClient, retireFromClient, createDoc }}>
       {children}
     </CpiDocsContext.Provider>
   );

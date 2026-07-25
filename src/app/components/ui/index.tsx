@@ -18,25 +18,26 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const DS = {
+  // Aligné sur les tokens CSS du Design System (src/styles/globals.css) — source unique.
   radius: {
-    sm:   '8px',
-    md:   '12px',
-    lg:   '16px',
-    xl:   '20px',
-    full: '9999px',
+    sm:   'var(--r-sm)',
+    md:   'var(--r-md)',
+    lg:   'var(--r-lg)',
+    xl:   'var(--r-xl)',
+    full: 'var(--r-full)',
   },
   shadow: {
-    sm:  '0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.04)',
-    md:  '0 2px 8px rgba(0,0,0,0.06), 0 4px 20px rgba(0,0,0,0.05)',
-    lg:  '0 4px 16px rgba(0,0,0,0.08), 0 8px 32px rgba(0,0,0,0.06)',
-    xl:  '0 8px 32px rgba(0,0,0,0.1),  0 16px 48px rgba(0,0,0,0.08)',
-    hover: '0 8px 28px rgba(26,58,110,0.12)',
+    sm:  'var(--elev-sm)',
+    md:  'var(--elev-md)',
+    lg:  'var(--elev-lg)',
+    xl:  'var(--elev-xl)',
+    hover: 'var(--shadow-hover)',
   },
   transition: {
-    fast:   'all 0.14s ease',
-    base:   'all 0.2s ease',
-    slow:   'all 0.35s ease',
-    spring: 'all 0.25s cubic-bezier(0.34,1.56,0.64,1)',
+    fast:   'all var(--dur-1) var(--ease-out)',
+    base:   'all var(--dur-2) var(--ease-out)',
+    slow:   'all var(--dur-3) var(--ease-out)',
+    spring: 'all var(--dur-2) var(--ease-spring)',
   },
   status: {
     success: { color: 'var(--success)',           bg: 'rgba(26,107,68,0.10)'     },
@@ -91,7 +92,7 @@ export function StatusBadge({
 // BUTTON LIBRARY
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type BtnVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'icon';
+export type BtnVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success' | 'icon';
 
 export function Btn({
   children,
@@ -100,8 +101,11 @@ export function Btn({
   icon,
   iconRight,
   disabled = false,
+  loading = false,
   onClick,
   fullWidth = false,
+  type,
+  ariaLabel,
   style: extraStyle,
 }: {
   children?: React.ReactNode;
@@ -110,12 +114,16 @@ export function Btn({
   icon?: React.ReactNode;
   iconRight?: React.ReactNode;
   disabled?: boolean;
+  loading?: boolean;
   onClick?: () => void;
   fullWidth?: boolean;
+  type?: 'button' | 'submit' | 'reset';
+  ariaLabel?: string;
   style?: React.CSSProperties;
 }) {
   const [hov, setHov] = useState(false);
   const [pressed, setPressed] = useState(false);
+  const isOff = disabled || loading;
 
   const sizePad = { sm: '7px 14px', md: '10px 18px', lg: '12px 22px' }[size];
   const sizeFont = { sm: '0.8125rem', md: '0.875rem', lg: '0.9375rem' }[size];
@@ -123,32 +131,37 @@ export function Btn({
 
   const bases: Record<BtnVariant, React.CSSProperties> = {
     primary: {
-      background: hov ? 'rgba(26,58,110,0.88)' : 'var(--primary)',
+      background: hov && !isOff ? 'var(--primary-hover)' : 'var(--primary)',
       color: 'var(--primary-foreground)', border: 'none',
-      boxShadow: hov ? DS.shadow.hover : DS.shadow.sm,
+      boxShadow: hov && !isOff ? DS.shadow.hover : DS.shadow.sm,
     },
     secondary: {
-      background: hov ? 'var(--muted)' : 'var(--secondary)',
+      background: hov && !isOff ? 'var(--muted)' : 'var(--secondary)',
       color: 'var(--primary)', border: '1px solid var(--border)',
     },
     outline: {
-      background: hov ? 'var(--secondary)' : 'transparent',
-      color: hov ? 'var(--primary)' : 'var(--foreground)',
-      border: `1.5px solid ${hov ? 'var(--primary)' : 'var(--border)'}`,
+      background: hov && !isOff ? 'var(--secondary)' : 'transparent',
+      color: hov && !isOff ? 'var(--primary)' : 'var(--foreground)',
+      border: `1.5px solid ${hov && !isOff ? 'var(--primary)' : 'var(--border)'}`,
     },
     ghost: {
-      background: hov ? 'var(--secondary)' : 'transparent',
-      color: hov ? 'var(--primary)' : 'var(--foreground)',
+      background: hov && !isOff ? 'var(--secondary)' : 'transparent',
+      color: hov && !isOff ? 'var(--primary)' : 'var(--foreground)',
       border: '1px solid transparent',
     },
     danger: {
-      background: hov ? 'rgba(192,57,43,0.12)' : 'rgba(192,57,43,0.07)',
+      background: hov && !isOff ? 'rgba(185,28,28,0.12)' : 'rgba(185,28,28,0.07)',
       color: 'var(--destructive)',
-      border: '1px solid rgba(192,57,43,0.2)',
+      border: '1px solid rgba(185,28,28,0.22)',
+    },
+    success: {
+      background: hov && !isOff ? 'rgba(26,107,68,0.14)' : 'rgba(26,107,68,0.09)',
+      color: 'var(--success)',
+      border: '1px solid rgba(26,107,68,0.22)',
     },
     icon: {
-      background: hov ? 'var(--secondary)' : 'transparent',
-      color: hov ? 'var(--primary)' : 'var(--muted-foreground)',
+      background: hov && !isOff ? 'var(--secondary)' : 'transparent',
+      color: hov && !isOff ? 'var(--primary)' : 'var(--muted-foreground)',
       border: '1px solid transparent',
       padding: size === 'sm' ? '6px' : size === 'md' ? '8px' : '10px',
       borderRadius: DS.radius.md,
@@ -157,8 +170,11 @@ export function Btn({
 
   return (
     <button
-      onClick={onClick}
-      disabled={disabled}
+      onClick={isOff ? undefined : onClick}
+      disabled={isOff}
+      type={type}
+      aria-label={ariaLabel}
+      aria-busy={loading || undefined}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => { setHov(false); setPressed(false); }}
       onMouseDown={() => setPressed(true)}
@@ -169,20 +185,107 @@ export function Btn({
         padding: variant === 'icon' ? undefined : sizePad,
         borderRadius: variant === 'primary' ? DS.radius.full : DS.radius.md,
         fontFamily: 'var(--font-sans)', fontSize: sizeFont, fontWeight: 600,
-        cursor: disabled ? 'not-allowed' : 'pointer',
+        cursor: isOff ? (loading ? 'progress' : 'not-allowed') : 'pointer',
         opacity: disabled ? 0.5 : 1,
         transition: DS.transition.fast,
-        transform: pressed ? 'scale(0.97)' : 'scale(1)',
+        transform: pressed && !isOff ? 'scale(0.97)' : 'scale(1)',
         width: fullWidth ? '100%' : undefined,
         whiteSpace: 'nowrap',
         ...bases[variant],
         ...extraStyle,
       }}
     >
-      {icon && <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{icon}</span>}
+      {loading
+        ? <Loader2 size={iconSize} style={{ flexShrink: 0, animation: 'spin 0.8s linear infinite' }} />
+        : icon && <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{icon}</span>}
       {children}
-      {iconRight && <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginLeft: 2 }}>{iconRight}</span>}
+      {!loading && iconRight && <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginLeft: 2 }}>{iconRight}</span>}
     </button>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FIELD — champ de formulaire moderne (icône, helper, focus/error/success)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function Field({
+  label, value, onChange, placeholder, type = 'text', icon, helper, error, success,
+  disabled = false, required = false, name, autoComplete, inputMode, id, style,
+}: {
+  label?: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  type?: string;
+  icon?: React.ReactNode;
+  helper?: string;
+  error?: string;
+  success?: string;
+  disabled?: boolean;
+  required?: boolean;
+  name?: string;
+  autoComplete?: string;
+  inputMode?: 'text' | 'email' | 'tel' | 'numeric' | 'decimal' | 'search';
+  id?: string;
+  style?: React.CSSProperties;
+}) {
+  const [focused, setFocused] = useState(false);
+  const state: 'error' | 'success' | 'default' = error ? 'error' : success ? 'success' : 'default';
+  const borderColor =
+    state === 'error' ? 'var(--destructive)'
+    : state === 'success' ? 'var(--success)'
+    : focused ? 'var(--primary)' : 'var(--border)';
+  const ring =
+    state === 'error' ? '0 0 0 3px rgba(185,28,28,0.14)'
+    : state === 'success' ? '0 0 0 3px rgba(26,107,68,0.14)'
+    : focused ? 'var(--ring-focus)' : 'none';
+  const autoId = id ?? name ?? label?.replace(/\s+/g, '-').toLowerCase();
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, ...style }}>
+      {label && (
+        <label htmlFor={autoId} style={{
+          fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-label)', fontWeight: 700,
+          letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--muted-foreground)',
+        }}>
+          {label}{required && <span style={{ color: 'var(--destructive)', marginLeft: 3 }}>*</span>}
+        </label>
+      )}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 9,
+        background: disabled ? 'var(--muted)' : 'var(--input-background)',
+        border: `1.5px solid ${borderColor}`,
+        borderRadius: 'var(--r-md)',
+        padding: '11px 13px',
+        boxShadow: ring,
+        transition: 'border-color var(--dur-1) var(--ease-out), box-shadow var(--dur-2) var(--ease-out)',
+        opacity: disabled ? 0.65 : 1,
+      }}>
+        {icon && <span style={{ display: 'flex', color: focused ? 'var(--primary)' : 'var(--muted-foreground)', flexShrink: 0, transition: 'color var(--dur-1) var(--ease-out)' }}>{icon}</span>}
+        <input
+          id={autoId} name={name} type={type} value={value} placeholder={placeholder}
+          disabled={disabled} required={required} autoComplete={autoComplete} inputMode={inputMode}
+          aria-invalid={state === 'error' || undefined}
+          onChange={e => onChange(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          style={{
+            flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent',
+            fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--foreground)',
+          }}
+        />
+        {state === 'success' && <CheckCircle2 size={16} style={{ color: 'var(--success)', flexShrink: 0 }} />}
+        {state === 'error' && <AlertCircle size={16} style={{ color: 'var(--destructive)', flexShrink: 0 }} />}
+      </div>
+      {(error || success || helper) && (
+        <span style={{
+          fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-caption)', lineHeight: 1.4,
+          color: error ? 'var(--destructive)' : success ? 'var(--success)' : 'var(--muted-foreground)',
+        }}>
+          {error || success || helper}
+        </span>
+      )}
+    </div>
   );
 }
 

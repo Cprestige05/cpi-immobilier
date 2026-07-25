@@ -151,7 +151,7 @@ export default function ConventionBancairePage() {
             textTransform: 'uppercase' as const,
             color: GOLD,
           }}>
-            Convention de financement — 2/3
+            Convention de financement
           </span>
         </div>
 
@@ -211,47 +211,6 @@ export default function ConventionBancairePage() {
           </span>
         </div>
 
-        {/* Pagination nav */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          marginTop: '24px',
-        }}>
-          <button style={{
-            display: 'flex', alignItems: 'center', gap: '6px',
-            background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: '4px', padding: '7px 14px',
-            fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 500,
-            color: 'rgba(255,255,255,0.65)', cursor: 'pointer',
-            transition: 'background 0.15s',
-          }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.14)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
-          >
-            <ChevronLeft size={14} /> Précédent
-          </button>
-          <div style={{ display: 'flex', gap: '6px' }}>
-            {[1,2,3].map(n => (
-              <div key={n} style={{
-                width: '28px', height: '4px',
-                borderRadius: '2px',
-                background: n === 2 ? GOLD : 'rgba(255,255,255,0.2)',
-              }} />
-            ))}
-          </div>
-          <button style={{
-            display: 'flex', alignItems: 'center', gap: '6px',
-            background: GOLD, border: 'none',
-            borderRadius: '4px', padding: '7px 14px',
-            fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 700,
-            color: FOREST, cursor: 'pointer',
-            transition: 'opacity 0.15s',
-          }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-          >
-            Suivant <ChevronRight size={14} />
-          </button>
-        </div>
       </div>
     </div>
   );

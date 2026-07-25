@@ -207,7 +207,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
   return (
     <>
       <style>{CSS}</style>
-      <div style={{ maxWidth: '1120px', fontFamily: 'var(--font-sans)' }} className="sim-print-full">
+      <div style={{ width: '100%', fontFamily: 'var(--font-sans)' }} className="sim-print-full">
 
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <div className="sim-no-print" style={{

@@ -61,20 +61,15 @@ const EVENT_TYPES: { value: CalendarEventType; label: string }[] = [
   { value: 'remise-cles',       label: 'Remise des clés'       },
 ];
 
-const CH1_ID = 'ch-aissatou';
+const CH1_ID = 'ch-live';
 
-// Static ch2 (Mamadou) — not connected to context
+// Chantier secondaire neutre (base vide — aucun persona fictif, non affiché).
 const INITIAL_CH2: ChantierProject = {
-  id: 'ch2', nom: 'Villa F3 — Thiès Nord', client: 'Mamadou Diallo',
-  ref: 'CPI-2026-04698', progression: 18, etape: 'Fondations',
-  chefChantier: 'Cheikh Mbaye', entreprise: 'CONSTRUIRE SA',
-  dateDebut: '01 juin 2026', dateLivraison: '01 avr. 2027',
-  tranches: [
-    { num: 1, label: 'Démarrage (35%)',    pct: 35, status: 'en-cours',   date: '', comment: '' },
-    { num: 2, label: 'Gros œuvre (30%)',   pct: 30, status: 'en-attente', date: '', comment: '' },
-    { num: 3, label: 'Second œuvre (30%)', pct: 30, status: 'en-attente', date: '', comment: '' },
-    { num: 4, label: 'Livraison (5%)',     pct: 5,  status: 'en-attente', date: '', comment: '' },
-  ],
+  id: 'ch2', nom: '—', client: '—',
+  ref: '—', progression: 0, etape: 'Préparation',
+  chefChantier: '—', entreprise: '—',
+  dateDebut: '—', dateLivraison: '—',
+  tranches: [],
   photos: [],
   commentaires: [],
 };
@@ -113,7 +108,9 @@ export default function ChantierModule({ agentName = 'Agent CPI' }: Props) {
   };
 
   const [ch2, setCh2] = useState<ChantierProject>(INITIAL_CH2);
-  const chantiers = [ch1Live, ch2];
+  void ch2; void setCh2; // chantier secondaire neutralisé (base vide)
+  // Seul le chantier réel du client sélectionné est présenté.
+  const chantiers = [ch1Live];
 
   const [expanded, setExpanded] = useState<string | null>(CH1_ID);
   const [editingId, setEditingId] = useState<string | null>(null);

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { CHANTIER_AISSATOU, TRANCHES_AISSATOU, CHANTIER_MAMADOU, TRANCHES_MAMADOU } from './demoStore';
+import { loadClients } from './clientRegistry';
 import { useClientContext } from '../contexts/ClientContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -130,133 +130,41 @@ interface PersistedState {
   history: ChantierHistoryEntry[];
 }
 
-const INITIAL_INFO_AISSATOU: ChantierInfo = {
-  id: CHANTIER_AISSATOU.id,
-  clientId: 'c-aissatou',
-  client: 'Aïssatou Ndiaye',
-  projet: CHANTIER_AISSATOU.nom,
-  reference: 'CPI-2026-04721',
-  localisation: 'Ngolfagnick (Thiès)',
-  chefChantier: CHANTIER_AISSATOU.chefChantier,
-  entreprise: CHANTIER_AISSATOU.entreprise,
-  dateDebut: CHANTIER_AISSATOU.dateDebut,
-  dateLivraison: CHANTIER_AISSATOU.dateLivraison,
-  progression: 42,
-  etapeActuelle: 'Gros œuvre',
-  statut: 'en-cours',
-  derniereMAJ: '18 juin 2026',
-};
+// Base vide : aucun chantier fictif. Chaque dossier démarre « non démarré » ;
+// l'Agent CPI renseigne le chantier réel au fil de l'avancement.
+const emptyInfo = (clientId: string, clientName: string): ChantierInfo => ({
+  id: `ch-${clientId}`,
+  clientId,
+  client: clientName,
+  projet: '—',
+  reference: '—',
+  localisation: '—',
+  chefChantier: '—',
+  entreprise: '—',
+  dateDebut: '—',
+  dateLivraison: '—',
+  progression: 0,
+  etapeActuelle: 'Non démarré',
+  statut: 'non-demarre',
+  derniereMAJ: '—',
+});
 
-const INITIAL_TRANCHES_AISSATOU: ChantierTranche[] = TRANCHES_AISSATOU.map(t => ({
-  num: t.num,
-  label: t.num === 2 ? 'Élévation des murs, poteaux, dalle et toiture' : t.num === 4 ? 'Remise des clés' : t.label,
-  description: t.description ?? '',
-  pct: t.pct,
-  etat: t.etat,
-  date: t.date,
-  comment: t.comment,
-}));
-
-const INITIAL_PUBLICATIONS_AISSATOU: ChantierPublication[] = [
-  { id: 'pub1', phase: 2, titre: '14 nouvelles photos ajoutées — Tranche T2 (élévation)',              description: '', date: '18 juin 2026', heure: '10:00', auteur: 'Mme Thiombane', type: 'photo',        visibleClient: true },
-  { id: 'pub2', phase: 2, titre: 'Inspection CPI réalisée — rapport disponible dans les documents',    description: '', date: '18 juin 2026', heure: '14:30', auteur: 'Mme Thiombane', type: 'actualite',    visibleClient: true },
-  { id: 'pub3', phase: 2, titre: 'Livraison matériaux de construction (lot 2) — 8 tonnes de ciment',  description: '', date: '10 juin 2026', heure: '09:00', auteur: 'Aliou Koné',    type: 'actualite',    visibleClient: true },
-  { id: 'pub4', phase: 2, titre: 'PV de réunion de chantier — semaine du 9 juin',                     description: '', date: '10 juin 2026', heure: '17:00', auteur: 'Aliou Koné',    type: 'document',     visibleClient: true },
-  { id: 'pub5', phase: 2, titre: 'Tranche T2 démarrée — poteaux en cours de coulage',                 description: '', date: '15 mai 2026',  heure: '08:00', auteur: 'Mme Thiombane', type: 'etape-validee',visibleClient: true },
-  { id: 'pub6', phase: 1, titre: 'Décaissement T1 confirmé — 6 475 000 FCFA versés par la banque',    description: '', date: '15 mai 2026',  heure: '16:00', auteur: 'Mme Thiombane', type: 'actualite',    visibleClient: true },
-  { id: 'pub7', phase: 1, titre: 'Fondations terminées — T1 validée par CPI et la banque',             description: '', date: '10 mars 2026', heure: '11:00', auteur: 'Mme Thiombane', type: 'etape-validee',visibleClient: true },
-  { id: 'pub8', phase: 1, titre: '8 photos de la phase fondations disponibles dans la galerie',        description: '', date: '10 mars 2026', heure: '15:00', auteur: 'Mme Thiombane', type: 'photo',        visibleClient: true },
-];
-
-const INITIAL_MEDIAS_AISSATOU: ChantierMedia[] = [
-  { id: 'm1', type: 'photo', titre: 'Fondations J+3',   description: '', date: '10 mars 2026', phase: 1, auteur: 'Aliou Koné',    url: '', bg: 'linear-gradient(135deg,#7B1A2E,#B05070)', visibleClient: true },
-  { id: 'm2', type: 'photo', titre: 'Coulage béton',    description: '', date: '10 mars 2026', phase: 1, auteur: 'Aliou Koné',    url: '', bg: 'linear-gradient(135deg,#38080F,#7B1A2E)', visibleClient: true },
-  { id: 'm3', type: 'photo', titre: 'Fondations T1 ✓',  description: '', date: '15 mars 2026', phase: 1, auteur: 'Aliou Koné',    url: '', bg: 'linear-gradient(135deg,#5C1224,#A04060)', visibleClient: true },
-  { id: 'm4', type: 'photo', titre: 'Poteaux J+1',      description: '', date: '20 mai 2026',  phase: 2, auteur: 'Aliou Koné',    url: '', bg: 'linear-gradient(135deg,#1E4D8C,#2D6BC4)', visibleClient: true },
-  { id: 'm5', type: 'photo', titre: 'Élévation Nord',   description: '', date: '28 mai 2026',  phase: 2, auteur: 'Aliou Koné',    url: '', bg: 'linear-gradient(135deg,#163B6E,#1E4D8C)', visibleClient: true },
-  { id: 'm6', type: 'photo', titre: 'Matériaux livrés', description: '', date: '10 juin 2026', phase: 2, auteur: 'Aliou Koné',    url: '', bg: 'linear-gradient(135deg,#1A6B44,#2A9B64)', visibleClient: true },
-  { id: 'm7', type: 'photo', titre: 'Façade Est',       description: '', date: '12 juin 2026', phase: 2, auteur: 'Aliou Koné',    url: '', bg: 'linear-gradient(135deg,#1A4D2E,#1A6B44)', visibleClient: true },
-  { id: 'm8', type: 'photo', titre: 'Vue aérienne',     description: '', date: '18 juin 2026', phase: 2, auteur: 'Mme Thiombane', url: '', bg: 'linear-gradient(135deg,#C8921A,#E0B030)', visibleClient: true },
-];
-
-const INITIAL_EVENTS_AISSATOU: CalendarEvent[] = [
-  { id: 'ev1', titre: 'Visite de chantier',             type: 'visite',     date: '28 juillet 2026', heure: '10:00', description: "Inspection de l'avancement du gros œuvre.",              statut: 'prevu',    visibleClient: true  },
-  { id: 'ev2', titre: 'Inspection bancaire — Certification T2', type: 'inspection', date: '5 août 2026', heure: '09:00', description: "Inspection bancaire pour déblocage de la tranche T2.", statut: 'confirme', visibleClient: false },
-];
-
-const INITIAL_STATE_BY_CLIENT: Record<string, PersistedState> = {
-  'c-aissatou': {
-    info: INITIAL_INFO_AISSATOU,
-    tranches: INITIAL_TRANCHES_AISSATOU,
-    publications: INITIAL_PUBLICATIONS_AISSATOU,
-    medias: INITIAL_MEDIAS_AISSATOU,
-    events: INITIAL_EVENTS_AISSATOU,
-    history: [],
-  },
-  'c-mamadou': {
-    info: {
-      id: CHANTIER_MAMADOU.id,
-      clientId: 'c-mamadou',
-      client: 'Mamadou Diallo',
-      projet: CHANTIER_MAMADOU.nom,
-      reference: 'CPI-2026-04698',
-      localisation: 'Thiès Nord',
-      chefChantier: CHANTIER_MAMADOU.chefChantier,
-      entreprise: CHANTIER_MAMADOU.entreprise,
-      dateDebut: CHANTIER_MAMADOU.dateDebut,
-      dateLivraison: CHANTIER_MAMADOU.dateLivraison,
-      progression: 18,
-      etapeActuelle: 'Fondations',
-      statut: 'en-cours',
-      derniereMAJ: '16 juin 2026',
-    },
-    tranches: TRANCHES_MAMADOU.map(t => ({ num: t.num, label: t.label, description: t.description ?? '', pct: t.pct, etat: t.etat, date: t.date, comment: t.comment })),
-    publications: [
-      { id: 'pub-m1', phase: 1, titre: 'Démarrage des travaux — fondations en cours', description: '', date: '12 juin 2026', heure: '08:00', auteur: 'Cheikh Mbaye', type: 'etape-validee', visibleClient: true },
-    ],
-    medias: [
-      { id: 'med-m1', type: 'photo', titre: 'Fondations J+2', description: '', date: '12 juin 2026', phase: 1, auteur: 'Cheikh Mbaye', url: '', bg: 'linear-gradient(135deg,#1E4D8C,#2D6BC4)', visibleClient: true },
-    ],
-    events: [
-      { id: 'ev-m1', titre: 'Visite de chantier', type: 'visite', date: '5 août 2026', heure: '11:00', description: 'Inspection de la phase fondations.', statut: 'prevu', visibleClient: true },
-    ],
-    history: [],
-  },
-  'c-fatou': {
-    info: {
-      id: 'ch-fatou', clientId: 'c-fatou', client: 'Fatou Mbaye',
-      projet: 'Appartement T3 — Dakar Plateau', reference: 'CPI-2026-04712',
-      localisation: 'Dakar (Plateau)', chefChantier: '—', entreprise: '—',
-      dateDebut: '—', dateLivraison: '—', progression: 0,
-      etapeActuelle: 'Non démarré', statut: 'non-demarre', derniereMAJ: '—',
-    },
-    tranches: [], publications: [], medias: [], events: [], history: [],
-  },
-  'c-ibrahim': {
-    info: {
-      id: 'ch-ibrahim', clientId: 'c-ibrahim', client: 'Ibrahim Sow',
-      projet: 'Villa R+2 — Saly Portudal', reference: 'CPI-2026-04688',
-      localisation: 'Saly Portudal', chefChantier: '—', entreprise: '—',
-      dateDebut: '—', dateLivraison: '—', progression: 0,
-      etapeActuelle: 'Non démarré', statut: 'non-demarre', derniereMAJ: '—',
-    },
-    tranches: [], publications: [], medias: [], events: [], history: [],
-  },
-};
-
-const ALL_CLIENT_IDS = Object.keys(INITIAL_STATE_BY_CLIENT);
+const emptyState = (clientId: string, clientName: string): PersistedState => ({
+  info: emptyInfo(clientId, clientName),
+  tranches: [], publications: [], medias: [], events: [], history: [],
+});
 
 // ─── localStorage ─────────────────────────────────────────────────────────────
 
-// Préfixe v2 : invalide toute donnée de démo persistée avant la purge CHUES/CBAO.
-const LS_KEY_ALL = 'cpi_chantier_all_state_v2';
+// Préfixe v3 : base vide — invalide toute donnée de démo persistée.
+const LS_KEY_ALL = 'cpi_chantier_all_state_v3';
 
 const loadAllChantierState = (): Record<string, PersistedState> => {
   try {
     const s = localStorage.getItem(LS_KEY_ALL);
     if (s) {
       const parsed = JSON.parse(s) as Record<string, PersistedState>;
-      if (parsed['c-aissatou']?.info) return parsed;
+      if (parsed && typeof parsed === 'object') return parsed;
     }
   } catch {}
   return {};
@@ -265,14 +173,16 @@ const loadAllChantierState = (): Record<string, PersistedState> => {
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function ChantierStateProvider({ children }: { children: React.ReactNode }) {
-  const { selectedClientId } = useClientContext();
+  const { selectedClientId, allClients } = useClientContext();
+
+  const nameFor = (id: string) => allClients.find(c => c.id === id)?.name ?? id;
 
   const [allState, setAllState] = useState<Record<string, PersistedState>>(() => {
     const loaded = loadAllChantierState();
-    // Ensure every client has initial state
-    const merged: Record<string, PersistedState> = {};
-    for (const id of ALL_CLIENT_IDS) {
-      merged[id] = loaded[id] ?? INITIAL_STATE_BY_CLIENT[id];
+    // Chaque client réel connu (registre) reçoit un état de chantier vide.
+    const merged: Record<string, PersistedState> = { ...loaded };
+    for (const c of [...loadClients(), ...allClients]) {
+      if (!merged[c.id]) merged[c.id] = emptyState(c.id, c.name);
     }
     return merged;
   });
@@ -281,7 +191,7 @@ export function ChantierStateProvider({ children }: { children: React.ReactNode 
     try { localStorage.setItem(LS_KEY_ALL, JSON.stringify(allState)); } catch {}
   }, [allState]);
 
-  const current = allState[selectedClientId] ?? INITIAL_STATE_BY_CLIENT[selectedClientId] ?? INITIAL_STATE_BY_CLIENT['c-aissatou'];
+  const current = allState[selectedClientId] ?? emptyState(selectedClientId, nameFor(selectedClientId));
 
   const chantierInfo    = current.info;
   const tranches        = current.tranches;
@@ -293,7 +203,7 @@ export function ChantierStateProvider({ children }: { children: React.ReactNode 
   const updateCurrent = (updater: (s: PersistedState) => PersistedState) => {
     setAllState(prev => ({
       ...prev,
-      [selectedClientId]: updater(prev[selectedClientId] ?? INITIAL_STATE_BY_CLIENT[selectedClientId]),
+      [selectedClientId]: updater(prev[selectedClientId] ?? emptyState(selectedClientId, nameFor(selectedClientId))),
     }));
   };
 

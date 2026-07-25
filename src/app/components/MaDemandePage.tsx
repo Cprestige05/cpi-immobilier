@@ -1,105 +1,72 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   FileText, Calendar, Clock, CheckCircle2, AlertCircle, XCircle,
-  Upload, RefreshCw, ChevronDown, ChevronUp,
   Building2, Edit3, Save, X, MessageSquare,
   Printer, Send, MapPin, Banknote, Timer, User2,
-  Hash, LayoutGrid, ArrowRight, UploadCloud, AlertTriangle,
+  Hash, LayoutGrid, ArrowRight, FolderOpen, Bell, ImageIcon, FileUp,
 } from 'lucide-react';
 import type { AuthUser } from '../App';
+import type { HistoActionType } from '../data/demoStore';
 import { useClientData } from '../data/useClientData';
+import { useDocState, type SharedDoc } from '../data/docStateContext';
 import { useNavigate } from '../contexts/NavigationContext';
 
 interface Props { user: AuthUser }
 
 // ── Types ──────────────────────────────────────────────────────────
-type DemandStatut = 'validee' | 'en-cours' | 'attente-docs' | 'incomplete' | 'brouillon';
-type DocStatut    = 'non-envoye' | 'uploading' | 'analyse' | 'traitement' | 'en-attente' | 'valide' | 'refuse' | 'expire';
+type DemandStatut = 'validee' | 'en-cours' | 'incomplete' | 'brouillon';
 
-interface DocItem {
-  id: string;
-  label: string;
+interface DemandeForm {
+  typeProjet: string;
+  natureProjet: string;
+  montant: string;
+  duree: string;
+  apport: string;
+  region: string;
+  commune: string;
+  adresseProjet: string;
   description: string;
-  obligatoire: boolean;
-  formats: string;
-  statut: DocStatut;
-  taille?: string;
-  dateEnvoi?: string;
-  motifRefus?: string;
-  agentRefus?: string;
-  version: number;
-  // upload progress
-  uploadFilename?: string;
-  uploadSizeLabel?: string;
-  uploadPct?: number;
-  uploadError?: string;
 }
 
-interface ToastItem { id: number; type: 'success' | 'error' | 'info'; text: string }
+interface DemandeState {
+  submitted: boolean;
+  submittedAt?: string;
+  form: DemandeForm;
+}
 
-// ── Doc statut config ──────────────────────────────────────────────
-const DOC_CFG: Record<DocStatut, {
-  label: string; color: string; bg: string; stripe: string; iconBg: string;
-  Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>;
-  meta: string;
-}> = {
-  'non-envoye': {
-    label: 'À envoyer',
-    color: 'var(--muted-foreground)', bg: 'rgba(0,0,0,0.04)',
-    stripe: 'rgba(0,0,0,0.12)', iconBg: 'rgba(0,0,0,0.05)',
-    Icon: Upload, meta: 'Document requis · non déposé',
-  },
-  uploading: {
-    label: 'Envoi en cours…',
-    color: 'var(--chart-4)', bg: 'rgba(46,110,196,0.08)',
-    stripe: 'var(--chart-4)', iconBg: 'rgba(46,110,196,0.1)',
-    Icon: UploadCloud, meta: 'Téléversement en cours…',
-  },
-  analyse: {
-    label: 'Analyse…',
-    color: 'var(--chart-4)', bg: 'rgba(46,110,196,0.08)',
-    stripe: 'var(--chart-4)', iconBg: 'rgba(46,110,196,0.1)',
-    Icon: UploadCloud, meta: 'Analyse du fichier…',
-  },
-  traitement: {
-    label: 'Traitement…',
-    color: 'var(--chart-4)', bg: 'rgba(46,110,196,0.08)',
-    stripe: 'var(--chart-4)', iconBg: 'rgba(46,110,196,0.1)',
-    Icon: UploadCloud, meta: 'Finalisation…',
-  },
-  'en-attente': {
-    label: 'En attente de validation',
-    color: 'var(--accent)', bg: 'rgba(200,146,26,0.09)',
-    stripe: 'var(--accent)', iconBg: 'rgba(200,146,26,0.1)',
-    Icon: Clock, meta: 'Reçu · en attente de validation',
-  },
-  valide: {
-    label: 'Validé',
-    color: 'var(--success)', bg: 'rgba(26,107,68,0.1)',
-    stripe: 'var(--success)', iconBg: 'rgba(26,107,68,0.12)',
-    Icon: CheckCircle2, meta: 'Validé par CPI',
-  },
-  refuse: {
-    label: 'Refusé',
-    color: 'var(--destructive)', bg: 'rgba(192,57,43,0.08)',
-    stripe: 'var(--destructive)', iconBg: 'rgba(192,57,43,0.1)',
-    Icon: XCircle, meta: 'Document refusé — renvoi requis',
-  },
-  expire: {
-    label: 'Expiré',
-    color: 'var(--destructive)', bg: 'rgba(192,57,43,0.06)',
-    stripe: 'rgba(192,57,43,0.4)', iconBg: 'rgba(192,57,43,0.07)',
-    Icon: AlertTriangle, meta: 'Document expiré',
-  },
+// ── Doc status config (statuts réels, gérés par l'Agent CPI dans "Mon dossier") ──
+const DOC_STATUS_CFG: Record<SharedDoc['status'], { label: string; color: string; bg: string }> = {
+  'en-attente':  { label: 'À déposer',              color: 'var(--muted-foreground)', bg: 'var(--muted)'           },
+  depose:        { label: 'Déposé — analyse en cours', color: 'var(--chart-4)',        bg: 'rgba(46,110,196,0.08)' },
+  verification:  { label: 'En vérification',        color: 'var(--accent)',           bg: 'rgba(200,146,26,0.09)' },
+  accepte:       { label: 'Accepté',                color: 'var(--success)',          bg: 'rgba(26,107,68,0.1)'   },
+  refuse:        { label: 'Refusé',                 color: 'var(--destructive)',       bg: 'rgba(192,57,43,0.08)' },
+  'a-remplacer': { label: 'À remplacer',             color: 'var(--destructive)',       bg: 'rgba(192,57,43,0.08)' },
+};
+
+const DOC_DESCRIPTIONS: Record<string, string> = {
+  identite:  'CNI ou passeport en cours de validité',
+  revenus:   'Les 3 derniers bulletins de salaire ou justificatifs de revenus',
+  bancaires: 'Les 3 derniers mois de relevés de compte courant',
+};
+
+// ── History icon/tone (mêmes conventions que le Tableau de bord) ────
+const HISTO_ICON: Record<HistoActionType, React.ComponentType<{ size?: number }>> = {
+  validation: CheckCircle2, document: FileText, notification: Bell, photo: ImageIcon,
+  decaissement: Banknote, commentaire: MessageSquare, depot: FileUp, refus: AlertCircle,
+};
+const HISTO_COLOR: Record<HistoActionType, string> = {
+  validation: 'var(--success)', document: 'var(--primary)', notification: 'var(--accent)',
+  photo: 'var(--primary)', decaissement: 'var(--success)', commentaire: 'var(--muted-foreground)',
+  depot: 'var(--primary)', refus: 'var(--destructive)',
 };
 
 // ── Constants ──────────────────────────────────────────────────────
 const STATUT_CONFIG: Record<DemandStatut, { label: string; color: string; bg: string; dot: string }> = {
-  validee:        { label: 'Validée',                color: 'var(--success)',          bg: 'rgba(26,107,68,0.1)',   dot: 'var(--success)'          },
-  'en-cours':     { label: "En cours d'étude",        color: 'var(--accent)',           bg: 'rgba(200,146,26,0.1)', dot: 'var(--accent)'           },
-  'attente-docs': { label: 'En attente de documents', color: 'var(--chart-4)',          bg: 'rgba(46,110,196,0.1)', dot: 'var(--chart-4)'          },
-  incomplete:     { label: 'Demande incomplète',      color: 'var(--destructive)',      bg: 'rgba(192,57,43,0.09)', dot: 'var(--destructive)'      },
-  brouillon:      { label: 'Brouillon',               color: 'var(--muted-foreground)', bg: 'var(--muted)',         dot: 'var(--muted-foreground)' },
+  validee:    { label: 'Validée',                color: 'var(--success)',          bg: 'rgba(26,107,68,0.1)',   dot: 'var(--success)'          },
+  'en-cours': { label: "En cours d'étude",       color: 'var(--accent)',           bg: 'rgba(200,146,26,0.1)', dot: 'var(--accent)'           },
+  incomplete: { label: 'Document à corriger',    color: 'var(--destructive)',      bg: 'rgba(192,57,43,0.09)', dot: 'var(--destructive)'      },
+  brouillon:  { label: 'Brouillon',              color: 'var(--muted-foreground)', bg: 'var(--muted)',         dot: 'var(--muted-foreground)' },
 };
 
 const NATURE_LABELS: Record<string, string> = {
@@ -109,58 +76,6 @@ const NATURE_LABELS: Record<string, string> = {
   viabilisation: 'Viabilisation de terrain',
 };
 
-const DOCS_INITIAL: DocItem[] = [
-  {
-    id: 'cni', label: 'CNI ou passeport',
-    description: "Pièce d'identité nationale ou passeport en cours de validité",
-    obligatoire: true, formats: 'PDF, JPG, PNG',
-    statut: 'valide', taille: '2.1 Mo', dateEnvoi: '03 juin 2026', version: 1,
-  },
-  {
-    id: 'domicile', label: 'Justificatif de domicile',
-    description: "Facture d'eau, d'électricité ou bail de moins de 3 mois",
-    obligatoire: true, formats: 'PDF, JPG, PNG',
-    statut: 'valide', taille: '1.4 Mo', dateEnvoi: '03 juin 2026', version: 1,
-  },
-  {
-    id: 'salaire', label: 'Bulletin de salaire',
-    description: '3 derniers bulletins de salaire ou justificatifs de revenus',
-    obligatoire: true, formats: 'PDF',
-    statut: 'valide', taille: '4.7 Mo', dateEnvoi: '04 juin 2026', version: 1,
-  },
-  {
-    id: 'releves', label: 'Relevés bancaires (3 derniers mois)',
-    description: '3 derniers mois de relevés de compte courant',
-    obligatoire: true, formats: 'PDF',
-    statut: 'refuse', taille: '1.8 Mo', dateEnvoi: '05 juin 2026',
-    motifRefus: 'Document illisible — veuillez renvoyer en qualité supérieure (300 dpi minimum)',
-    agentRefus: 'Mme Thiombane', version: 1,
-  },
-  {
-    id: 'attestation', label: "Attestation de travail",
-    description: "Attestation d'emploi ou contrat récent (moins de 3 mois)",
-    obligatoire: true, formats: 'PDF, JPG',
-    statut: 'non-envoye', version: 0,
-  },
-];
-
-const TIMELINE = [
-  { date: '03 juin 2026', hour: '09:12', text: 'Demande créée',                                 type: 'success' },
-  { date: '04 juin 2026', hour: '14:30', text: 'Documents reçus — CNI, bulletins, domicile',    type: 'success' },
-  { date: '08 juin 2026', hour: '11:00', text: 'Analyse démarrée par le service instruction',   type: 'success' },
-  { date: '10 juin 2026', hour: '16:45', text: 'Conseillère affectée — Mme Thiombane',          type: 'success' },
-  { date: '14 juin 2026', hour: '09:20', text: 'Relevé bancaire refusé — renvoi demandé',       type: 'warning' },
-  { date: '—',            hour: '—',     text: 'Validation bancaire (prochaine étape)',     type: 'pending' },
-];
-
-function blankDocs(): DocItem[] {
-  return DOCS_INITIAL.map(d => ({
-    id: d.id, label: d.label, description: d.description,
-    obligatoire: d.obligatoire, formats: d.formats,
-    statut: 'non-envoye', version: 0,
-  }));
-}
-
 // ── Design tokens ──────────────────────────────────────────────────
 const CARD_RADIUS = 20;
 const CARD_SHADOW = '0 1px 4px rgba(0,0,0,0.05), 0 8px 32px rgba(0,0,0,0.04)';
@@ -168,59 +83,43 @@ const CARD_BORDER = '1px solid rgba(26,58,110,0.08)';
 const SECTION_PAD = '26px 28px';
 const BODY_PAD    = '0 28px 28px';
 
-// ── File validation ────────────────────────────────────────────────
-const ALLOWED_EXTS  = ['.pdf', '.jpg', '.jpeg', '.png'];
-const ALLOWED_MIMES = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-const MAX_BYTES     = 10 * 1024 * 1024;
+// ── Persisted per-client draft ─────────────────────────────────────
+const STORAGE_KEY = (clientId: string) => `cpi_demande_v1_${clientId}`;
 
-function validateFile(file: File): string | null {
-  if (file.size === 0) return 'Le fichier est vide.';
-  if (file.size > MAX_BYTES) return `Fichier trop lourd (${(file.size / 1024 / 1024).toFixed(1)} Mo). Maximum autorisé : 10 Mo.`;
-  const ext = '.' + (file.name.split('.').pop() ?? '').toLowerCase();
-  if (!ALLOWED_EXTS.includes(ext)) return 'Format non autorisé. Utilisez PDF, JPG ou PNG.';
-  if (file.type && !ALLOWED_MIMES.includes(file.type)) return 'Type MIME non reconnu. Utilisez PDF, JPG ou PNG.';
-  return null;
+function defaultFormFor(_client: ReturnType<typeof useClientData>, _isNewClient: boolean): DemandeForm {
+  // Aucune valeur pré-remplie fictive : chaque client saisit sa propre demande.
+  return {
+    typeProjet: 'financement', natureProjet: 'acquisition',
+    montant: '', duree: '15', apport: '',
+    region: 'Dakar', commune: '', adresseProjet: '', description: '',
+  };
 }
 
-function sizeLabel(bytes: number): string {
-  return bytes > 1024 * 1024
-    ? `${(bytes / 1024 / 1024).toFixed(1)} Mo`
-    : `${Math.round(bytes / 1024)} Ko`;
+function loadDemandeState(client: ReturnType<typeof useClientData>, isNewClient: boolean): DemandeState {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY(client.id));
+    if (s) return JSON.parse(s) as DemandeState;
+  } catch {}
+  return { submitted: !isNewClient, form: defaultFormFor(client, isNewClient) };
 }
 
 // ── Primitives ─────────────────────────────────────────────────────
 
-function SectionCard({ title, icon, iconBg, children, collapsible = false, accent }: {
+function SectionCard({ title, icon, iconBg, children, accent }: {
   title: string; icon: React.ReactNode; iconBg?: string;
-  children: React.ReactNode; collapsible?: boolean; accent?: string;
+  children: React.ReactNode; accent?: string;
 }) {
-  const [open, setOpen] = useState(true);
   return (
     <div style={{ background: 'var(--card)', border: CARD_BORDER, borderRadius: CARD_RADIUS, overflow: 'hidden', boxShadow: CARD_SHADOW }}>
-      <div
-        style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: SECTION_PAD,
-          borderBottom: open ? '1px solid rgba(26,58,110,0.06)' : 'none',
-          cursor: collapsible ? 'pointer' : 'default',
-        }}
-        onClick={() => collapsible && setOpen(o => !o)}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 38, height: 38, borderRadius: 12, flexShrink: 0, background: iconBg ?? 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: accent ?? 'var(--primary)' }}>
-            {icon}
-          </div>
-          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
-            {title}
-          </h3>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: SECTION_PAD, borderBottom: '1px solid rgba(26,58,110,0.06)' }}>
+        <div style={{ width: 38, height: 38, borderRadius: 12, flexShrink: 0, background: iconBg ?? 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: accent ?? 'var(--primary)' }}>
+          {icon}
         </div>
-        {collapsible && (
-          <div style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted-foreground)' }}>
-            {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </div>
-        )}
+        <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+          {title}
+        </h3>
       </div>
-      {open && <div style={{ padding: BODY_PAD }}>{children}</div>}
+      <div style={{ padding: BODY_PAD }}>{children}</div>
     </div>
   );
 }
@@ -273,296 +172,9 @@ function FSelect({ value, onChange, options, disabled }: {
   );
 }
 
-// ── DocCard — fully functional upload ──────────────────────────────
-interface DocCardProps {
-  doc: DocItem;
-  onUpload: (id: string, file: File) => void;
-  onCancel: (id: string) => void;
-  highlighted?: boolean;
-}
-
-function DocCard({ doc, onUpload, onCancel, highlighted = false }: DocCardProps) {
-  const [dragging, setDragging] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  const cfg = DOC_CFG[doc.statut];
-  const { Icon } = cfg;
-  const isProcessing = ['uploading', 'analyse', 'traitement'].includes(doc.statut);
-  const canDrop      = doc.statut === 'non-envoye' || doc.statut === 'refuse';
-
-  const triggerPicker = () => fileRef.current?.click();
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) onUpload(doc.id, file);
-    e.target.value = '';
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file) onUpload(doc.id, file);
-  };
-
-  // Shared small action button style
-  const actionBtn = (accent?: boolean): React.CSSProperties => ({
-    display: 'inline-flex', alignItems: 'center', gap: 5,
-    padding: '5px 10px', borderRadius: 8, cursor: 'pointer',
-    fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600,
-    transition: 'all 0.14s',
-    border: accent ? '1.5px solid var(--primary)' : '1.5px solid var(--border)',
-    background: 'transparent',
-    color: accent ? 'var(--primary)' : 'var(--muted-foreground)',
-  });
-
-  return (
-    <div
-      id={`doc-${doc.id}`}
-      style={{
-        display: 'flex', overflow: 'hidden',
-        border: highlighted ? '1.5px solid var(--primary)' : CARD_BORDER,
-        borderRadius: 14, background: 'var(--card)',
-        boxShadow: highlighted ? '0 0 0 3px rgba(26,58,110,0.1)' : CARD_SHADOW,
-        transition: 'box-shadow 0.2s, border-color 0.2s',
-      }}
-    >
-      {/* hidden file input */}
-      <input
-        ref={fileRef}
-        type="file"
-        accept=".pdf,.jpg,.jpeg,.png"
-        onChange={handleChange}
-        style={{ display: 'none' }}
-        aria-label={`Téléverser ${doc.label}`}
-      />
-
-      {/* Status stripe */}
-      <div style={{ width: 4, background: cfg.stripe, flexShrink: 0 }} />
-
-      <div style={{ flex: 1, padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-
-        {/* ── Main row ── */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap' }}>
-
-          {/* File icon */}
-          <div style={{ width: 38, height: 38, borderRadius: 10, flexShrink: 0, background: cfg.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: cfg.color, marginTop: 1 }}>
-            <FileText size={17} />
-          </div>
-
-          {/* Name + meta */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', fontWeight: 600, color: 'var(--foreground)', lineHeight: 1.3 }}>
-              {doc.label}
-              {!doc.obligatoire && (
-                <span style={{ marginLeft: 6, fontFamily: 'var(--font-sans)', fontSize: '0.625rem', fontWeight: 600, color: 'var(--muted-foreground)', background: 'var(--muted)', padding: '1px 6px', borderRadius: 4, verticalAlign: 'middle' }}>
-                  Facultatif
-                </span>
-              )}
-            </div>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: 2 }}>
-              {isProcessing
-                ? doc.uploadFilename
-                : doc.taille
-                ? `${doc.taille} · ${doc.dateEnvoi}${doc.version > 1 ? ` · v${doc.version}` : ''}`
-                : doc.description}
-            </div>
-          </div>
-
-          {/* Status badge + action buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0, flexWrap: 'wrap' }}>
-
-            {/* Status badge */}
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              padding: '4px 10px', borderRadius: 100,
-              background: cfg.bg, color: cfg.color,
-              fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700,
-              whiteSpace: 'nowrap',
-            }}>
-              <Icon size={12} style={{ flexShrink: 0 }} /> {cfg.label}
-            </span>
-
-            {/* Actions: non-envoye */}
-            {doc.statut === 'non-envoye' && (
-              <button
-                onClick={triggerPicker}
-                aria-label={`Téléverser ${doc.label}`}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '7px 14px', borderRadius: 100,
-                  border: 'none', background: 'var(--primary)',
-                  color: 'var(--primary-foreground)',
-                  fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 700,
-                  cursor: 'pointer', transition: 'opacity 0.15s',
-                  whiteSpace: 'nowrap',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-                onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-              >
-                <UploadCloud size={14} /> Téléverser
-              </button>
-            )}
-
-            {/* Actions: reçu / en-attente → remplaçable */}
-            {(doc.statut === 'recu' || doc.statut === 'en-attente') && (
-              <button
-                onClick={triggerPicker}
-                aria-label="Remplacer ce document"
-                style={actionBtn(true)}
-                onMouseEnter={e => { e.currentTarget.style.background = 'var(--secondary)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-              >
-                <RefreshCw size={13} /> Remplacer
-              </button>
-            )}
-            {/* valide → verrouillé, aucun bouton d'action */}
-
-            {/* Actions: uploading / analyse / traitement */}
-            {isProcessing && (
-              <button
-                onClick={() => onCancel(doc.id)}
-                aria-label="Annuler l'envoi"
-                style={actionBtn()}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(192,57,43,0.07)'; e.currentTarget.style.borderColor = 'var(--destructive)'; e.currentTarget.style.color = 'var(--destructive)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted-foreground)'; }}
-              >
-                <X size={13} /> Annuler
-              </button>
-            )}
-
-          </div>
-        </div>
-
-        {/* ── Upload progress bar ── */}
-        {isProcessing && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
-                {cfg.label}
-                {doc.uploadSizeLabel && ` · ${doc.uploadSizeLabel}`}
-              </span>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.8125rem', fontWeight: 700, color: cfg.color }}>
-                {doc.uploadPct ?? 0}%
-              </span>
-            </div>
-            <div style={{ height: 7, background: 'var(--muted)', borderRadius: 100, overflow: 'hidden' }}>
-              <div style={{
-                height: '100%',
-                width: `${doc.uploadPct ?? 0}%`,
-                background: 'linear-gradient(90deg, var(--primary) 0%, var(--chart-4) 100%)',
-                borderRadius: 100,
-                transition: 'width 0.12s linear',
-              }} />
-            </div>
-          </div>
-        )}
-
-        {/* ── Upload error ── */}
-        {doc.uploadError && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            padding: '8px 12px', borderRadius: 9,
-            background: 'rgba(192,57,43,0.07)', border: '1px solid rgba(192,57,43,0.18)',
-          }}>
-            <AlertTriangle size={13} style={{ color: 'var(--destructive)', flexShrink: 0 }} />
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--destructive)' }}>
-              {doc.uploadError}
-            </span>
-            <button
-              onClick={() => {/* clear error handled on next upload */}}
-              style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--destructive)', display: 'flex', padding: 2 }}
-            >
-              <X size={12} />
-            </button>
-          </div>
-        )}
-
-        {/* ── Motif du refus + renvoyer ── */}
-        {doc.motifRefus && doc.statut === 'refuse' && (
-          <>
-            <div style={{
-              background: 'rgba(192,57,43,0.05)',
-              border: '1px solid rgba(192,57,43,0.14)',
-              borderLeft: '3px solid var(--destructive)',
-              borderRadius: '0 10px 10px 0',
-              padding: '9px 14px',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
-                {doc.agentRefus && (
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.625rem', fontWeight: 700, color: 'var(--destructive)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    Motif du refus · {doc.agentRefus}
-                  </span>
-                )}
-                {!doc.agentRefus && (
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.625rem', fontWeight: 700, color: 'var(--destructive)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    Motif du refus
-                  </span>
-                )}
-              </div>
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--foreground)', lineHeight: 1.5 }}>
-                {doc.motifRefus}
-              </span>
-            </div>
-
-            {/* Prominent renvoyer button */}
-            <button
-              onClick={triggerPicker}
-              aria-label={`Renvoyer le document ${doc.label}`}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                padding: '10px 18px', borderRadius: 10, cursor: 'pointer',
-                border: '1.5px solid var(--destructive)', background: 'rgba(192,57,43,0.05)',
-                color: 'var(--destructive)',
-                fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700,
-                transition: 'all 0.15s', alignSelf: 'flex-start',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(192,57,43,0.1)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(192,57,43,0.05)'; e.currentTarget.style.transform = 'none'; }}
-            >
-              <RefreshCw size={15} /> Renvoyer le document
-            </button>
-          </>
-        )}
-
-        {/* ── Drop zone for non-envoye ── */}
-        {doc.statut === 'non-envoye' && (
-          <div
-            role="button"
-            tabIndex={0}
-            aria-label={`Déposer un fichier pour ${doc.label}`}
-            onClick={triggerPicker}
-            onKeyDown={e => e.key === 'Enter' && triggerPicker()}
-            onDragOver={e => { e.preventDefault(); setDragging(true); }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={handleDrop}
-            style={{
-              border: `2px dashed ${dragging ? 'var(--primary)' : 'rgba(26,58,110,0.2)'}`,
-              borderRadius: 10, padding: '14px 16px',
-              background: dragging ? 'rgba(26,58,110,0.04)' : 'transparent',
-              cursor: 'pointer', transition: 'all 0.18s',
-              display: 'flex', alignItems: 'center', gap: 12,
-            }}
-          >
-            <UploadCloud size={16} style={{ color: dragging ? 'var(--primary)' : 'var(--muted-foreground)', flexShrink: 0 }} />
-            <div>
-              <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', fontWeight: 500 }}>
-                Glisser-déposer ou{' '}
-                <span style={{ color: 'var(--primary)', fontWeight: 700 }}>choisir un fichier</span>
-              </div>
-              <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.7rem', color: 'var(--muted-foreground)', marginTop: 3 }}>
-                {doc.formats} — 10 Mo maximum
-              </div>
-            </div>
-          </div>
-        )}
-
-      </div>
-    </div>
-  );
-}
-
 // ── Toast ──────────────────────────────────────────────────────────
+interface ToastItem { id: number; type: 'success' | 'error' | 'info'; text: string }
+
 function ToastStack({ toasts }: { toasts: ToastItem[] }) {
   if (toasts.length === 0) return null;
   return (
@@ -591,189 +203,146 @@ function ToastStack({ toasts }: { toasts: ToastItem[] }) {
   );
 }
 
-// ── Btn ────────────────────────────────────────────────────────────
-function Btn({ label, icon, variant = 'ghost', onClick }: {
-  label: string; icon: React.ReactNode; variant?: 'primary' | 'outline' | 'ghost'; onClick?: () => void;
-}) {
-  const base: React.CSSProperties = variant === 'primary'
-    ? { background: 'var(--primary)', color: 'var(--primary-foreground)', border: 'none', boxShadow: '0 2px 8px rgba(26,58,110,0.25)' }
-    : variant === 'outline'
-    ? { background: 'transparent', color: 'var(--primary)', border: '1.5px solid var(--primary)' }
-    : { background: 'var(--secondary)', color: 'var(--foreground)', border: '1px solid var(--border)' };
+// ── Zone de dépôt inline (une pièce) ───────────────────────────────
+function InlineDepot({ label, onDeposit }: { label: string; onDeposit: (fileName: string) => void }) {
+  const [dragging, setDragging] = useState(false);
+  const [file, setFile] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [done, setDone] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const startUpload = (name: string) => {
+    setFile(name); setProgress(0); setDone(false);
+    let p = 0;
+    const iv = setInterval(() => {
+      p += Math.random() * 22 + 10;
+      if (p >= 100) { p = 100; clearInterval(iv); setDone(true); }
+      setProgress(Math.round(p));
+    }, 140);
+  };
+
+  const reset = () => { setFile(null); setProgress(0); setDone(false); };
+
+  if (!file) {
+    return (
+      <div
+        onDragOver={e => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={e => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) startUpload(f.name); }}
+        onClick={() => inputRef.current?.click()}
+        style={{ border: `2px dashed ${dragging ? 'var(--primary)' : 'var(--border)'}`, borderRadius: 12, padding: '18px 16px', textAlign: 'center', cursor: 'pointer', background: dragging ? 'var(--secondary)' : 'var(--muted)', transition: 'all 0.15s' }}
+      >
+        <FileUp size={22} style={{ color: 'var(--primary)', margin: '0 auto 6px', display: 'block' }} />
+        <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--foreground)' }}>Glissez votre fichier ici, ou cliquez pour parcourir</div>
+        <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: 2 }}>PDF, JPG ou PNG · 10 Mo maximum</div>
+        <input ref={inputRef} type="file" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) startUpload(f.name); }} />
+      </div>
+    );
+  }
+
   return (
-    <button
-      onClick={onClick}
-      style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: variant === 'primary' ? '11px 22px' : '10px 18px', borderRadius: variant === 'primary' ? 100 : 10, fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.18s', ...base }}
-      onMouseEnter={e => { const el = e.currentTarget; if (variant === 'primary') { el.style.transform = 'translateY(-1px)'; el.style.boxShadow = '0 4px 16px rgba(26,58,110,0.3)'; } if (variant === 'outline') el.style.background = 'var(--secondary)'; if (variant === 'ghost') el.style.background = 'var(--muted)'; }}
-      onMouseLeave={e => { const el = e.currentTarget; el.style.transform = 'none'; if (variant === 'primary') el.style.boxShadow = '0 2px 8px rgba(26,58,110,0.25)'; if (variant === 'outline') el.style.background = 'transparent'; if (variant === 'ghost') el.style.background = 'var(--secondary)'; }}
-    >
-      {icon} {label}
-    </button>
+    <div style={{ background: 'var(--muted)', borderRadius: 12, padding: '14px 16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+        <FileText size={18} style={{ color: 'var(--primary)', flexShrink: 0 }} />
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--foreground)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file}</span>
+        {done && <CheckCircle2 size={16} style={{ color: 'var(--success)', flexShrink: 0 }} />}
+      </div>
+      <div style={{ height: 6, background: 'var(--border)', borderRadius: 99, overflow: 'hidden' }}>
+        <div style={{ height: '100%', borderRadius: 99, background: done ? 'var(--success)' : 'var(--primary)', width: `${progress}%`, transition: 'width 0.2s ease, background 0.3s' }} />
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 12 }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>{done ? 'Chargement terminé' : `${progress}%`}</span>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={reset} style={{ padding: '7px 14px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'transparent', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted-foreground)', cursor: 'pointer' }}>Annuler</button>
+          <button disabled={!done} onClick={() => onDeposit(file)} style={{ padding: '7px 16px', borderRadius: 'var(--radius)', border: 'none', background: done ? 'var(--primary)' : 'var(--muted-foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, color: '#fff', cursor: done ? 'pointer' : 'not-allowed', opacity: done ? 1 : 0.5 }}>Valider le dépôt</button>
+        </div>
+      </div>
+      <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', color: 'var(--muted-foreground)', marginTop: 8 }}>Pièce : {label}</div>
+    </div>
   );
 }
 
 // ── Main ───────────────────────────────────────────────────────────
 export default function MaDemandePage({ user: _user }: Props) {
   const client = useClientData();
+  const { requisDocs, history, depositDoc } = useDocState();
   const { navigate } = useNavigate();
   const isNewClient = client.conseiller === 'Non assigné';
 
-  const DEMO_REF      = client.ref;
-  const DEMO_DATE     = client.dateOuverture;
+  const [demande, setDemande] = useState<DemandeState>(() => loadDemandeState(client, isNewClient));
+  const [isEditing, setIsEditing] = useState(!demande.submitted);
+  const [depotDocId, setDepotDocId] = useState<string | null>(null);
+  const lastClientId = useRef(client.id);
 
-  const timeline = isNewClient
-    ? [{
-        date: client.dateOuverture,
-        hour: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-        text: 'Compte créé — complétez votre dossier pour le soumettre.',
-        type: 'success',
-      }]
-    : TIMELINE;
-
-  const [isEditing, setIsEditing] = useState(false);
-  const [statut]    = useState<DemandStatut>(isNewClient ? 'brouillon' : 'en-cours');
-  const [docs, setDocs] = useState<DocItem[]>(isNewClient ? blankDocs() : DOCS_INITIAL);
-  const [toasts, setToasts]   = useState<ToastItem[]>([]);
-  const [highlighted, setHighlighted] = useState<string | null>(null);
-  const uploadTimers = useRef<Record<string, ReturnType<typeof setInterval>>>({});
-
-  const [form, setForm] = useState(isNewClient
-    ? {
-        typeProjet:    'financement',
-        natureProjet:  'acquisition',
-        montant:       '',
-        duree:         '15',
-        apport:        '',
-        region:        'Dakar',
-        commune:       '',
-        adresseProjet: '',
-        description:   '',
-      }
-    : {
-        typeProjet:    'financement',
-        natureProjet:  'acquisition',
-        montant:       '6 500 000',
-        duree:         '15',
-        apport:        '3 000 000',
-        region:        'Thiès',
-        commune:       client.adresse.split('(')[0].trim(),
-        adresseProjet: `Cité Résidentielle ${client.adresse.split('(')[0].trim()}, Lot 47`,
-        description:   `${client.projectNom} — terrain de 300 m², viabilisé. Construction prévue Q4 2026.`,
-      });
-
-  const set = (k: keyof typeof form) => (v: string) => setForm(f => ({ ...f, [k]: v }));
-  const sc  = STATUT_CONFIG[statut];
-
-  // Toast helper
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
   const addToast = useCallback((type: ToastItem['type'], text: string) => {
     const id = Date.now();
     setToasts(p => [...p, { id, type, text }]);
     setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 4000);
   }, []);
 
-  // Highlight a doc card briefly
-  const highlightDoc = useCallback((id: string) => {
-    const el = document.getElementById(`doc-${id}`);
-    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setHighlighted(id);
-    setTimeout(() => setHighlighted(null), 2500);
-  }, []);
-
-  // Cancel upload
-  const handleCancel = useCallback((id: string) => {
-    clearInterval(uploadTimers.current[id]);
-    delete uploadTimers.current[id];
-    setDocs(p => p.map(d => d.id === id
-      ? { ...d, statut: 'non-envoye', uploadFilename: undefined, uploadSizeLabel: undefined, uploadPct: undefined }
-      : d));
-    addToast('info', 'Envoi annulé');
-  }, [addToast]);
-
-  // Handle file selected — validate + simulate upload stages
-  const handleUpload = useCallback((id: string, file: File) => {
-    const err = validateFile(file);
-    if (err) {
-      setDocs(p => p.map(d => d.id === id ? { ...d, uploadError: err } : d));
-      addToast('error', err);
-      return;
+  // Recharger l'état si l'agent change de client sélectionné
+  useEffect(() => {
+    if (lastClientId.current !== client.id) {
+      lastClientId.current = client.id;
+      const fresh = loadDemandeState(client, isNewClient);
+      setDemande(fresh);
+      setIsEditing(!fresh.submitted);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [client.id]);
 
-    const sl = sizeLabel(file.size);
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY(client.id), JSON.stringify(demande)); } catch {}
+  }, [demande, client.id]);
 
-    // Clear previous error, start upload
-    setDocs(p => p.map(d => d.id === id
-      ? { ...d, statut: 'uploading', uploadFilename: file.name, uploadSizeLabel: sl, uploadPct: 0, uploadError: undefined }
-      : d));
+  const set = (k: keyof DemandeForm) => (v: string) => setDemande(d => ({ ...d, form: { ...d.form, [k]: v } }));
+  const form = demande.form;
 
-    let pct = 0;
-    const iv = setInterval(() => {
-      pct = Math.min(100, pct + Math.random() * 16 + 8);
-      const rounded = Math.round(pct);
-      setDocs(p => p.map(d => d.id === id ? { ...d, uploadPct: rounded } : d));
+  const canSubmit = form.montant.trim() !== '' && form.commune.trim() !== '' && form.adresseProjet.trim() !== '';
 
-      if (rounded >= 100) {
-        clearInterval(iv);
-        delete uploadTimers.current[id];
+  const handleSubmitDemande = () => {
+    if (!canSubmit) return;
+    const submittedAt = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+    setDemande(d => ({ ...d, submitted: true, submittedAt }));
+    setIsEditing(false);
+    addToast('success', 'Demande envoyée — votre conseiller CPI va l\'étudier.');
+  };
 
-        // Analyse stage
-        setDocs(p => p.map(d => d.id === id ? { ...d, statut: 'analyse', uploadPct: 100 } : d));
+  const handleDepot = (docId: string, fileName: string) => {
+    depositDoc(docId, fileName);
+    setDepotDocId(null);
+    addToast('success', 'Document déposé — votre conseiller CPI va l\'analyser.');
+  };
 
-        setTimeout(() => {
-          // Traitement stage
-          setDocs(p => p.map(d => d.id === id ? { ...d, statut: 'traitement' } : d));
+  const validDocs   = requisDocs.filter(d => d.status === 'accepte').length;
+  const totalDocs   = requisDocs.length;
+  const hasDocIssue = requisDocs.some(d => d.status === 'refuse' || d.status === 'a-remplacer');
 
-          setTimeout(() => {
-            // Final: en-attente
-            const today = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
-            setDocs(p => p.map(d => d.id === id
-              ? {
-                  ...d, statut: 'en-attente',
-                  taille: sl, dateEnvoi: today,
-                  motifRefus: undefined, agentRefus: undefined,
-                  uploadFilename: undefined, uploadSizeLabel: undefined, uploadPct: undefined,
-                  version: d.version + 1,
-                }
-              : d));
-            addToast('success', 'Document envoyé · En attente de validation');
-          }, 700);
-        }, 600);
-      }
-    }, 110);
+  const statut: DemandStatut = !demande.submitted
+    ? 'brouillon'
+    : hasDocIssue
+    ? 'incomplete'
+    : (totalDocs > 0 && validDocs === totalDocs)
+    ? 'validee'
+    : 'en-cours';
+  const sc = STATUT_CONFIG[statut];
 
-    uploadTimers.current[id] = iv;
-  }, [addToast]);
+  const progressPct = !demande.submitted
+    ? 10
+    : Math.round(20 + (totalDocs > 0 ? (validDocs / totalDocs) * 80 : 0));
 
-  // Computed doc stats
-  const valides   = docs.filter(d => d.statut === 'valide').length;
-  const enAttente = docs.filter(d => ['en-attente', 'uploading', 'analyse', 'traitement'].includes(d.statut)).length;
-  const refuses   = docs.filter(d => d.statut === 'refuse').length;
-  const manquants = docs.filter(d => d.statut === 'non-envoye').length;
+  const DEMO_REF  = client.ref;
+  const DEMO_DATE = demande.submittedAt ?? client.dateOuverture;
 
-  // Send eligibility — all obligatoire docs must be valide
-  const canSend = docs.filter(d => d.obligatoire).every(d => d.statut === 'valide');
-  const dossierComplet = canSend;
-
-  const sendBlockReason = refuses > 0
-    ? `Envoi bloqué : ${refuses} document${refuses > 1 ? 's' : ''} refusé${refuses > 1 ? 's' : ''} à renvoyer.`
-    : manquants > 0
-    ? `Envoi bloqué : ${manquants} document${manquants > 1 ? 's' : ''} obligatoire${manquants > 1 ? 's' : ''} manquant${manquants > 1 ? 's' : ''}.`
-    : enAttente > 0
-    ? 'Envoi bloqué : des documents sont en attente de validation par CPI.'
-    : null;
-
-  // Dynamic progress (0-100)
-  const progressPct = Math.round(
-    (docs.filter(d => ['en-attente', 'valide'].includes(d.statut)).length / docs.length) * 60 +
-    (valides / docs.length) * 20 +
-    20 // form exists
-  );
+  const recentHistory = history.slice(0, 6);
 
   const GRID2: React.CSSProperties = {
     display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '18px 22px',
   };
 
   return (
-    <div style={{ fontFamily: 'var(--font-sans)', color: 'var(--foreground)', maxWidth: 860, margin: '0 auto', padding: '0 0 64px' }}>
+    <div style={{ fontFamily: 'var(--font-sans)', color: 'var(--foreground)', width: '100%', padding: '0 0 64px' }}>
 
       <style>{`@keyframes slideInToast { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }`}</style>
 
@@ -792,7 +361,7 @@ export default function MaDemandePage({ user: _user }: Props) {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>
-                <Hash size={12} /> {DEMO_REF}
+                <Hash size={12} /> {demande.submitted ? DEMO_REF : '—'}
               </span>
               <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--border)', display: 'inline-block' }} />
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>
@@ -801,26 +370,37 @@ export default function MaDemandePage({ user: _user }: Props) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {isEditing ? (
-              <>
-                <button onClick={() => setIsEditing(false)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 10, border: '1.5px solid var(--border)', background: 'transparent', color: 'var(--muted-foreground)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600, transition: 'all 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--muted)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                  <X size={14} /> Annuler
+          {demande.submitted && (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {isEditing ? (
+                <>
+                  <button onClick={() => { setIsEditing(false); setDemande(d => ({ ...d, form: loadDemandeState(client, isNewClient).form })); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 10, border: '1.5px solid var(--border)', background: 'transparent', color: 'var(--muted-foreground)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600 }}>
+                    <X size={14} /> Annuler
+                  </button>
+                  <button onClick={() => { setIsEditing(false); addToast('success', 'Modifications enregistrées'); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 20px', borderRadius: 100, border: 'none', background: 'var(--primary)', color: 'var(--primary-foreground)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700, boxShadow: '0 2px 8px rgba(26,58,110,0.25)' }}>
+                    <Save size={14} /> Enregistrer
+                  </button>
+                </>
+              ) : (
+                <button onClick={() => setIsEditing(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 18px', borderRadius: 10, border: '1.5px solid var(--primary)', background: 'transparent', color: 'var(--primary)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700 }}>
+                  <Edit3 size={14} /> Modifier la demande
                 </button>
-                <button onClick={() => { setIsEditing(false); addToast('success', 'Modifications enregistrées'); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 20px', borderRadius: 100, border: 'none', background: 'var(--primary)', color: 'var(--primary-foreground)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700, boxShadow: '0 2px 8px rgba(26,58,110,0.25)', transition: 'all 0.18s' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(26,58,110,0.3)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(26,58,110,0.25)'; }}>
-                  <Save size={14} /> Enregistrer
-                </button>
-              </>
-            ) : (
-              <button onClick={() => setIsEditing(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 18px', borderRadius: 10, border: '1.5px solid var(--primary)', background: 'transparent', color: 'var(--primary)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700, transition: 'all 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--secondary)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                <Edit3 size={14} /> Modifier la demande
-              </button>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
 
+        {!demande.submitted && (
+          <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', background: 'rgba(26,58,110,0.05)', border: '1px solid rgba(26,58,110,0.12)', borderRadius: 12 }}>
+            <AlertCircle size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>
+              Remplissez les informations de votre projet ci-dessous, puis envoyez votre demande pour qu'elle soit étudiée par votre conseiller.
+            </span>
+          </div>
+        )}
+
         {/* Progress */}
-        <div style={{ marginTop: 28, background: 'var(--card)', border: CARD_BORDER, borderRadius: 16, padding: '18px 22px', boxShadow: CARD_SHADOW }}>
+        <div style={{ marginTop: 20, background: 'var(--card)', border: CARD_BORDER, borderRadius: 16, padding: '18px 22px', boxShadow: CARD_SHADOW }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 500, color: 'var(--muted-foreground)' }}>
               Avancement global de la demande
@@ -832,29 +412,18 @@ export default function MaDemandePage({ user: _user }: Props) {
           <div style={{ height: 10, background: 'var(--muted)', borderRadius: 100, overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${progressPct}%`, background: 'linear-gradient(90deg, var(--primary) 0%, var(--chart-4) 100%)', borderRadius: 100, transition: 'width 1.2s cubic-bezier(0.22,1,0.36,1)' }} />
           </div>
-          {/* Enriched doc counters */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-            {valides > 0 && (
+          {demande.submitted && totalDocs > 0 && (
+            <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
               <span style={{ padding: '3px 11px', borderRadius: 100, background: 'rgba(26,107,68,0.1)', color: 'var(--success)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600 }}>
-                {valides} validé{valides > 1 ? 's' : ''}
+                {validDocs}/{totalDocs} document{totalDocs > 1 ? 's' : ''} validé{validDocs > 1 ? 's' : ''}
               </span>
-            )}
-            {enAttente > 0 && (
-              <span style={{ padding: '3px 11px', borderRadius: 100, background: 'rgba(200,146,26,0.1)', color: 'var(--accent)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600 }}>
-                {enAttente} en attente
-              </span>
-            )}
-            {refuses > 0 && (
-              <span style={{ padding: '3px 11px', borderRadius: 100, background: 'rgba(192,57,43,0.1)', color: 'var(--destructive)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600 }}>
-                {refuses} refusé{refuses > 1 ? 's' : ''}
-              </span>
-            )}
-            {manquants > 0 && (
-              <span style={{ padding: '3px 11px', borderRadius: 100, background: 'var(--muted)', color: 'var(--muted-foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600 }}>
-                {manquants} manquant{manquants > 1 ? 's' : ''}
-              </span>
-            )}
-          </div>
+              {hasDocIssue && (
+                <span style={{ padding: '3px 11px', borderRadius: 100, background: 'rgba(192,57,43,0.1)', color: 'var(--destructive)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600 }}>
+                  Action requise sur un document
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -862,7 +431,7 @@ export default function MaDemandePage({ user: _user }: Props) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         {/* 1 — Projet immobilier */}
-        <SectionCard title="Projet immobilier" icon={<Building2 size={18} />} collapsible iconBg="rgba(26,58,110,0.08)" accent="var(--primary)">
+        <SectionCard title="Projet immobilier" icon={<Building2 size={18} />} iconBg="rgba(26,58,110,0.08)" accent="var(--primary)">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 22, paddingTop: 4 }}>
             <div style={GRID2}>
               <FieldGroup label="Type de demande">
@@ -901,7 +470,7 @@ export default function MaDemandePage({ user: _user }: Props) {
                   />
                 </FieldGroup>
                 <FieldGroup label="Commune / Ville">
-                  <FInput value={form.commune} onChange={set('commune')} placeholder="Ex. Ngolfagnick" disabled={!isEditing} />
+                  <FInput value={form.commune} onChange={set('commune')} placeholder="Votre commune" disabled={!isEditing} />
                 </FieldGroup>
                 <FieldGroup label="Adresse ou localisation">
                   <FInput value={form.adresseProjet} onChange={set('adresseProjet')} placeholder="Ex. Lot 47…" disabled={!isEditing} />
@@ -916,32 +485,64 @@ export default function MaDemandePage({ user: _user }: Props) {
           </div>
         </SectionCard>
 
-        {/* 2 — Documents requis */}
-        <SectionCard title="Documents requis" icon={<Upload size={18} />} iconBg="rgba(200,146,26,0.1)" accent="var(--accent)">
-          {/* Counter row */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, marginTop: 4, flexWrap: 'wrap', gap: 8 }}>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>
-              {docs.length} document{docs.length > 1 ? 's' : ''} requis
-              {valides > 0 && ` · ${valides} validé${valides > 1 ? 's' : ''}`}
-              {manquants > 0 && ` · ${manquants} manquant${manquants > 1 ? 's' : ''}`}
-            </span>
-            {refuses > 0 && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 12px', borderRadius: 100, background: 'rgba(192,57,43,0.09)', color: 'var(--destructive)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700 }}>
-                <XCircle size={12} strokeWidth={2.5} /> {refuses} document{refuses > 1 ? 's' : ''} à renvoyer
-              </span>
-            )}
+        {/* Bandeau d'envoi — bouton principal, après le formulaire */}
+        {!demande.submitted && (
+          <div style={{ background: 'var(--card)', border: CARD_BORDER, borderRadius: CARD_RADIUS, boxShadow: CARD_SHADOW, padding: '22px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 18, flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: 240 }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--foreground)' }}>Prêt à envoyer votre demande ?</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 4 }}>
+                {!canSubmit && <AlertCircle size={13} style={{ color: 'var(--accent)', flexShrink: 0 }} />}
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', lineHeight: 1.5 }}>
+                  {canSubmit
+                    ? 'Votre conseiller CPI étudiera votre projet dès réception.'
+                    : 'Renseignez le montant, la commune et l\'adresse du projet pour pouvoir envoyer.'}
+                </span>
+              </div>
+            </div>
+            <button onClick={handleSubmitDemande} disabled={!canSubmit}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '13px 28px', borderRadius: 100, border: 'none', background: canSubmit ? 'var(--primary)' : 'var(--muted)', color: canSubmit ? 'var(--primary-foreground)' : 'var(--muted-foreground)', cursor: canSubmit ? 'pointer' : 'not-allowed', fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', fontWeight: 700, boxShadow: canSubmit ? '0 4px 14px rgba(26,58,110,0.28)' : 'none', whiteSpace: 'nowrap' }}>
+              <Send size={16} /> Envoyer ma demande
+            </button>
           </div>
+        )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {docs.map(doc => (
-              <DocCard
-                key={doc.id}
-                doc={doc}
-                onUpload={handleUpload}
-                onCancel={handleCancel}
-                highlighted={highlighted === doc.id}
-              />
-            ))}
+        {/* 2 — Documents requis — dépôt directement ici */}
+        <SectionCard title="Documents requis" icon={<FolderOpen size={18} />} iconBg="rgba(200,146,26,0.1)" accent="var(--accent)">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 4 }}>
+            <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', margin: '0 0 4px', lineHeight: 1.6 }}>
+              Déposez ici les pièces nécessaires à l'étude de votre dossier. Votre conseiller CPI les vérifie une à une — vous suivez leur validation dans « Mon dossier ».
+            </p>
+            {requisDocs.map(doc => {
+              const cfg = DOC_STATUS_CFG[doc.status];
+              const needsDepot = doc.status === 'en-attente' || doc.status === 'refuse' || doc.status === 'a-remplacer';
+              const isOpen = depotDocId === doc.id;
+              return (
+                <div key={doc.id} style={{ border: `1px solid ${needsDepot ? 'rgba(192,57,43,0.16)' : 'var(--border)'}`, borderRadius: 12, overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: 200 }}>
+                      <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600, color: 'var(--foreground)' }}>{doc.label}</div>
+                      <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: 2 }}>{DOC_DESCRIPTIONS[doc.id] ?? ''}</div>
+                      {doc.commentaire && (doc.status === 'refuse' || doc.status === 'a-remplacer') && (
+                        <div style={{ marginTop: 5, fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--destructive)', fontStyle: 'italic' }}>"{doc.commentaire}"</div>
+                      )}
+                    </div>
+                    <span style={{ padding: '4px 11px', borderRadius: 100, background: cfg.bg, color: cfg.color, fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, whiteSpace: 'nowrap' }}>{cfg.label}</span>
+                    {needsDepot && !isOpen && (
+                      <button onClick={() => setDepotDocId(doc.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: 'none', background: 'var(--primary)', color: '#fff', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                        <FileUp size={13} /> {doc.status === 'a-remplacer' || doc.status === 'refuse' ? 'Remplacer' : 'Déposer'}
+                      </button>
+                    )}
+                  </div>
+                  {needsDepot && isOpen && (
+                    <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--border)' }}>
+                      <div style={{ paddingTop: 14 }}>
+                        <InlineDepot label={doc.label} onDeposit={name => handleDepot(doc.id, name)} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </SectionCard>
 
@@ -959,7 +560,7 @@ export default function MaDemandePage({ user: _user }: Props) {
             <div style={{ padding: '8px 28px 24px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border)', borderRadius: 12, overflow: 'hidden', margin: '16px 0' }}>
                 {[
-                  { label: 'Montant demandé', value: form.montant, sub: 'FCFA', icon: <Banknote size={14} />, color: 'var(--primary)' },
+                  { label: 'Montant demandé', value: form.montant || '—', sub: 'FCFA', icon: <Banknote size={14} />, color: 'var(--primary)' },
                   { label: 'Durée', value: form.duree, sub: 'ans', icon: <Timer size={14} />, color: 'var(--accent)' },
                 ].map(item => (
                   <div key={item.label} style={{ background: 'var(--card)', padding: '14px 16px' }}>
@@ -974,12 +575,12 @@ export default function MaDemandePage({ user: _user }: Props) {
                 ))}
               </div>
               {[
-                { label: 'Référence',        value: DEMO_REF,                                              icon: <Hash size={13} /> },
-                { label: 'Date de dépôt',    value: DEMO_DATE,                                             icon: <Calendar size={13} /> },
+                { label: 'Référence',        value: demande.submitted ? DEMO_REF : '—',                    icon: <Hash size={13} /> },
+                { label: demande.submitted ? 'Date de dépôt' : 'Compte créé le', value: DEMO_DATE,           icon: <Calendar size={13} /> },
                 { label: 'Nature du projet', value: NATURE_LABELS[form.natureProjet] ?? form.natureProjet,  icon: <Building2 size={13} /> },
-                { label: 'Apport personnel', value: `${form.apport} FCFA`,                                  icon: <Banknote size={13} /> },
-                { label: 'Agence',           value: 'CPI Immobilier — Dakar',                               icon: <MapPin size={13} /> },
-                { label: 'Conseillère',      value: client.conseiller,                                       icon: <User2 size={13} /> },
+                { label: 'Apport personnel', value: `${form.apport || '0'} FCFA`,                             icon: <Banknote size={13} /> },
+                { label: 'Agence',           value: 'CPI Immobilier — Dakar',                                icon: <MapPin size={13} /> },
+                { label: 'Conseiller',       value: client.conseiller === 'Non assigné' ? '— (à assigner)' : client.conseiller, icon: <User2 size={13} /> },
               ].map((row, i, arr) => (
                 <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: i < arr.length - 1 ? '1px solid rgba(26,58,110,0.06)' : 'none', gap: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7, color: 'var(--muted-foreground)' }}>
@@ -998,7 +599,7 @@ export default function MaDemandePage({ user: _user }: Props) {
             </div>
           </div>
 
-          {/* Historique */}
+          {/* Historique (réel — actions de votre conseiller CPI) */}
           <div style={{ background: 'var(--card)', border: CARD_BORDER, borderRadius: CARD_RADIUS, overflow: 'hidden', boxShadow: CARD_SHADOW }}>
             <div style={{ padding: SECTION_PAD, borderBottom: '1px solid rgba(26,58,110,0.06)', display: 'flex', alignItems: 'center', gap: 14 }}>
               <div style={{ width: 38, height: 38, borderRadius: 12, background: 'rgba(200,146,26,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)' }}>
@@ -1007,31 +608,30 @@ export default function MaDemandePage({ user: _user }: Props) {
               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>Historique de traitement</h3>
             </div>
             <div style={{ padding: '20px 28px 24px' }}>
-              {timeline.map((ev, i) => {
-                const color = ev.type === 'success' ? 'var(--success)' : ev.type === 'warning' ? 'var(--destructive)' : 'var(--muted-foreground)';
-                const bg    = ev.type === 'success' ? 'rgba(26,107,68,0.12)' : ev.type === 'warning' ? 'rgba(192,57,43,0.1)' : 'var(--muted)';
-                const bdr   = ev.type === 'success' ? 'rgba(26,107,68,0.2)' : ev.type === 'warning' ? 'rgba(192,57,43,0.2)' : 'var(--border)';
-                const Icon  = ev.type === 'success' ? CheckCircle2 : ev.type === 'warning' ? AlertCircle : Clock;
-                const isPending = ev.type === 'pending';
+              {recentHistory.length === 0 ? (
+                <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', margin: 0 }}>
+                  Aucune action pour le moment. Les validations de votre conseiller apparaîtront ici.
+                </p>
+              ) : recentHistory.map((ev, i) => {
+                const Icon = HISTO_ICON[ev.type] ?? FileText;
+                const color = HISTO_COLOR[ev.type] ?? 'var(--muted-foreground)';
                 return (
-                  <div key={i} style={{ display: 'flex', gap: 16, opacity: isPending ? 0.5 : 1 }}>
+                  <div key={ev.id} style={{ display: 'flex', gap: 16 }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
-                      <div style={{ width: 36, height: 36, borderRadius: '50%', background: bg, border: `1.5px solid ${bdr}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color, flexShrink: 0 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--secondary)', border: `1.5px solid ${color}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', color, flexShrink: 0 }}>
                         <Icon size={16} />
                       </div>
-                      {i < timeline.length - 1 && (
-                        <div style={{ width: 1.5, flex: 1, minHeight: 16, background: i < timeline.length - 2 ? 'var(--border)' : 'linear-gradient(to bottom, var(--border), transparent)', marginTop: 4 }} />
+                      {i < recentHistory.length - 1 && (
+                        <div style={{ width: 1.5, flex: 1, minHeight: 16, background: 'var(--border)', marginTop: 4 }} />
                       )}
                     </div>
-                    <div style={{ paddingBottom: i < timeline.length - 1 ? 22 : 0, flex: 1, minWidth: 0, paddingTop: 4 }}>
-                      <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9rem', fontWeight: isPending ? 400 : 500, color: isPending ? 'var(--muted-foreground)' : 'var(--foreground)', lineHeight: 1.4, fontStyle: isPending ? 'italic' : 'normal' }}>
-                        {ev.text}
+                    <div style={{ paddingBottom: i < recentHistory.length - 1 ? 22 : 0, flex: 1, minWidth: 0, paddingTop: 4 }}>
+                      <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9rem', fontWeight: 500, color: 'var(--foreground)', lineHeight: 1.4 }}>
+                        {ev.action}
                       </div>
-                      {!isPending && (
-                        <span style={{ display: 'inline-block', marginTop: 5, padding: '2px 8px', borderRadius: 6, background: 'var(--secondary)', fontFamily: 'var(--font-sans)', fontSize: '0.7rem', color: 'var(--muted-foreground)', fontWeight: 500 }}>
-                          {ev.date} · {ev.hour}
-                        </span>
-                      )}
+                      <span style={{ display: 'inline-block', marginTop: 5, padding: '2px 8px', borderRadius: 6, background: 'var(--secondary)', fontFamily: 'var(--font-sans)', fontSize: '0.7rem', color: 'var(--muted-foreground)', fontWeight: 500 }}>
+                        {ev.date} · {ev.heure}
+                      </span>
                     </div>
                   </div>
                 );
@@ -1042,190 +642,76 @@ export default function MaDemandePage({ user: _user }: Props) {
 
         {/* 4 — Actions disponibles */}
         <div style={{ background: 'var(--card)', border: CARD_BORDER, borderRadius: CARD_RADIUS, overflow: 'hidden', boxShadow: CARD_SHADOW }}>
-          <div style={{ padding: '20px 28px', borderBottom: '1px solid rgba(26,58,110,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Send size={15} style={{ color: 'var(--primary)' }} />
-              </div>
-              <div>
-                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0, lineHeight: 1.2 }}>Actions disponibles</h3>
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>Réf. {client.ref}</span>
-              </div>
+          <div style={{ padding: '20px 28px', borderBottom: '1px solid rgba(26,58,110,0.07)', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Send size={15} style={{ color: 'var(--primary)' }} />
             </div>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: 99, background: 'var(--secondary)', color: 'var(--primary)' }}>
-              5 actions
-            </span>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>Actions disponibles</h3>
           </div>
 
           <div style={{ padding: '8px 0' }}>
-
-            {/* ── A. Envoyer la demande — état conditionnel ── */}
-            <div style={{ borderBottom: '1px solid rgba(26,58,110,0.06)' }}>
-              <button
-                onClick={canSend ? () => addToast('success', 'Demande envoyée pour étude.') : undefined}
-                disabled={!canSend}
-                aria-disabled={!canSend}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 14,
-                  width: '100%', padding: '13px 28px',
-                  background: 'transparent', border: 'none',
-                  cursor: canSend ? 'pointer' : 'not-allowed',
-                  textAlign: 'left', transition: 'background 0.14s',
-                  opacity: canSend ? 1 : 0.6,
-                }}
-                onMouseEnter={e => { if (canSend) e.currentTarget.style.background = 'var(--secondary)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-              >
-                <div style={{ width: 38, height: 38, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: canSend ? 'var(--primary)' : 'var(--muted)' }}>
-                  <Send size={16} style={{ color: canSend ? '#fff' : 'var(--muted-foreground)' }} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9rem', fontWeight: 600, color: canSend ? 'var(--primary)' : 'var(--muted-foreground)', marginBottom: 2 }}>
-                    Envoyer la demande
-                  </div>
-                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: canSend ? 'var(--muted-foreground)' : 'var(--destructive)', lineHeight: 1.4 }}>
-                    {canSend ? 'Soumettre le dossier complet pour étude' : sendBlockReason}
-                  </div>
-                </div>
-                {canSend && <ArrowRight size={14} style={{ color: 'var(--muted-foreground)', flexShrink: 0, opacity: 0.5 }} />}
-              </button>
-            </div>
-
-            {/* ── B. Modifier la demande ── */}
-            <button
-              onClick={() => setIsEditing(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%', padding: '13px 28px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(26,58,110,0.06)', cursor: 'pointer', textAlign: 'left', transition: 'background 0.14s' }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--secondary)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-            >
-              <div style={{ width: 38, height: 38, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(26,58,110,0.07)', border: '1px solid rgba(26,58,110,0.15)' }}>
-                <Edit3 size={16} style={{ color: 'var(--primary)' }} />
+            <button onClick={() => navigate('mon-dossier')} style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%', padding: '13px 28px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(26,58,110,0.06)', cursor: 'pointer', textAlign: 'left' }}>
+              <div style={{ width: 38, height: 38, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(200,146,26,0.12)', border: '1px solid rgba(200,146,26,0.2)' }}>
+                <FolderOpen size={16} style={{ color: 'var(--accent)' }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9rem', fontWeight: 600, color: 'var(--foreground)', marginBottom: 1 }}>Modifier la demande</div>
-                <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', lineHeight: 1.4 }}>Corriger ou mettre à jour les informations du projet</div>
+                <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9rem', fontWeight: 600, color: 'var(--foreground)', marginBottom: 1 }}>Suivre mon dossier</div>
+                <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>Consulter l'état de vos pièces et vos documents CPI</div>
               </div>
               <ArrowRight size={14} style={{ color: 'var(--muted-foreground)', flexShrink: 0, opacity: 0.5 }} />
             </button>
 
-            {/* ── C. Compléter les informations / Dossier complet ── */}
-            {dossierComplet ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 28px', borderBottom: '1px solid rgba(26,58,110,0.06)' }}>
-                <div style={{ width: 38, height: 38, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(26,107,68,0.1)' }}>
-                  <CheckCircle2 size={16} style={{ color: 'var(--success)' }} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9rem', fontWeight: 600, color: 'var(--success)', marginBottom: 1 }}>Dossier complet</div>
-                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', lineHeight: 1.4 }}>Tous les documents obligatoires sont validés</div>
-                </div>
-                <span style={{ padding: '3px 10px', borderRadius: 99, background: 'rgba(26,107,68,0.1)', color: 'var(--success)', fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, flexShrink: 0 }}>
-                  ✓ Complet
-                </span>
-              </div>
-            ) : (
-              <button
-                onClick={() => { const d = docs.find(x => x.statut === 'refuse' || x.statut === 'non-envoye'); if (d) highlightDoc(d.id); else addToast('success', 'Aucun élément manquant détecté'); }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 14,
-                  width: '100%', padding: '13px 28px',
-                  background: (refuses > 0 || manquants > 0) ? 'rgba(200,146,26,0.04)' : 'transparent',
-                  border: 'none', borderBottom: '1px solid rgba(26,58,110,0.06)',
-                  cursor: 'pointer', textAlign: 'left', transition: 'background 0.14s',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.background = (refuses > 0 || manquants > 0) ? 'rgba(200,146,26,0.08)' : 'var(--secondary)')}
-                onMouseLeave={e => (e.currentTarget.style.background = (refuses > 0 || manquants > 0) ? 'rgba(200,146,26,0.04)' : 'transparent')}
-              >
-                <div style={{ width: 38, height: 38, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(200,146,26,0.12)', border: '1px solid rgba(200,146,26,0.2)' }}>
-                  <Upload size={16} style={{ color: 'var(--accent)' }} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 2, flexWrap: 'wrap' }}>
-                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9rem', fontWeight: 600, color: 'var(--foreground)' }}>Compléter les informations</span>
-                    {(refuses > 0 || manquants > 0) && (
-                      <span style={{ padding: '2px 7px', borderRadius: 99, background: 'rgba(200,146,26,0.14)', color: 'var(--accent)', fontFamily: 'var(--font-sans)', fontSize: '0.625rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                        Action requise
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: refuses > 0 ? 'var(--accent)' : 'var(--muted-foreground)', lineHeight: 1.4 }}>
-                    {refuses > 0
-                      ? `${refuses} document${refuses > 1 ? 's' : ''} refusé${refuses > 1 ? 's' : ''} — cliquez pour y accéder directement`
-                      : manquants > 0
-                      ? `${manquants} document${manquants > 1 ? 's' : ''} manquant${manquants > 1 ? 's' : ''} — cliquez pour compléter`
-                      : 'Vérifier les éléments du dossier'}
-                  </div>
-                </div>
-                <ArrowRight size={14} style={{ color: 'var(--accent)', flexShrink: 0, opacity: 0.7 }} />
-              </button>
-            )}
-
-            {/* ── D. Télécharger le récapitulatif ── */}
             <button
-              onClick={() => { addToast('info', 'Génération du PDF en cours…'); setTimeout(() => addToast('success', 'Récapitulatif téléchargé avec succès'), 2000); }}
-              style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%', padding: '13px 28px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(26,58,110,0.06)', cursor: 'pointer', textAlign: 'left', transition: 'background 0.14s' }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--secondary)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              onClick={() => { addToast('info', 'Génération du PDF en cours…'); setTimeout(() => addToast('success', 'Récapitulatif téléchargé avec succès'), 1600); }}
+              style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%', padding: '13px 28px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(26,58,110,0.06)', cursor: 'pointer', textAlign: 'left' }}
             >
               <div style={{ width: 38, height: 38, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--secondary)' }}>
                 <Printer size={16} style={{ color: 'var(--primary)' }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9rem', fontWeight: 600, color: 'var(--foreground)', marginBottom: 1 }}>Télécharger le récapitulatif</div>
-                <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', lineHeight: 1.4 }}>Exporter le résumé complet de votre demande en PDF</div>
+                <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>Exporter le résumé complet de votre demande en PDF</div>
               </div>
               <ArrowRight size={14} style={{ color: 'var(--muted-foreground)', flexShrink: 0, opacity: 0.5 }} />
             </button>
 
-            {/* ── E. Contacter mon conseiller ── */}
-            <button
-              onClick={() => navigate('support')}
-              style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%', padding: '13px 28px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'background 0.14s' }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--secondary)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-            >
+            <button onClick={() => navigate('support')} style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%', padding: '13px 28px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
               <div style={{ width: 38, height: 38, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--secondary)' }}>
                 <MessageSquare size={16} style={{ color: 'var(--primary)' }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9rem', fontWeight: 600, color: 'var(--foreground)', marginBottom: 1 }}>Contacter mon conseiller</div>
-                <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', lineHeight: 1.4 }}>Envoyer un message direct à {client.conseiller}</div>
+                <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>{client.conseiller === 'Non assigné' ? 'Envoyer un message au support CPI' : `Envoyer un message direct à ${client.conseiller}`}</div>
               </div>
               <ArrowRight size={14} style={{ color: 'var(--muted-foreground)', flexShrink: 0, opacity: 0.5 }} />
             </button>
-
           </div>
 
           {/* ── Bandeau bas — contextuel ── */}
-          {dossierComplet ? (
-            <div style={{ margin: '0 20px 20px', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'rgba(26,107,68,0.07)', border: '1px solid rgba(26,107,68,0.18)', borderRadius: 12 }}>
-              <CheckCircle2 size={15} style={{ color: 'var(--success)', flexShrink: 0 }} />
-              <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', margin: 0, lineHeight: 1.6 }}>
-                <strong style={{ color: 'var(--success)', fontWeight: 700 }}>Dossier complet.</strong> Tous les documents obligatoires sont validés — vous pouvez envoyer votre demande.
-              </p>
-            </div>
-          ) : refuses > 0 ? (
-            <div style={{ margin: '0 20px 20px', display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px', background: 'rgba(192,57,43,0.06)', border: '1px solid rgba(192,57,43,0.18)', borderRadius: 12 }}>
-              <AlertTriangle size={15} style={{ color: 'var(--destructive)', flexShrink: 0, marginTop: 1 }} />
-              <div style={{ flex: 1 }}>
-                <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', margin: '0 0 5px', lineHeight: 1.65 }}>
-                  <strong style={{ color: 'var(--destructive)', fontWeight: 700 }}>Action requise</strong> — {refuses} document{refuses > 1 ? 's' : ''} refusé{refuses > 1 ? 's' : ''}. L'envoi reste bloqué jusqu'au renvoi et à la validation.
+          {demande.submitted && (
+            statut === 'validee' ? (
+              <div style={{ margin: '0 20px 20px', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'rgba(26,107,68,0.07)', border: '1px solid rgba(26,107,68,0.18)', borderRadius: 12 }}>
+                <CheckCircle2 size={15} style={{ color: 'var(--success)', flexShrink: 0 }} />
+                <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', margin: 0, lineHeight: 1.6 }}>
+                  <strong style={{ color: 'var(--success)', fontWeight: 700 }}>Dossier complet.</strong> Tous les documents obligatoires ont été validés par votre conseiller.
                 </p>
-                <button
-                  onClick={() => { const d = docs.find(x => x.statut === 'refuse'); if (d) highlightDoc(d.id); }}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 700, color: 'var(--destructive)', padding: 0 }}
-                >
-                  <RefreshCw size={13} /> Aller au document refusé
-                </button>
               </div>
-            </div>
-          ) : enAttente > 0 ? (
-            <div style={{ margin: '0 20px 20px', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'rgba(200,146,26,0.07)', border: '1px solid rgba(200,146,26,0.2)', borderRadius: 12 }}>
-              <AlertCircle size={15} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-              <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', margin: 0, lineHeight: 1.6 }}>
-                Document{enAttente > 1 ? 's' : ''} envoyé{enAttente > 1 ? 's' : ''} — en attente de validation par CPI. L'envoi sera débloqué après validation.
-              </p>
-            </div>
-          ) : null}
+            ) : hasDocIssue ? (
+              <div style={{ margin: '0 20px 20px', display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px', background: 'rgba(192,57,43,0.06)', border: '1px solid rgba(192,57,43,0.18)', borderRadius: 12 }}>
+                <AlertCircle size={15} style={{ color: 'var(--destructive)', flexShrink: 0, marginTop: 1 }} />
+                <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', margin: 0, lineHeight: 1.65 }}>
+                  <strong style={{ color: 'var(--destructive)', fontWeight: 700 }}>Action requise</strong> — un ou plusieurs documents ont été refusés par votre conseiller. Remplacez-les dans la section « Documents requis » ci-dessus.
+                </p>
+              </div>
+            ) : (
+              <div style={{ margin: '0 20px 20px', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'rgba(200,146,26,0.07)', border: '1px solid rgba(200,146,26,0.2)', borderRadius: 12 }}>
+                <AlertCircle size={15} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', margin: 0, lineHeight: 1.6 }}>
+                  Votre demande est en cours d'étude par votre conseiller CPI.
+                </p>
+              </div>
+            )
+          )}
         </div>
 
       </div>

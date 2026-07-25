@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import {
   Eye, EyeOff, Shield, Zap, Headphones, Handshake, Lock,
-  ChevronRight, ArrowLeft, CheckSquare, Square,
+  ChevronRight, ChevronDown, ArrowLeft, CheckSquare, Square,
   Landmark, Briefcase, UserCircle, ArrowRight, CheckCircle,
 } from 'lucide-react';
 import type { AuthUser, UserRole, AppPage } from '../App';
+import { registerClient, generateDossierRef, loadStaff, findClient } from '../data/clientRegistry';
 import bgWelcome from '../../imports/BG.png';
 import cpiLogo from '../../imports/image.png';
 
@@ -60,10 +61,11 @@ const PROFIL_OPTIONS: {
   },
 ];
 
-const DEMO_ACCOUNTS: { role: UserRole; name: string; desc: string }[] = [
-  { role: 'client-public', name: 'Aïssatou Ndiaye', desc: 'Cliente'        },
-  { role: 'agent-cpi',     name: 'Mme Thiombane',   desc: 'Agent CPI'      },
-  { role: 'admin',         name: 'Admin CPI',        desc: 'Administrateur' },
+// Comptes professionnels réels (personnel CPI). Aucun persona fictif : identités
+// génériques provisoires. La connexion se fait par identifiant professionnel.
+const STAFF_ACCOUNTS: { email: string; role: UserRole; name: string; label: string }[] = [
+  { email: 'agent@cpi.sn', role: 'agent-cpi', name: 'Agent CPI',          label: 'Agent CPI'      },
+  { email: 'admin@cpi.sn', role: 'admin',     name: 'Administrateur CPI', label: 'Administrateur' },
 ];
 
 interface Props {
@@ -92,13 +94,14 @@ function Field({ label, type = 'text', placeholder, value, onChange }: {
           onChange={e => onChange(e.target.value)}
           style={{
             width: '100%', boxSizing: 'border-box',
-            padding: '10px 14px', paddingRight: isPwd ? '40px' : '14px',
-            border: '1px solid var(--border)', borderRadius: 'var(--radius)',
+            padding: '11px 14px', paddingRight: isPwd ? '42px' : '14px',
+            border: '1.5px solid var(--border)', borderRadius: 'var(--r-sm)',
             background: 'var(--input-background)',
             fontFamily: 'var(--font-sans)', fontSize: '0.9375rem',
             color: 'var(--foreground)', outline: 'none',
+            transition: 'border-color var(--dur-1) var(--ease-out), box-shadow var(--dur-2) var(--ease-out)',
           }}
-          onFocus={e => { e.target.style.borderColor = 'var(--ring)'; e.target.style.boxShadow = '0 0 0 2px rgba(123,26,46,0.1)'; }}
+          onFocus={e => { e.target.style.borderColor = 'var(--primary)'; e.target.style.boxShadow = '0 0 0 3px rgba(123,26,46,0.12)'; }}
           onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
         />
         {isPwd && (
@@ -120,27 +123,31 @@ function SelectField({ label, value, onChange, options, placeholder }: {
       <label style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 'var(--font-weight-medium)' as any, color: 'var(--foreground)' }}>
         {label}
       </label>
-      <select
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        style={{
-          width: '100%', boxSizing: 'border-box',
-          padding: '10px 14px',
-          border: '1px solid var(--border)', borderRadius: 'var(--radius)',
-          background: 'var(--input-background)',
-          fontFamily: 'var(--font-sans)', fontSize: '0.9375rem',
-          color: value ? 'var(--foreground)' : 'var(--muted-foreground)', outline: 'none',
-          appearance: 'none',
-          cursor: 'pointer',
-        }}
-        onFocus={e => { e.target.style.borderColor = 'var(--ring)'; e.target.style.boxShadow = '0 0 0 2px rgba(123,26,46,0.1)'; }}
-        onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
-      >
-        {placeholder && <option value="" disabled>{placeholder}</option>}
-        {options.map(o => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </select>
+      <div style={{ position: 'relative' }}>
+        <select
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          style={{
+            width: '100%', boxSizing: 'border-box',
+            padding: '11px 38px 11px 14px',
+            border: '1.5px solid var(--border)', borderRadius: 'var(--r-sm)',
+            background: 'var(--input-background)',
+            fontFamily: 'var(--font-sans)', fontSize: '0.9375rem',
+            color: value ? 'var(--foreground)' : 'var(--muted-foreground)', outline: 'none',
+            appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none',
+            cursor: 'pointer',
+            transition: 'border-color var(--dur-1) var(--ease-out), box-shadow var(--dur-2) var(--ease-out)',
+          }}
+          onFocus={e => { e.target.style.borderColor = 'var(--primary)'; e.target.style.boxShadow = '0 0 0 3px rgba(123,26,46,0.12)'; }}
+          onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
+        >
+          {placeholder && <option value="" disabled>{placeholder}</option>}
+          {options.map(o => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+        <ChevronDown size={16} style={{ position: 'absolute', right: '13px', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', pointerEvents: 'none' }} />
+      </div>
     </div>
   );
 }
@@ -152,15 +159,19 @@ function PrimaryBtn({ children, onClick, type = 'button', fullWidth = true, disa
     <button type={type} onClick={onClick} disabled={disabled}
       style={{
         width: fullWidth ? '100%' : 'auto',
-        padding: '12px 24px', background: disabled ? 'var(--muted)' : 'var(--primary)',
+        padding: '13px 24px', background: disabled ? 'var(--muted)' : 'var(--primary)',
         color: disabled ? 'var(--muted-foreground)' : 'var(--primary-foreground)',
-        border: 'none', borderRadius: 'var(--radius)',
+        border: 'none', borderRadius: 'var(--r-sm)',
         fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', fontWeight: 700,
-        cursor: disabled ? 'not-allowed' : 'pointer', letterSpacing: '0.03em', transition: 'opacity 0.15s',
+        cursor: disabled ? 'not-allowed' : 'pointer', letterSpacing: '0.03em',
+        boxShadow: disabled ? 'none' : 'var(--elev-sm)',
+        transition: 'background var(--dur-1) var(--ease-out), box-shadow var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
       }}
-      onMouseEnter={e => { if (!disabled) (e.currentTarget as HTMLElement).style.opacity = '0.9'; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}>
+      onMouseEnter={e => { if (!disabled) { const t = e.currentTarget as HTMLElement; t.style.background = 'var(--primary-hover)'; t.style.boxShadow = 'var(--shadow-hover)'; } }}
+      onMouseLeave={e => { const t = e.currentTarget as HTMLElement; if (!disabled) { t.style.background = 'var(--primary)'; t.style.boxShadow = 'var(--elev-sm)'; } t.style.transform = 'scale(1)'; }}
+      onMouseDown={e => { if (!disabled) (e.currentTarget as HTMLElement).style.transform = 'scale(0.98)'; }}
+      onMouseUp={e => { if (!disabled) (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}>
       {children}
     </button>
   );
@@ -172,7 +183,6 @@ function WelcomeScreen({ onNavigate, onLogin, onProfileSelect }: {
   onLogin: (u: AuthUser) => void;
   onProfileSelect: (p: ProfilType) => void;
 }) {
-  const [showDemo, setShowDemo] = useState(false);
   const [hovered, setHovered] = useState<ProfilType | null>(null);
 
   return (
@@ -219,7 +229,7 @@ function WelcomeScreen({ onNavigate, onLogin, onProfileSelect }: {
         padding: '8px 24px 36px', gap: '0',
       }}>
         {/* Heading */}
-        <div style={{ textAlign: 'center', marginBottom: '28px', maxWidth: '680px' }}>
+        <div className="cpi-animate-in" style={{ textAlign: 'center', marginBottom: '28px', maxWidth: '680px' }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: '6px',
             background: 'rgba(255,255,255,0.9)', border: '1px solid var(--border)',
@@ -253,7 +263,8 @@ function WelcomeScreen({ onNavigate, onLogin, onProfileSelect }: {
           gap: '14px',
           width: '100%', maxWidth: '720px',
           marginBottom: '20px',
-        }} className="profile-grid">
+          animationDelay: '80ms',
+        }} className="profile-grid cpi-animate-in">
           {PROFIL_OPTIONS.map(p => {
             const Icon = p.icon;
             const isHov = hovered === p.type;
@@ -334,7 +345,8 @@ function WelcomeScreen({ onNavigate, onLogin, onProfileSelect }: {
           border: '1px solid rgba(255,255,255,0.95)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.09), 0 1px 3px rgba(0,0,0,0.05)',
           overflow: 'hidden',
-        }} className="trust-strip">
+          animationDelay: '160ms',
+        }} className="trust-strip cpi-animate-in">
           {([
             { icon: Zap,        label: 'Processus simple',         sub: 'Des étapes claires à chaque stade',       color: '#7B1A2E', bg: 'var(--secondary)' },
             { icon: Shield,     label: 'Données sécurisées',       sub: 'Chiffrement SSL — confidentialité totale', color: '#1E4D8C', bg: 'rgba(30,77,140,0.08)' },
@@ -366,30 +378,12 @@ function WelcomeScreen({ onNavigate, onLogin, onProfileSelect }: {
           })}
         </div>
 
-        {/* Demo access */}
+        {/* Accès professionnel CPI */}
         <div style={{ marginTop: '16px', textAlign: 'center' }}>
-          <button type="button" onClick={() => setShowDemo(!showDemo)}
+          <button type="button" onClick={() => onNavigate('login')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', textDecoration: 'underline' }}>
-            {showDemo ? 'Masquer les accès démo' : 'Accès démonstration →'}
+            Espace professionnel CPI (Agent / Administrateur) →
           </button>
-          {showDemo && (
-            <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center' }}>
-              {DEMO_ACCOUNTS.map(acc => (
-                <button key={acc.role}
-                  onClick={() => onLogin({ role: acc.role, name: acc.name })}
-                  style={{
-                    padding: '5px 12px',
-                    background: 'rgba(255,255,255,0.92)', border: '1px solid var(--border)', borderRadius: '99px',
-                    fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600, color: 'var(--foreground)', cursor: 'pointer',
-                    transition: 'background 0.15s',
-                  }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--secondary)'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.92)'; }}>
-                  {acc.desc}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
         <a href="https://cpi.sn" target="_blank" rel="noopener noreferrer"
@@ -418,21 +412,83 @@ function WelcomeScreen({ onNavigate, onLogin, onProfileSelect }: {
 
 // ─── SCREEN 2 — Login ─────────────────────────────────────────────────────────
 function LoginScreen({ onLogin, onNavigate }: { onLogin: (u: AuthUser) => void; onNavigate: (p: AppPage) => void }) {
+  const [mode, setMode] = useState<'client' | 'pro'>('client');
+  // Espace client
   const [nom, setNom] = useState('');
   const [tel, setTel] = useState('');
   const [email, setEmail] = useState('');
+  // Espace professionnel
+  const [proEmail, setProEmail] = useState('');
+  const [proPwd, setProPwd] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleClientSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      onLogin({ role: 'client-public', name: nom || 'Utilisateur' });
-    }, 900);
+      // Reconnexion : si un compte existe (même e-mail ou nom), on le retrouve.
+      const existing = findClient(nom, email);
+      if (existing) {
+        onLogin({ role: 'client-public', name: existing.name, clientId: existing.id });
+        return;
+      }
+      const clientId = `c-${Date.now()}`;
+      registerClient({
+        id: clientId,
+        name: nom || 'Client',
+        ref: generateDossierRef(),
+        statut: 'Dossier en préparation',
+        progression: 0,
+        projectNom: '—',
+        adresse: '—',
+        dateInscription: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }),
+        email: email.trim() || undefined,
+        phone: tel.trim() || undefined,
+      });
+      onLogin({ role: 'client-public', name: nom || 'Client', clientId });
+    }, 700);
+  };
+
+  const handleProSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const email = proEmail.trim().toLowerCase();
+    // Comptes intégrés : mot de passe libre ≥ 4 caractères.
+    const builtin = STAFF_ACCOUNTS.find(s => s.email.toLowerCase() === email);
+    // Personnel ajouté par l'admin : mot de passe exact.
+    const custom = loadStaff().find(s => s.email.toLowerCase() === email);
+    let target: { role: UserRole; name: string } | null = null;
+    if (builtin && proPwd.trim().length >= 4) target = { role: builtin.role, name: builtin.name };
+    else if (custom && proPwd === custom.password) target = { role: custom.role, name: custom.name };
+    if (!target) {
+      setError('Identifiants professionnels incorrects.');
+      return;
+    }
+    setError('');
+    setLoading(true);
+    const t = target;
+    setTimeout(() => {
+      setLoading(false);
+      onLogin({ role: t.role, name: t.name });
+    }, 700);
   };
 
   const PHOTO = 'https://images.unsplash.com/photo-1721978536434-3cd55a457672?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200';
+
+  const TabBtn = ({ value, children }: { value: 'client' | 'pro'; children: React.ReactNode }) => (
+    <button type="button" onClick={() => { setMode(value); setError(''); }}
+      style={{
+        flex: 1, padding: '9px 12px', borderRadius: 'var(--radius)', border: 'none', cursor: 'pointer',
+        fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 700,
+        background: mode === value ? 'var(--primary)' : 'transparent',
+        color: mode === value ? 'var(--primary-foreground)' : 'var(--muted-foreground)',
+        transition: 'background 0.15s, color 0.15s',
+      }}>
+      {children}
+    </button>
+  );
 
   return (
     <div style={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: '1fr 1fr' }} className="auth-split">
@@ -470,47 +526,65 @@ function LoginScreen({ onLogin, onNavigate }: { onLogin: (u: AuthUser) => void; 
 
         <div style={{ maxWidth: '360px', width: '100%' }}>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem', fontWeight: 800, color: 'var(--foreground)', marginBottom: '6px' }}>Connexion</h2>
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', color: 'var(--muted-foreground)', marginBottom: '28px' }}>Accédez à votre espace personnel.</p>
-
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <Field label="Nom" placeholder="Nom complet" value={nom} onChange={setNom} />
-            <Field label="Téléphone" type="tel" placeholder="77 010 00 00" value={tel} onChange={setTel} />
-            <Field label="E-mail" type="email" placeholder="bonjour@email.com" value={email} onChange={setEmail} />
-            <div style={{ marginTop: '4px' }}>
-              <PrimaryBtn type="submit">
-                {loading
-                  ? <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
-                      Connexion…
-                    </span>
-                  : 'CONNECTER'}
-              </PrimaryBtn>
-            </div>
-          </form>
-
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--muted-foreground)', marginTop: '20px', textAlign: 'center' }}>
-            Pas de compte ?{' '}
-            <button type="button" onClick={() => onNavigate('register')}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700, color: 'var(--primary)', padding: 0 }}>
-              Créer mon compte
-            </button>
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', color: 'var(--muted-foreground)', marginBottom: '20px' }}>
+            {mode === 'client' ? 'Accédez à votre espace personnel.' : 'Espace réservé au personnel CPI.'}
           </p>
 
-          {/* Demo */}
-          <div style={{ marginTop: '28px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
-            <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', marginBottom: '10px', textAlign: 'center' }}>Connexion rapide (démo)</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-              {DEMO_ACCOUNTS.map(acc => (
-                <button key={acc.role} onClick={() => onLogin({ role: acc.role, name: acc.name })}
-                  style={{ padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--input-background)', fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 600, color: 'var(--foreground)', cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--secondary)'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--input-background)'; }}>
-                  {acc.name}<br />
-                  <span style={{ color: 'var(--muted-foreground)', fontWeight: 400 }}>{acc.desc}</span>
-                </button>
-              ))}
-            </div>
+          {/* Sélecteur d'espace */}
+          <div style={{ display: 'flex', gap: '4px', padding: '4px', background: 'var(--input-background)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', marginBottom: '22px' }}>
+            <TabBtn value="client">Espace client</TabBtn>
+            <TabBtn value="pro">Espace professionnel</TabBtn>
           </div>
+
+          {error && (
+            <div style={{ marginBottom: '14px', padding: '10px 12px', background: 'rgba(192,57,43,0.08)', border: '1px solid rgba(192,57,43,0.25)', borderRadius: 'var(--radius)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: '#C0392B' }}>
+              {error}
+            </div>
+          )}
+
+          {mode === 'client' ? (
+            <form onSubmit={handleClientSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <Field label="Nom" placeholder="Nom complet" value={nom} onChange={setNom} />
+              <Field label="Téléphone" type="tel" placeholder="77 010 00 00" value={tel} onChange={setTel} />
+              <Field label="E-mail" type="email" placeholder="bonjour@email.com" value={email} onChange={setEmail} />
+              <div style={{ marginTop: '4px' }}>
+                <PrimaryBtn type="submit">
+                  {loading
+                    ? <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
+                        Connexion…
+                      </span>
+                    : 'CONNECTER'}
+                </PrimaryBtn>
+              </div>
+              <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--muted-foreground)', marginTop: '4px', textAlign: 'center' }}>
+                Pas de compte ?{' '}
+                <button type="button" onClick={() => onNavigate('register')}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700, color: 'var(--primary)', padding: 0 }}>
+                  Créer mon compte
+                </button>
+              </p>
+            </form>
+          ) : (
+            <form onSubmit={handleProSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <Field label="Identifiant professionnel" type="email" placeholder="agent@cpi.sn" value={proEmail} onChange={setProEmail} />
+              <Field label="Mot de passe" type="password" placeholder="••••••••" value={proPwd} onChange={setProPwd} />
+              <div style={{ marginTop: '4px' }}>
+                <PrimaryBtn type="submit">
+                  {loading
+                    ? <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
+                        Connexion…
+                      </span>
+                    : 'ACCÉDER À MON ESPACE'}
+                </PrimaryBtn>
+              </div>
+              <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: '4px', textAlign: 'center', lineHeight: 1.5 }}>
+                <Lock size={11} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                Accès Agent CPI et Administrateur. Contactez CPI pour vos identifiants.
+              </p>
+            </form>
+          )}
         </div>
       </div>
 
@@ -554,7 +628,25 @@ function RegisterScreen({ onLogin, onNavigate, initialProfile }: {
     setTimeout(() => {
       setLoading(false);
       const role: UserRole = profil === 'fonctionnaire' ? 'client-fonctionnaire' : 'client-public';
+      // Si un compte existe déjà (même e-mail ou nom), on le retrouve.
+      const existing = findClient(form.nom, form.email);
+      if (existing) {
+        onLogin({ role, name: existing.name, clientId: existing.id });
+        return;
+      }
       const clientId = `c-new-${Date.now()}`;
+      registerClient({
+        id: clientId,
+        name: form.nom || 'Nouveau client',
+        ref: generateDossierRef(),
+        statut: 'Dossier en préparation',
+        progression: 0,
+        projectNom: '—',
+        adresse: form.employeur || '—',
+        dateInscription: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }),
+        email: form.email.trim() || undefined,
+        phone: form.tel.trim() || undefined,
+      });
       onLogin({ role, name: form.nom || 'Nouveau client', clientId });
     }, 900);
   };

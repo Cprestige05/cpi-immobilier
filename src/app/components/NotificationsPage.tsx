@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from '../contexts/NavigationContext';
 import { useClientData } from '../data/useClientData';
+import { useDocState } from '../data/docStateContext';
+import type { HistoEntry } from '../data/demoStore';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -39,136 +41,7 @@ interface Notif {
 
 // ─── Static notification data ─────────────────────────────────────────────────
 
-const INITIAL_NOTIFS: Notif[] = [
-  {
-    id: 'n-s1',
-    type: 'securite-appareil',
-    titre: 'Connexion depuis un nouvel appareil',
-    description: 'Une connexion a été détectée depuis iPhone 14 · Dakar, Sénégal (23 juil. 2026 à 08:42). Si ce n\'était pas vous, sécurisez votre compte immédiatement.',
-    date: "Aujourd'hui",
-    heure: '08:42',
-    lu: false,
-    category: 'securite',
-    actionLabel: 'Sécuriser mon compte',
-    actionPage: 'support',
-  },
-  {
-    id: 'n-p1',
-    type: 'paiement-confirme',
-    titre: 'Paiement reçu — Juillet 2026',
-    description: 'Votre échéance de juillet 2026 a bien été enregistrée. Montant : 208 400 FCFA. Merci pour votre ponctualité.',
-    date: "Aujourd'hui",
-    heure: '09:14',
-    lu: false,
-    category: 'paiements',
-    actionLabel: 'Voir le reçu',
-    actionPage: 'ma-demande',
-  },
-  {
-    id: 'n-p2',
-    type: 'debit-paiement',
-    titre: 'Débit automatique effectué — Banque',
-    description: 'Prélèvement de 208 400 FCFA sur votre compte bancaire ****4721 le 22 juillet 2026 à 09h00.',
-    date: "Aujourd'hui",
-    heure: '09:00',
-    lu: false,
-    category: 'paiements',
-  },
-  {
-    id: 'n-p3',
-    type: 'echeance-proche',
-    titre: 'Rappel : prochaine échéance dans 5 jours',
-    description: 'Votre échéance du mois d\'août 2026 (208 400 FCFA) sera prélevée le 22 août. Assurez-vous que votre compte est provisionné à temps.',
-    date: '18 juil. 2026',
-    heure: '08:00',
-    lu: false,
-    category: 'paiements',
-  },
-  {
-    id: 'n-s2',
-    type: 'securite-inactivite',
-    titre: 'Aucune connexion depuis 7 jours',
-    description: 'Nous n\'avons détecté aucune connexion à votre compte depuis 7 jours. Consultez régulièrement votre espace pour rester informé de l\'avancement de votre dossier.',
-    date: '17 juil. 2026',
-    heure: '10:00',
-    lu: true,
-    category: 'securite',
-  },
-  {
-    id: 'n-d1',
-    type: 'document-refuse',
-    titre: 'Document à remplacer — Relevé bancaire',
-    description: 'Votre relevé bancaire (mois 6) a été refusé par l\'équipe CPI : document illisible ou tronqué. Déposez un nouveau fichier pour débloquer votre dossier.',
-    date: '20 juin 2026',
-    heure: '11:20',
-    lu: true,
-    category: 'dossier',
-    actionLabel: 'Remplacer le document',
-    actionPage: 'mon-dossier',
-  },
-  {
-    id: 'n-p4',
-    type: 'paiement-confirme',
-    titre: 'Paiement reçu — Juin 2026',
-    description: 'Votre échéance de juin 2026 a bien été enregistrée. Montant : 208 400 FCFA. Total remboursé : 2 917 600 FCFA.',
-    date: '22 juin 2026',
-    heure: '09:10',
-    lu: true,
-    category: 'paiements',
-  },
-  {
-    id: 'n-d2',
-    type: 'document-valide',
-    titre: 'Document validé — Justificatifs de revenus',
-    description: 'Vos justificatifs de revenus ont été acceptés par Mme Thiombane. Votre dossier progresse vers l\'accord bancaire.',
-    date: '16 juin 2026',
-    heure: '14:30',
-    lu: true,
-    category: 'dossier',
-  },
-  {
-    id: 'n-p5',
-    type: 'alerte-retard',
-    titre: 'Alerte : échéance en retard — Mai 2026',
-    description: 'Votre échéance de mai 2026 n\'a pas été réglée à la date prévue. Des pénalités de retard peuvent s\'appliquer. Contactez votre conseiller dès que possible.',
-    date: '25 mai 2026',
-    heure: '08:00',
-    lu: true,
-    category: 'paiements',
-    actionLabel: 'Contacter le support',
-    actionPage: 'support',
-  },
-  {
-    id: 'n-s3',
-    type: 'securite-mdp',
-    titre: 'Mot de passe modifié avec succès',
-    description: 'Votre mot de passe a été changé le 15 juin 2026 à 16h45. Si vous n\'êtes pas à l\'origine de cette action, contactez le support immédiatement.',
-    date: '15 juin 2026',
-    heure: '16:45',
-    lu: true,
-    category: 'securite',
-  },
-  {
-    id: 'n-d3',
-    type: 'dossier-update',
-    titre: 'Dossier transmis à la banque',
-    description: 'Votre dossier de financement (réf. CPI-2026-04721) a été transmis à notre banque partenaire pour instruction. Vous serez notifié dès que la banque rend sa décision.',
-    date: '10 juin 2026',
-    heure: '09:00',
-    lu: true,
-    category: 'dossier',
-  },
-  {
-    id: 'n-d4',
-    type: 'document-valide',
-    titre: 'Document validé — Pièce d\'identité',
-    description: 'Votre CNI (Aïssatou Ndiaye) a été validée par l\'équipe CPI. Conformité vérifiée.',
-    date: '18 juin 2026',
-    heure: '10:05',
-    lu: true,
-    category: 'dossier',
-  },
-];
+const INITIAL_NOTIFS: Notif[] = [];
 
 // ─── Type config ──────────────────────────────────────────────────────────────
 
@@ -245,10 +118,32 @@ const CATEGORIES: { id: NotifCategory; label: string }[] = [
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
+// Convertit une trace d'envoi de l'agent (type 'notification') en notification client.
+function agentEntryToNotif(e: HistoEntry): Notif {
+  const m = e.action.match(/«\s*(.*?)\s*»/);
+  const message = m ? m[1] : e.action;
+  const canal = e.action.split(' envoyé')[0] || 'Notification';
+  return {
+    id: e.id,
+    type: 'dossier-update',
+    titre: `${canal} de votre conseiller`,
+    description: message,
+    date: e.date,
+    heure: e.heure,
+    lu: false,
+    category: 'dossier',
+  };
+}
+
 export default function NotificationsPage() {
   const { navigate } = useNavigate();
   const client = useClientData();
-  const [notifs, setNotifs] = useState<Notif[]>(INITIAL_NOTIFS);
+  const { history } = useDocState();
+  // Notifications réelles envoyées par l'agent (contexte partagé) + notifications de démo.
+  const [notifs, setNotifs] = useState<Notif[]>(() => {
+    const agentNotifs = history.filter(e => e.type === 'notification').map(agentEntryToNotif);
+    return [...agentNotifs, ...INITIAL_NOTIFS];
+  });
   const [activeCategory, setActiveCategory] = useState<NotifCategory>('toutes');
 
   const unreadCount = notifs.filter(n => !n.lu).length;
@@ -279,7 +174,7 @@ export default function NotificationsPage() {
       : notifs.filter(n => n.category === cat && !n.lu).length;
 
   return (
-    <div style={{ maxWidth: '720px', fontFamily: 'var(--font-sans)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ width: '100%', fontFamily: 'var(--font-sans)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>

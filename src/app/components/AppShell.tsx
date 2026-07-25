@@ -9,7 +9,9 @@ import cpiLogo from '../../imports/image.png';
 import type { AuthUser, UserRole } from '../App';
 import { ClientProvider } from '../contexts/ClientContext';
 import { NavigationProvider, useNavigate } from '../contexts/NavigationContext';
-import { CLIENT_SUMMARIES, type ClientSummary } from '../data/demoStore';
+import type { ClientSummary } from '../data/demoStore';
+import { loadClients } from '../data/clientRegistry';
+import { useClientData } from '../data/useClientData';
 import { DocStateProvider } from '../data/docStateContext';
 import { CpiDocsProvider } from '../data/cpiDocsContext';
 import { ChantierStateProvider } from '../data/chantierStateContext';
@@ -53,7 +55,6 @@ function getNavItems(role: UserRole): NavItem[] {
     { id: 'ma-demande',   label: 'Ma demande',       icon: FileText        },
     { id: 'mon-dossier',  label: 'Mon dossier',      icon: FolderOpen      },
     { id: 'notifications', label: 'Notifications',  icon: Bell            },
-    { id: 'support',      label: 'Support',          icon: LifeBuoy        },
   ];
   if (role === 'agent-cpi') return [
     { id: 'dashboard',          label: 'Tableau de bord',    icon: LayoutDashboard },
@@ -118,7 +119,7 @@ function SupportPage() {
       value: '+221 77 XXX XX XX',
       sub: 'Réponse sous 1h en heures ouvrées',
       action: 'Ouvrir WhatsApp',
-      href: 'https://wa.me/221771234567',
+      href: 'https://wa.me/221XXXXXXXXX',
       color: '#25D366',
       bg: 'rgba(37,211,102,0.07)',
       border: 'rgba(37,211,102,0.18)',
@@ -138,7 +139,7 @@ function SupportPage() {
   ];
 
   return (
-    <div style={{ maxWidth: '680px', display: 'flex', flexDirection: 'column', gap: '22px', fontFamily: 'var(--font-sans)' }}>
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '22px', fontFamily: 'var(--font-sans)' }}>
 
       {/* Header */}
       <div style={{
@@ -173,7 +174,7 @@ function SupportPage() {
               background: ch.bg,
               border: `1px solid ${ch.border}`,
               borderRadius: '12px', padding: '18px 20px',
-              display: 'flex', alignItems: 'center', gap: '16px',
+              display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap',
               cursor: 'pointer', transition: 'box-shadow 0.15s, transform 0.12s',
             }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 18px rgba(0,0,0,0.08)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
@@ -184,7 +185,7 @@ function SupportPage() {
                 <ch.icon size={20} style={{ color: ch.color }} />
               </div>
               {/* Info */}
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ flex: 1, minWidth: '150px' }}>
                 <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--muted-foreground)', marginBottom: '2px' }}>{ch.label}</div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 800, color: 'var(--foreground)' }}>{ch.value}</div>
                 <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: '2px' }}>{ch.sub}</div>
@@ -350,6 +351,11 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
   const roleLabel = ROLE_LABELS[user.role];
   const roleColor = ROLE_COLORS[user.role];
 
+  // Numéro de dossier affiché sous le nom (clients uniquement, si un dossier existe).
+  const client = useClientData();
+  const isClientRole = user.role === 'client-public' || user.role === 'client-fonctionnaire';
+  const dossierRef = isClientRole && client.ref && client.ref !== '—' ? client.ref : null;
+
   const renderDashboard = () => {
     if (activeNav === 'statistiques')  return <StatisticsDashboard user={user} />;
     if (activeNav === 'convention')    return <ConventionBancairePage />;
@@ -359,7 +365,7 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
     if (activeNav === 'simulateur')    return <SimulateurPage user={user} />;
     if (activeNav === 'support')       return <SupportPage />;
     if (activeNav === 'notifications') return <NotificationsPage />;
-    if (activeNav === 'mon-profil')    return <MonProfilPage user={user} />;
+    if (activeNav === 'mon-profil')    return <MonProfilPage user={user} onLogout={onLogout} />;
 
     if (user.role === 'client-fonctionnaire' || user.role === 'client-public') {
       return <ClientDashboardHome user={user} />;
@@ -370,7 +376,9 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
   };
 
   // Active nav label for the top bar
-  const navLabel = navItems.find(n => n.id === activeNav)?.label ?? 'Tableau de bord';
+  // Libellés des entrées hors liste principale (bas de menu) pour le titre du bandeau.
+  const EXTRA_NAV_LABELS: Record<string, string> = { support: 'Support', 'mon-profil': 'Mon profil' };
+  const navLabel = navItems.find(n => n.id === activeNav)?.label ?? EXTRA_NAV_LABELS[activeNav] ?? 'Tableau de bord';
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: 'var(--background)', fontFamily: 'var(--font-sans)' }}>
@@ -390,6 +398,11 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
               </div>
               <div className="min-w-0">
                 <div className="text-white truncate" style={{ fontSize: '0.875rem', fontWeight: 600 }}>{user.name}</div>
+                {dossierRef && (
+                  <div className="truncate" style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'rgba(255,255,255,0.55)', marginTop: '2px', fontFamily: 'var(--font-sans)' }}>
+                    Dossier {dossierRef}
+                  </div>
+                )}
                 <div className="inline-flex items-center px-2 py-0.5 mt-0.5" style={{ fontSize: '0.625rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', backgroundColor: roleColor.bg, color: roleColor.text }}>
                   {roleLabel}
                 </div>
@@ -432,6 +445,16 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
               <UserCircle className="w-4 h-4" />
               Mon profil
             </button>
+            {isClientRole && (
+              <button
+                onClick={() => navigate('support')}
+                className="w-full flex items-center gap-3 px-3 py-2.5 hover:text-white hover:bg-white/5 transition-all"
+                style={{ fontSize: '0.875rem', color: activeNav === 'support' ? 'var(--sidebar-accent-foreground)' : 'var(--sidebar-foreground)', background: activeNav === 'support' ? 'var(--sidebar-accent)' : 'transparent' }}
+              >
+                <LifeBuoy className="w-4 h-4" />
+                Support
+              </button>
+            )}
             <button
               onClick={onLogout}
               className="w-full flex items-center gap-3 px-3 py-2.5 hover:text-red-400 hover:bg-white/5 transition-all"
@@ -505,8 +528,13 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
                 <div className="w-9 h-9 flex items-center justify-center" style={{ background: 'var(--primary)', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.875rem', color: 'white' }}>
                   {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </div>
-                <div>
-                  <div className="text-white" style={{ fontSize: '0.875rem', fontWeight: 600 }}>{user.name}</div>
+                <div className="min-w-0">
+                  <div className="text-white truncate" style={{ fontSize: '0.875rem', fontWeight: 600 }}>{user.name}</div>
+                  {dossierRef && (
+                    <div className="truncate" style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'rgba(255,255,255,0.55)', marginTop: '2px', fontFamily: 'var(--font-sans)' }}>
+                      Dossier {dossierRef}
+                    </div>
+                  )}
                   <div className="inline-flex items-center px-2 py-0.5 mt-0.5" style={{ fontSize: '0.625rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', backgroundColor: roleColor.bg, color: roleColor.text }}>
                     {roleLabel}
                   </div>
@@ -541,6 +569,16 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
                 <UserCircle className="w-4 h-4" />
                 Mon profil
               </button>
+              {isClientRole && (
+                <button
+                  onClick={() => { navigate('support'); setSidebarOpen(false); }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:text-white hover:bg-white/5 transition-all"
+                  style={{ fontSize: '0.875rem', color: activeNav === 'support' ? 'var(--sidebar-accent-foreground)' : 'var(--sidebar-foreground)', background: activeNav === 'support' ? 'var(--sidebar-accent)' : 'transparent' }}
+                >
+                  <LifeBuoy className="w-4 h-4" />
+                  Support
+                </button>
+              )}
               <button onClick={onLogout} className="w-full flex items-center gap-3 px-3 py-2.5 hover:text-red-400 transition-all" style={{ fontSize: '0.875rem', color: 'var(--sidebar-foreground)' }}>
                 <LogOut className="w-4 h-4" />
                 Se déconnecter
@@ -557,7 +595,9 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
 
 export default function AppShell({ user, onLogout }: AppShellProps) {
   const isClientRole = user.role === 'client-public' || user.role === 'client-fonctionnaire';
-  const isNewClient = !!user.clientId && !CLIENT_SUMMARIES.some(c => c.id === user.clientId);
+  // Clients réels connus = registre (base vide au départ).
+  const registered = loadClients();
+  const isNewClient = !!user.clientId && !registered.some(c => c.id === user.clientId);
   const freshClient: ClientSummary | null = isNewClient
     ? {
         id: user.clientId!,
@@ -569,11 +609,11 @@ export default function AppShell({ user, onLogout }: AppShellProps) {
         adresse: '—',
       }
     : null;
-  const allClients = freshClient ? [...CLIENT_SUMMARIES, freshClient] : CLIENT_SUMMARIES;
+  const allClients = freshClient ? [...registered, freshClient] : registered;
   const defaultPage = isClientRole ? 'simulateur' : 'dashboard';
   return (
     <NavigationProvider defaultPage={defaultPage}>
-    <ClientProvider allClients={allClients} initialId={user.clientId ?? 'c-aissatou'} locked={isClientRole}>
+    <ClientProvider allClients={allClients} initialId={user.clientId ?? registered[0]?.id ?? 'c-none'} locked={isClientRole}>
     <DocStateProvider>
     <CpiDocsProvider>
     <ChantierStateProvider>

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ALL_REQUIS_DOCS, ALL_HISTORIQUE, type DocStatus, type HistoEntry, type HistoActionType } from './demoStore';
+import { loadClients } from './clientRegistry';
 import { useClientContext } from '../contexts/ClientContext';
 
 // ─── Shared doc shape (live state) ───────────────────────────────────────────
@@ -23,24 +24,64 @@ interface DocStateCtx {
   requisDocs: SharedDoc[];
   history: HistoEntry[];
   allDocsByClient: Record<string, SharedDoc[]>;
+  allHistoryByClient: Record<string, HistoEntry[]>;
   acceptDoc: (docId: string, agentName: string, clientId?: string) => void;
   refuseDoc: (docId: string, agentName: string, comment: string, clientId?: string) => void;
   requestReplacement: (docId: string, agentName: string, comment: string, clientId?: string) => void;
   remettreVerification: (docId: string, agentName: string, clientId?: string) => void;
+  // Dépôt côté client (dans « Ma demande ») : la pièce passe en analyse chez le CPI.
+  depositDoc: (docId: string, fileName?: string, clientId?: string) => void;
+  // Parcours du dossier piloté par l'Agent CPI (index 0-5 dans TIMELINE_STEPS).
+  dossierEtape: number;
+  dossierEtapes: Record<string, number>;
+  setDossierEtape: (etape: number, agentName: string, clientId?: string) => void;
+  // Notification envoyée par l'agent — trace réelle dans le(s) dossier(s) client(s).
+  pushNotification: (target: string, message: string, canal: string, agentName: string) => void;
 }
 
 const DocStateContext = createContext<DocStateCtx | null>(null);
 
 // ─── Per-client localStorage keys ────────────────────────────────────────────
 
-// Préfixe v2 : invalide toute donnée de démo persistée avant la purge CHUES/CBAO.
-const LS_DOCS_KEY    = (id: string) => `cpi_docs_v2_${id}`;
-const LS_HISTORY_KEY = (id: string) => `cpi_history_v2_${id}`;
+// Préfixe v4 : base vide — invalide tout cache de démo antérieur (aucun compte
+// fictif ne doit subsister dans le localStorage des navigateurs).
+const LS_DOCS_KEY    = (id: string) => `cpi_docs_v4_${id}`;
+const LS_HISTORY_KEY = (id: string) => `cpi_history_v4_${id}`;
+const LS_ETAPE_KEY   = (id: string) => `cpi_etape_v4_${id}`;
 
-const ALL_CLIENT_IDS = Object.keys(ALL_REQUIS_DOCS);
+// Ids des clients connus — recalculés à chaque appel (le registre grandit en
+// cours de session : un client inscrit doit être rechargé à sa reconnexion).
+const clientIds = (): string[] => [
+  ...Object.keys(ALL_REQUIS_DOCS),
+  ...loadClients().map(c => c.id),
+];
+
+// Étape initiale d'un nouveau dossier : le parcours démarre à l'inscription.
+const DOCS_VALIDES_ETAPE = 2;
+const getInitialEtape = (_clientId: string): number => 0;
+
+const loadAllEtapes = (): Record<string, number> => {
+  const result: Record<string, number> = {};
+  for (const clientId of clientIds()) {
+    try {
+      const s = localStorage.getItem(LS_ETAPE_KEY(clientId));
+      if (s !== null) { result[clientId] = Number(JSON.parse(s)); continue; }
+    } catch {}
+    result[clientId] = getInitialEtape(clientId);
+  }
+  return result;
+};
+
+// Modèle générique pour un client sans dossier de démo préconfiguré (nouvel inscrit) —
+// les 3 pièces requises, aucune encore déposée.
+const GENERIC_REQUIS_DOCS = [
+  { id: 'identite',  label: "Pièce d'identité valide", status: 'en-attente' as DocStatus, version: 0 },
+  { id: 'revenus',   label: 'Justificatifs de revenus', status: 'en-attente' as DocStatus, version: 0 },
+  { id: 'bancaires', label: 'Relevés bancaires',        status: 'en-attente' as DocStatus, version: 0 },
+];
 
 const getInitialDocs = (clientId: string): SharedDoc[] => {
-  const source = ALL_REQUIS_DOCS[clientId] ?? [];
+  const source = ALL_REQUIS_DOCS[clientId] ?? GENERIC_REQUIS_DOCS;
   return source.map(d => ({
     id: d.id, label: d.label, status: d.status,
     commentaire: d.commentaire, dateValidation: d.dateValidation,
@@ -51,7 +92,7 @@ const getInitialDocs = (clientId: string): SharedDoc[] => {
 
 const loadAllDocs = (): Record<string, SharedDoc[]> => {
   const result: Record<string, SharedDoc[]> = {};
-  for (const clientId of ALL_CLIENT_IDS) {
+  for (const clientId of clientIds()) {
     try {
       const s = localStorage.getItem(LS_DOCS_KEY(clientId));
       if (s) { result[clientId] = JSON.parse(s) as SharedDoc[]; continue; }
@@ -63,7 +104,7 @@ const loadAllDocs = (): Record<string, SharedDoc[]> => {
 
 const loadAllHistory = (): Record<string, HistoEntry[]> => {
   const result: Record<string, HistoEntry[]> = {};
-  for (const clientId of ALL_CLIENT_IDS) {
+  for (const clientId of clientIds()) {
     try {
       const s = localStorage.getItem(LS_HISTORY_KEY(clientId));
       if (s) { result[clientId] = JSON.parse(s) as HistoEntry[]; continue; }
@@ -80,6 +121,7 @@ export function DocStateProvider({ children }: { children: React.ReactNode }) {
 
   const [allDocs,    setAllDocs]    = useState<Record<string, SharedDoc[]>>(loadAllDocs);
   const [allHistory, setAllHistory] = useState<Record<string, HistoEntry[]>>(loadAllHistory);
+  const [allEtapes,  setAllEtapes]  = useState<Record<string, number>>(loadAllEtapes);
 
   // Persist per-client state on every change
   useEffect(() => {
@@ -94,9 +136,16 @@ export function DocStateProvider({ children }: { children: React.ReactNode }) {
     }
   }, [allHistory]);
 
+  useEffect(() => {
+    for (const [clientId, etape] of Object.entries(allEtapes)) {
+      try { localStorage.setItem(LS_ETAPE_KEY(clientId), JSON.stringify(etape)); } catch {}
+    }
+  }, [allEtapes]);
+
   // Derived values for the currently selected client
   const requisDocs: SharedDoc[] = allDocs[selectedClientId] ?? getInitialDocs(selectedClientId);
   const history:    HistoEntry[] = allHistory[selectedClientId] ?? [];
+  const dossierEtape: number     = allEtapes[selectedClientId] ?? getInitialEtape(selectedClientId);
 
   const nameFor = (clientId: string) => allClients.find(c => c.id === clientId)?.name ?? clientId;
 
@@ -167,10 +216,52 @@ export function DocStateProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  // Libellés des 6 étapes du parcours (miroir de dossierJourney.TIMELINE_STEPS).
+  const ETAPE_LABELS = ['Inscription', 'Dossier reçu', 'Documents valides', 'Analyser', 'Validation banque', 'Signature'];
+
+  const setDossierEtape = (etape: number, agentName: string, clientId: string = selectedClientId) => {
+    const clamped = Math.max(0, Math.min(ETAPE_LABELS.length - 1, etape));
+    setAllEtapes(prev => ({ ...prev, [clientId]: clamped }));
+    const { date, heure } = nowStamp();
+    pushHistoryFor(clientId, {
+      date, heure, utilisateur: agentName, role: 'Agent CPI',
+      action: `Dossier avancé à l'étape « ${ETAPE_LABELS[clamped]} »`,
+      type: 'validation' as HistoActionType, cible: nameFor(clientId),
+    });
+  };
+
+  const pushNotification = (target: string, message: string, canal: string, agentName: string) => {
+    const ids = target === 'tous' ? allClients.map(c => c.id) : [target];
+    const { date, heure } = nowStamp();
+    ids.forEach(clientId => {
+      pushHistoryFor(clientId, {
+        date, heure, utilisateur: agentName, role: 'Agent CPI',
+        action: `${canal} envoyé : « ${message} »`,
+        type: 'notification' as HistoActionType, cible: nameFor(clientId),
+      });
+    });
+  };
+
+  const depositDoc = (docId: string, fileName?: string, clientId: string = selectedClientId) => {
+    const { date, heure } = nowStamp();
+    const current = (allDocs[clientId] ?? getInitialDocs(clientId)).find(d => d.id === docId);
+    updateDocs(clientId, docId, {
+      status: 'depose', date, agentName: undefined, commentaire: undefined,
+      submittedLabel: fileName ?? current?.submittedLabel,
+      version: (current?.version ?? 0) + 1,
+    });
+    pushHistoryFor(clientId, {
+      date, heure, utilisateur: nameFor(clientId), role: 'Client',
+      action: `${docLabelFor(clientId, docId)} déposé`,
+      type: 'depot' as HistoActionType, cible: nameFor(clientId),
+    });
+  };
+
   return (
     <DocStateContext.Provider value={{
-      requisDocs, history, allDocsByClient: allDocs,
-      acceptDoc, refuseDoc, requestReplacement, remettreVerification,
+      requisDocs, history, allDocsByClient: allDocs, allHistoryByClient: allHistory,
+      acceptDoc, refuseDoc, requestReplacement, remettreVerification, depositDoc,
+      dossierEtape, dossierEtapes: allEtapes, setDossierEtape, pushNotification,
     }}>
       {children}
     </DocStateContext.Provider>
