@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import type { AuthUser, UserRole, AppPage } from '../App';
 import { registerClient, generateDossierRef, loadStaff, findClient } from '../data/clientRegistry';
-import bgWelcome from '../../imports/BG.png';
+import bgWelcome from '../../imports/BG.jpg';
 import cpiLogo from '../../imports/image.png';
 
 type ProfilType = 'fonctionnaire' | 'prive' | 'autre';
