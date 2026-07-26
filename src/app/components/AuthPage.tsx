@@ -574,9 +574,9 @@ function LoginScreen({ onLogin, onNavigate }: { onLogin: (u: AuthUser) => void; 
 
           {mode === 'client' ? (
             <form onSubmit={handleClientSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <Field label="Nom" placeholder="Nom complet" value={nom} onChange={setNom} />
-              <Field label="Téléphone" type="tel" placeholder="77 010 00 00" value={tel} onChange={setTel} />
-              <Field label="E-mail" type="email" placeholder="bonjour@email.com" value={email} onChange={setEmail} />
+              <Field label="Nom" placeholder="Nom complet" value={nom} onChange={setNom} icon={<UserCircle size={15} />} />
+              <Field label="Téléphone" type="tel" placeholder="77 010 00 00" value={tel} onChange={setTel} icon={<Phone size={15} />} />
+              <Field label="E-mail" type="email" placeholder="bonjour@email.com" value={email} onChange={setEmail} icon={<Mail size={15} />} />
               <div style={{ marginTop: '4px' }}>
                 <PrimaryBtn type="submit">
                   {loading
@@ -597,8 +597,8 @@ function LoginScreen({ onLogin, onNavigate }: { onLogin: (u: AuthUser) => void; 
             </form>
           ) : (
             <form onSubmit={handleProSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <Field label="Identifiant professionnel" type="email" placeholder="agent@cpi.sn" value={proEmail} onChange={setProEmail} />
-              <Field label="Mot de passe" type="password" placeholder="••••••••" value={proPwd} onChange={setProPwd} />
+              <Field label="Identifiant professionnel" type="email" placeholder="agent@cpi.sn" value={proEmail} onChange={setProEmail} icon={<Mail size={15} />} />
+              <Field label="Mot de passe" type="password" placeholder="••••••••" value={proPwd} onChange={setProPwd} icon={<Lock size={15} />} />
               <div style={{ marginTop: '4px' }}>
                 <PrimaryBtn type="submit">
                   {loading
