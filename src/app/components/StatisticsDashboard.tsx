@@ -47,7 +47,7 @@ function KpiCard({ label, value, sub, delta, positive, icon: Icon, color }: {
   icon: React.ComponentType<{ className?: string }>; color: string;
 }) {
   return (
-    <div className="bg-white p-5" style={{ border: `1px solid ${C.border}` }}>
+    <div className="bg-white p-5" style={{ border: `1px solid ${C.border}`, borderRadius: 'var(--r-md)' }}>
       <div className="flex items-start justify-between mb-3">
         <div className="w-9 h-9 flex items-center justify-center" style={{ background: `${color}14` }}>
           <Icon className="w-4 h-4" style={{ color }} />
@@ -81,7 +81,7 @@ function EmptyChart({ height = 200, label = 'Aucune donnée pour le moment' }: {
   return (
     <div style={{
       height, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      gap: '6px', border: `1px dashed ${C.border}`, background: C.bg, padding: '0 24px', textAlign: 'center',
+      gap: '6px', border: `1px dashed ${C.border}`, borderRadius: 'var(--r-md)', background: C.bg, padding: '0 24px', textAlign: 'center',
     }}>
       <BarChart3 style={{ width: 22, height: 22, color: C.border }} />
       <span style={{ fontSize: '0.8125rem', color: C.muted, maxWidth: '320px' }}>{label}</span>
@@ -125,7 +125,7 @@ function parseFrDate(s?: string): Date | null {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white p-3 shadow-sm" style={{ border: `1px solid ${C.border}`, fontSize: '0.8125rem' }}>
+    <div className="bg-white p-3 shadow-sm" style={{ border: `1px solid ${C.border}`, borderRadius: 'var(--r-md)', fontSize: '0.8125rem' }}>
       <div style={{ fontWeight: 700, color: C.text, marginBottom: '4px' }}>{label}</div>
       {payload.map((p: any) => (
         <div key={p.name} className="flex items-center gap-2">
@@ -282,7 +282,7 @@ export default function StatisticsDashboard({ user }: Props) {
   return (
     <div className="space-y-6" style={{ fontFamily: 'var(--font-sans)' }}>
       {/* Header */}
-      <div className="bg-white p-5" style={{ border: `1px solid ${C.border}` }}>
+      <div className="bg-white p-5" style={{ border: `1px solid ${C.border}`, borderRadius: 'var(--r-md)' }}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div style={{ fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.gold, marginBottom: '4px' }}>
@@ -306,7 +306,7 @@ export default function StatisticsDashboard({ user }: Props) {
               ))}
             </div>
             <button className="flex items-center gap-2 px-4 py-2 transition-colors"
-              style={{ border: `1px solid ${C.border}`, color: C.muted, fontSize: '0.8125rem', fontWeight: 600 }}
+              style={{ border: `1px solid ${C.border}`, borderRadius: 'var(--r-md)', color: C.muted, fontSize: '0.8125rem', fontWeight: 600 }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = C.bordeauxLight; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
               <Download className="w-3.5 h-3.5" /> Exporter
@@ -325,7 +325,7 @@ export default function StatisticsDashboard({ user }: Props) {
       </div>
 
       {/* Tab navigation */}
-      <div className="bg-white" style={{ border: `1px solid ${C.border}` }}>
+      <div className="bg-white" style={{ border: `1px solid ${C.border}`, borderRadius: 'var(--r-md)' }}>
         <div className="flex border-b overflow-x-auto" style={{ borderColor: C.border }}>
           {([
             ['volume', 'Volume & Activité'],
@@ -460,7 +460,7 @@ export default function StatisticsDashboard({ user }: Props) {
                   { label: 'Dossiers financés', value: String(rFinalises), color: C.gold },
                   { label: 'Reste à financer', value: `${rEnCours} dossier${rEnCours > 1 ? 's' : ''}`, color: C.bordeaux },
                 ].map(k => (
-                  <div key={k.label} className="p-5 bg-white" style={{ border: `1px solid ${C.border}` }}>
+                  <div key={k.label} className="p-5 bg-white" style={{ border: `1px solid ${C.border}`, borderRadius: 'var(--r-md)' }}>
                     <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.375rem', fontWeight: 800, color: k.color }}>{k.value}</div>
                     <div style={{ fontSize: '0.8125rem', color: C.muted, marginTop: '4px' }}>{k.label}</div>
                   </div>
@@ -497,7 +497,7 @@ export default function StatisticsDashboard({ user }: Props) {
                   { label: 'Dossiers suivis', value: String(rTotal), sub: 'Portefeuille en cours', color: C.green },
                   { label: 'Dossiers finalisés', value: String(rFinalises), sub: `${rTaux}% du portefeuille`, color: C.gold },
                 ].map(k => (
-                  <div key={k.label} className="p-5 bg-white" style={{ border: `1px solid ${C.border}` }}>
+                  <div key={k.label} className="p-5 bg-white" style={{ border: `1px solid ${C.border}`, borderRadius: 'var(--r-md)' }}>
                     <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 800, color: k.color }}>{k.value}</div>
                     <div style={{ fontSize: '0.875rem', fontWeight: 600, color: C.text, marginTop: '2px' }}>{k.label}</div>
                     <div style={{ fontSize: '0.75rem', color: C.muted }}>{k.sub}</div>
