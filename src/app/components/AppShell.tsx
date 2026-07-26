@@ -3,7 +3,7 @@ import {
   Building2, LayoutDashboard, FileText, Bell, UserCircle,
   LogOut, ChevronRight, Menu, X, Users,
   BarChart3, ShieldCheck, CreditCard, BookOpen, FolderOpen, LifeBuoy,
-  Phone, Mail, Banknote, ScrollText, History, Settings, MessageSquare,
+  Phone, Mail, Banknote, ScrollText, History, Settings, MessageSquare, HardHat,
 } from 'lucide-react';
 import cpiLogo from '../../imports/image.png';
 import type { AuthUser, UserRole } from '../App';
@@ -12,6 +12,7 @@ import { NavigationProvider, useNavigate } from '../contexts/NavigationContext';
 import type { ClientSummary } from '../data/demoStore';
 import { loadClients } from '../data/clientRegistry';
 import { useClientData } from '../data/useClientData';
+import { getDecaissement } from '../data/decaissementStore';
 import { DocStateProvider } from '../data/docStateContext';
 import { CpiDocsProvider } from '../data/cpiDocsContext';
 import { ChantierStateProvider } from '../data/chantierStateContext';
@@ -48,12 +49,14 @@ const ROLE_COLORS: Record<UserRole, { bg: string; text: string }> = {
 
 type NavItem = { id: string; label: string; icon: React.ComponentType<{ className?: string }> };
 
-function getNavItems(role: UserRole): NavItem[] {
+function getNavItems(role: UserRole, hasChantier = false): NavItem[] {
   if (role === 'client-fonctionnaire' || role === 'client-public') return [
     { id: 'simulateur',   label: 'Simulateur',       icon: CreditCard      },
     { id: 'dashboard',    label: 'Tableau de bord', icon: LayoutDashboard },
     { id: 'ma-demande',   label: 'Ma demande',       icon: FileText        },
     { id: 'mon-dossier',  label: 'Mon dossier',      icon: FolderOpen      },
+    // « Mon chantier » n'apparaît que lorsque la construction a été lancée.
+    ...(hasChantier ? [{ id: 'mon-chantier', label: 'Mon chantier', icon: HardHat } as NavItem] : []),
     { id: 'notifications', label: 'Notifications',  icon: Bell            },
   ];
   if (role === 'agent-cpi') return [
@@ -347,7 +350,6 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
   const { activeNav, navigate } = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const navItems = getNavItems(user.role);
   const roleLabel = ROLE_LABELS[user.role];
   const roleColor = ROLE_COLORS[user.role];
 
@@ -355,6 +357,10 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
   const client = useClientData();
   const isClientRole = user.role === 'client-public' || user.role === 'client-fonctionnaire';
   const dossierRef = isClientRole && client.ref && client.ref !== '—' ? client.ref : null;
+
+  // « Mon chantier » n'est proposé au client que si sa construction a été lancée.
+  const hasChantier = isClientRole && getDecaissement(client.id).constructionActive;
+  const navItems = getNavItems(user.role, hasChantier);
 
   const renderDashboard = () => {
     if (activeNav === 'statistiques')  return <StatisticsDashboard user={user} />;
