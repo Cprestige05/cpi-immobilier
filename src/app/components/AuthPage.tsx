@@ -3,6 +3,7 @@ import {
   Eye, EyeOff, Shield, Zap, Headphones, Handshake, Lock,
   ChevronRight, ChevronDown, ArrowLeft, CheckSquare, Square,
   Landmark, Briefcase, UserCircle, ArrowRight, CheckCircle,
+  Mail, Phone, Building2, AlertCircle, Check,
 } from 'lucide-react';
 import type { AuthUser, UserRole, AppPage } from '../App';
 import { registerClient, generateDossierRef, loadStaff, findClient } from '../data/clientRegistry';
@@ -75,49 +76,77 @@ interface Props {
 }
 
 // ─── Shared: Field input ──────────────────────────────────────────────────────
-function Field({ label, type = 'text', placeholder, value, onChange }: {
+function FieldHelp({ error, hint }: { error?: string; hint?: string }) {
+  if (!error && !hint) return null;
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'var(--font-sans)', fontSize: '0.75rem', lineHeight: 1.4, color: error ? 'var(--destructive)' : 'var(--muted-foreground)' }}>
+      {error ? <AlertCircle size={11} style={{ flexShrink: 0 }} /> : null}{error || hint}
+    </span>
+  );
+}
+
+function Field({ label, type = 'text', placeholder, value, onChange, error, valid, hint, icon }: {
   label: string; type?: string; placeholder?: string;
   value: string; onChange: (v: string) => void;
+  error?: string; valid?: boolean; hint?: string; icon?: React.ReactNode;
 }) {
   const [show, setShow] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const [hover, setHover] = useState(false);
   const isPwd = type === 'password';
+  const borderColor = error ? 'var(--destructive)' : focused ? 'var(--primary)' : valid ? 'var(--success)' : hover ? 'var(--muted-foreground)' : 'var(--border)';
+  const boxShadow = !focused ? 'none' : error ? '0 0 0 3px rgba(192,57,43,0.14)' : '0 0 0 3px rgba(123,26,46,0.12)';
+  const showCheck = valid && !error && !isPwd;
+  const rightPad = isPwd ? 42 : showCheck ? 38 : 14;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
       <label style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 'var(--font-weight-medium)' as any, color: 'var(--foreground)' }}>
         {label}
       </label>
       <div style={{ position: 'relative' }}>
+        {icon && (
+          <span style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', display: 'flex', pointerEvents: 'none', color: focused ? 'var(--primary)' : 'var(--muted-foreground)', transition: 'color var(--dur-1) var(--ease-out)' }}>{icon}</span>
+        )}
         <input
           type={isPwd && show ? 'text' : type}
           placeholder={placeholder}
           value={value}
+          aria-invalid={!!error || undefined}
           onChange={e => onChange(e.target.value)}
+          onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+          onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
           style={{
             width: '100%', boxSizing: 'border-box',
-            padding: '11px 14px', paddingRight: isPwd ? '42px' : '14px',
-            border: '1.5px solid var(--border)', borderRadius: 'var(--r-sm)',
+            padding: '11px 14px', paddingLeft: icon ? 38 : 14, paddingRight: rightPad,
+            border: `1.5px solid ${borderColor}`, borderRadius: 'var(--r-sm)',
             background: 'var(--input-background)',
             fontFamily: 'var(--font-sans)', fontSize: '0.9375rem',
-            color: 'var(--foreground)', outline: 'none',
+            color: 'var(--foreground)', outline: 'none', boxShadow,
             transition: 'border-color var(--dur-1) var(--ease-out), box-shadow var(--dur-2) var(--ease-out)',
           }}
-          onFocus={e => { e.target.style.borderColor = 'var(--primary)'; e.target.style.boxShadow = '0 0 0 3px rgba(123,26,46,0.12)'; }}
-          onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
         />
-        {isPwd && (
+        {isPwd ? (
           <button type="button" onClick={() => setShow(!show)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)', padding: 0 }}>
             {show ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
-        )}
+        ) : showCheck ? (
+          <Check size={15} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--success)', pointerEvents: 'none' }} />
+        ) : null}
       </div>
+      <FieldHelp error={error} hint={hint} />
     </div>
   );
 }
 
-function SelectField({ label, value, onChange, options, placeholder }: {
+function SelectField({ label, value, onChange, options, placeholder, error, valid, hint }: {
   label: string; value: string; onChange: (v: string) => void;
   options: { value: string; label: string }[]; placeholder?: string;
+  error?: string; valid?: boolean; hint?: string;
 }) {
+  const [focused, setFocused] = useState(false);
+  const [hover, setHover] = useState(false);
+  const borderColor = error ? 'var(--destructive)' : focused ? 'var(--primary)' : valid ? 'var(--success)' : hover ? 'var(--muted-foreground)' : 'var(--border)';
+  const boxShadow = !focused ? 'none' : error ? '0 0 0 3px rgba(192,57,43,0.14)' : '0 0 0 3px rgba(123,26,46,0.12)';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
       <label style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 'var(--font-weight-medium)' as any, color: 'var(--foreground)' }}>
@@ -127,19 +156,19 @@ function SelectField({ label, value, onChange, options, placeholder }: {
         <select
           value={value}
           onChange={e => onChange(e.target.value)}
+          onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+          onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
           style={{
             width: '100%', boxSizing: 'border-box',
             padding: '11px 38px 11px 14px',
-            border: '1.5px solid var(--border)', borderRadius: 'var(--r-sm)',
+            border: `1.5px solid ${borderColor}`, borderRadius: 'var(--r-sm)',
             background: 'var(--input-background)',
             fontFamily: 'var(--font-sans)', fontSize: '0.9375rem',
-            color: value ? 'var(--foreground)' : 'var(--muted-foreground)', outline: 'none',
+            color: value ? 'var(--foreground)' : 'var(--muted-foreground)', outline: 'none', boxShadow,
             appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none',
             cursor: 'pointer',
             transition: 'border-color var(--dur-1) var(--ease-out), box-shadow var(--dur-2) var(--ease-out)',
           }}
-          onFocus={e => { e.target.style.borderColor = 'var(--primary)'; e.target.style.boxShadow = '0 0 0 3px rgba(123,26,46,0.12)'; }}
-          onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
         >
           {placeholder && <option value="" disabled>{placeholder}</option>}
           {options.map(o => (
@@ -148,6 +177,7 @@ function SelectField({ label, value, onChange, options, placeholder }: {
         </select>
         <ChevronDown size={16} style={{ position: 'absolute', right: '13px', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', pointerEvents: 'none' }} />
       </div>
+      <FieldHelp error={error} hint={hint} />
     </div>
   );
 }
@@ -616,14 +646,26 @@ function RegisterScreen({ onLogin, onNavigate, initialProfile }: {
   });
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [attempted, setAttempted] = useState(false);
 
   const set = (k: keyof typeof form) => (v: string) => setForm(f => ({ ...f, [k]: v }));
 
   const profilInfo = PROFIL_OPTIONS.find(p => p.type === profil);
 
+  // ── Validation en direct des champs requis ──
+  const nomOk   = form.nom.trim().length >= 2;
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
+  const telOk   = form.tel.replace(/\D/g, '').length >= 7;
+  const empOk   = form.employeur.trim().length >= 2;
+  const revOk   = form.revenus !== '';
+  const pwdOk   = form.pwd.length >= 8;
+  const pwd2Ok  = form.pwd2.length > 0 && form.pwd2 === form.pwd;
+  const formValid = nomOk && emailOk && telOk && empOk && revOk && pwdOk && pwd2Ok && accepted;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!accepted || !profil) return;
+    if (!profil) return;
+    if (!formValid) { setAttempted(true); return; }
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
@@ -828,11 +870,14 @@ function RegisterScreen({ onLogin, onNavigate, initialProfile }: {
 
             <div style={{ maxWidth: '400px' }}>
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <Field label="Nom complet *" placeholder="Prénom Nom" value={form.nom} onChange={set('nom')} />
+                <Field label="Nom complet *" placeholder="Prénom Nom" value={form.nom} onChange={set('nom')}
+                  icon={<UserCircle size={15} />} valid={nomOk} error={attempted && !nomOk ? 'Indiquez votre nom complet.' : undefined} />
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  <Field label="E-mail *" type="email" placeholder="vous@email.com" value={form.email} onChange={set('email')} />
-                  <Field label="Téléphone *" type="tel" placeholder="+221 7X XXX XX XX" value={form.tel} onChange={set('tel')} />
+                  <Field label="E-mail *" type="email" placeholder="vous@email.com" value={form.email} onChange={set('email')}
+                    icon={<Mail size={15} />} valid={emailOk} error={attempted && !emailOk ? 'Adresse e-mail invalide.' : undefined} />
+                  <Field label="Téléphone *" type="tel" placeholder="+221 7X XXX XX XX" value={form.tel} onChange={set('tel')}
+                    icon={<Phone size={15} />} valid={telOk} error={attempted && !telOk ? 'Numéro requis.' : undefined} />
                 </div>
 
                 <Field
@@ -840,6 +885,8 @@ function RegisterScreen({ onLogin, onNavigate, initialProfile }: {
                   placeholder={profil === 'fonctionnaire' ? "Ex: Ministère de l'Éducation" : "Ex: Sonatel, Orange SN..."}
                   value={form.employeur}
                   onChange={set('employeur')}
+                  icon={<Building2 size={15} />} valid={empOk}
+                  error={attempted && !empOk ? 'Ce champ est requis.' : undefined}
                 />
 
                 <SelectField
@@ -848,30 +895,42 @@ function RegisterScreen({ onLogin, onNavigate, initialProfile }: {
                   onChange={set('revenus')}
                   options={REVENUS_OPTIONS}
                   placeholder="Sélectionnez une tranche"
+                  valid={revOk}
+                  error={attempted && !revOk ? 'Sélectionnez une tranche.' : undefined}
                 />
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  <Field label="Mot de passe *" type="password" placeholder="Min. 8 caractères" value={form.pwd} onChange={set('pwd')} />
-                  <Field label="Confirmer *" type="password" placeholder="Répétez" value={form.pwd2} onChange={set('pwd2')} />
+                  <Field label="Mot de passe *" type="password" placeholder="Min. 8 caractères" value={form.pwd} onChange={set('pwd')}
+                    icon={<Lock size={15} />} valid={pwdOk}
+                    hint={!attempted && !pwdOk ? '8 caractères minimum.' : undefined}
+                    error={attempted && !pwdOk ? 'Au moins 8 caractères.' : undefined} />
+                  <Field label="Confirmer *" type="password" placeholder="Répétez" value={form.pwd2} onChange={set('pwd2')}
+                    icon={<Lock size={15} />} valid={pwd2Ok}
+                    error={attempted && !pwd2Ok ? (form.pwd2 ? 'Ne correspond pas.' : 'Confirmez.') : undefined} />
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
-                  onClick={() => setAccepted(!accepted)}>
-                  {accepted
-                    ? <CheckSquare size={18} style={{ color: 'var(--primary)', marginTop: '2px', flexShrink: 0 }} />
-                    : <Square size={18} style={{ color: 'var(--border)', marginTop: '2px', flexShrink: 0 }} />
-                  }
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>
-                    {"J'accepte les "}
-                    <a href="#" style={{ color: 'var(--primary)', fontWeight: 700, textDecoration: 'none' }}
-                      onClick={e => e.stopPropagation()}>
-                      conditions d'utilisation
-                    </a>
-                  </span>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
+                    onClick={() => setAccepted(!accepted)}>
+                    {accepted
+                      ? <CheckSquare size={18} style={{ color: 'var(--primary)', marginTop: '2px', flexShrink: 0 }} />
+                      : <Square size={18} style={{ color: attempted ? 'var(--destructive)' : 'var(--border)', marginTop: '2px', flexShrink: 0 }} />
+                    }
+                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>
+                      {"J'accepte les "}
+                      <a href="#" style={{ color: 'var(--primary)', fontWeight: 700, textDecoration: 'none' }}
+                        onClick={e => e.stopPropagation()}>
+                        conditions d'utilisation
+                      </a>
+                    </span>
+                  </div>
+                  {attempted && !accepted && (
+                    <div style={{ marginTop: 6, marginLeft: 28 }}><FieldHelp error="Vous devez accepter les conditions." /></div>
+                  )}
                 </div>
 
                 <div style={{ marginTop: '4px' }}>
-                  <PrimaryBtn type="submit" disabled={!accepted}>
+                  <PrimaryBtn type="submit" disabled={loading}>
                     {loading
                       ? <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <span style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
