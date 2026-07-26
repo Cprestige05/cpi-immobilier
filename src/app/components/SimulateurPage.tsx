@@ -211,7 +211,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
 
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <div className="sim-no-print" style={{
-          background: 'linear-gradient(120deg, var(--primary) 0%, #1E4D8C 100%)',
+          background: 'linear-gradient(120deg, var(--primary) 0%, #A03050 100%)',
           borderRadius: 'var(--r-lg)', padding: '26px 32px', marginBottom: '22px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap',
         }}>
@@ -438,7 +438,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
 
             {/* Big mensualité */}
             <div style={{
-              background: 'linear-gradient(135deg, var(--primary) 0%, #1E4D8C 55%, #163878 100%)',
+              background: 'linear-gradient(135deg, var(--primary) 0%, #5C1224 55%, #38080F 100%)',
               borderRadius: 'var(--r-md)', padding: '26px 28px',
               display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'center', justifyContent: 'space-between',
             }}>

@@ -513,7 +513,7 @@ function buildDocPreview(doc: SignDocTarget, client: ReturnType<typeof useClient
 function DocumentPreview({ doc, client }: { doc: SignDocTarget; client: ReturnType<typeof useClientData> }) {
   const content = buildDocPreview(doc, client);
   return (
-    <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '22px 22px 18px', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.04)', color: '#1a1a1a' }}>
+    <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '22px 22px 18px', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.04)', color: 'var(--foreground)' }}>
       {/* En-tête officiel */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', paddingBottom: '12px', borderBottom: '2px solid var(--primary)', marginBottom: '16px' }}>
         <div>
@@ -522,18 +522,18 @@ function DocumentPreview({ doc, client }: { doc: SignDocTarget; client: ReturnTy
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.625rem', color: '#666' }}>Réf. dossier</div>
-          <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, color: '#1a1a1a' }}>{client.ref}</div>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, color: 'var(--foreground)' }}>{client.ref}</div>
         </div>
       </div>
 
-      <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.0625rem', fontWeight: 800, color: '#1a1a1a', marginBottom: '4px' }}>{doc.nom}</div>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.0625rem', fontWeight: 800, color: 'var(--foreground)', marginBottom: '4px' }}>{doc.nom}</div>
       <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', color: '#666', marginBottom: '16px' }}>Version {doc.version} · établi le {doc.date}</div>
 
       <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: '#333', lineHeight: 1.7, margin: '0 0 16px' }}>{content.intro}</p>
 
       {content.articles.map((a, i) => (
         <div key={i} style={{ marginBottom: '14px' }}>
-          <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 700, color: '#1a1a1a', marginBottom: '3px' }}>{a.h}</div>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: '3px' }}>{a.h}</div>
           <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: '#333', lineHeight: 1.7, margin: 0 }}>{a.p}</p>
         </div>
       ))}

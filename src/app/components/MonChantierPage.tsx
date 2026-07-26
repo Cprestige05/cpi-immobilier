@@ -330,7 +330,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
 
   const GALLERY_LIVE = useMemo(() =>
     medias.filter(m => m.type === 'photo' && m.visibleClient).map(m => ({
-      bg: m.bg || 'linear-gradient(135deg,var(--primary),#2E6EC4)',
+      bg: m.bg || 'linear-gradient(135deg,var(--primary),#B05070)',
       label: m.titre, tranche: m.phase ? `T${m.phase}` : 'T1', date: m.date,
     })), [medias]);
   const rawGallery = GALLERY_LIVE.length > 0 ? GALLERY_LIVE : GALLERY_ITEMS;

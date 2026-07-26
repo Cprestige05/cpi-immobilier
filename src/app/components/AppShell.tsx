@@ -146,7 +146,7 @@ function SupportPage() {
 
       {/* Header */}
       <div style={{
-        background: 'linear-gradient(120deg, var(--primary) 0%, #1E4D8C 100%)',
+        background: 'linear-gradient(120deg, var(--primary) 0%, #A03050 100%)',
         borderRadius: 'var(--r-md)', padding: '24px 28px',
         display: 'flex', alignItems: 'center', gap: '16px',
       }}>
