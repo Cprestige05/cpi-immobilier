@@ -55,7 +55,7 @@ const REQUIS_DOSSIERS: RequisDossier[] = [
     id: 'bancaires', num: 3,
     label: 'Relevés bancaires',
     requirement: '3 derniers relevés de compte',
-    accent: 'var(--chart-4)', accentBg: 'rgba(46,110,196,0.08)',
+    accent: 'var(--chart-4)', accentBg: 'rgba(176,80,112,0.08)',
     icon: CreditCard, status: 'accepte',
   },
 ];
@@ -113,7 +113,7 @@ const STATUS_CONFIG: Record<DossierStatus, { label: string; color: string; bg: s
   'a-remplacer':  { label: 'À corriger',      color: 'var(--destructive)',      bg: 'rgba(192,57,43,0.08)', icon: RefreshCw },
   'verification': { label: 'En vérification', color: 'var(--accent)',           bg: 'rgba(200,146,26,0.10)', icon: Clock },
   'en-attente':   { label: 'À déposer',       color: 'var(--muted-foreground)', bg: 'var(--muted)',          icon: Clock },
-  'depose':       { label: 'Déposé — analyse', color: 'var(--chart-4)',         bg: 'rgba(46,110,196,0.08)', icon: Send },
+  'depose':       { label: 'Déposé — analyse', color: 'var(--chart-4)',         bg: 'rgba(176,80,112,0.08)', icon: Send },
 };
 
 const CPI_STATUS_MAP: Record<string, { color: string; bg: string }> = {
@@ -168,8 +168,8 @@ function ActionBtn({ icon: Icon, label, variant = 'ghost', disabled, onClick }: 
 }) {
   const [hov, setHov] = useState(false);
   const styles: Record<string, React.CSSProperties> = {
-    ghost:   { border: '1px solid var(--border)',   color: 'var(--muted-foreground)', background: hov ? 'var(--input-background)' : 'transparent' },
-    primary: { border: 'none',                      color: 'var(--primary-foreground)', background: 'var(--primary)' },
+    ghost:   { border: '1px solid var(--border)',   color: hov ? 'var(--foreground)' : 'var(--muted-foreground)', background: hov ? 'var(--input-background)' : 'transparent' },
+    primary: { border: 'none',                      color: 'var(--primary-foreground)', background: hov && !disabled ? 'var(--primary-hover)' : 'var(--primary)', boxShadow: hov && !disabled ? 'var(--shadow-hover)' : 'var(--elev-xs)' },
     sign:    { border: '1px solid var(--primary)',  color: 'var(--primary)',            background: hov && !disabled ? 'var(--secondary)' : 'transparent' },
   };
   return (
@@ -179,7 +179,7 @@ function ActionBtn({ icon: Icon, label, variant = 'ghost', disabled, onClick }: 
       onClick={onClick}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
-      style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '6px 12px', borderRadius: 'var(--radius)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.6 : 1, transition: 'background 0.12s', whiteSpace: 'nowrap', ...styles[variant] }}>
+      style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '6px 12px', borderRadius: 'var(--r-sm)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.6 : 1, transition: 'all var(--dur-1) var(--ease-out)', whiteSpace: 'nowrap', ...styles[variant] }}>
       <Icon size={12} />{label}
     </button>
   );
@@ -218,7 +218,7 @@ function DossierJourneyBanner() {
   return (
     <div style={{
       background: 'var(--primary)', borderRadius: 'var(--r-lg)', overflow: 'hidden',
-      position: 'relative', marginBottom: '16px', boxShadow: '0 8px 32px rgba(26,58,110,0.18)',
+      position: 'relative', marginBottom: '16px', boxShadow: '0 8px 32px rgba(123,26,46,0.18)',
     }}>
       <style>{`
         .dj-rail-mobile { display: none; }
@@ -584,8 +584,8 @@ function PreviewModal({ doc, onClose }: { doc: SignDocTarget; onClose: () => voi
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(11,25,41,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', padding: '16px' }}>
-      <div style={{ background: 'var(--card)', borderRadius: 'var(--r-md)', width: '100%', maxWidth: '560px', maxHeight: '92vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 64px rgba(11,25,41,0.28)' }}>
+      style={{ position: 'fixed', inset: 0, background: 'rgba(28,8,16,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', padding: '16px' }}>
+      <div style={{ background: 'var(--card)', borderRadius: 'var(--r-md)', width: '100%', maxWidth: '560px', maxHeight: '92vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 64px rgba(28,8,16,0.28)' }}>
         <div style={{ padding: '16px 22px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
             <Eye size={18} style={{ color: 'var(--primary)', flexShrink: 0 }} />
@@ -629,9 +629,9 @@ function SignatureModal({ doc, onClose }: { doc: SignDocTarget; onClose: () => v
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget && phase !== 'processing') onClose(); }}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(11,25,41,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', padding: '16px' }}>
+      style={{ position: 'fixed', inset: 0, background: 'rgba(28,8,16,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', padding: '16px' }}>
       <style>{`@keyframes cpiSpin { to { transform: rotate(360deg); } }`}</style>
-      <div style={{ background: 'var(--card)', borderRadius: 'var(--r-md)', width: '100%', maxWidth: '500px', maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(11,25,41,0.28)' }}>
+      <div style={{ background: 'var(--card)', borderRadius: 'var(--r-md)', width: '100%', maxWidth: '500px', maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(28,8,16,0.28)' }}>
 
         {phase === 'done' ? (
           <div style={{ padding: '36px 28px', textAlign: 'center' }}>
@@ -686,7 +686,7 @@ function SignatureModal({ doc, onClose }: { doc: SignDocTarget; onClose: () => v
               </div>
 
               {/* Engagement légal */}
-              <div style={{ display: 'flex', gap: '10px', padding: '12px 14px', background: 'rgba(26,58,110,0.04)', border: '1px solid rgba(26,58,110,0.12)', borderRadius: 'var(--r-sm)' }}>
+              <div style={{ display: 'flex', gap: '10px', padding: '12px 14px', background: 'rgba(123,26,46,0.04)', border: '1px solid rgba(123,26,46,0.12)', borderRadius: 'var(--r-sm)' }}>
                 <ShieldCheck size={16} style={{ color: 'var(--primary)', flexShrink: 0, marginTop: '1px' }} />
                 <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', margin: 0, lineHeight: 1.6 }}>
                   Votre signature électronique a la même valeur juridique qu'une signature manuscrite. Elle est horodatée et associée à votre dossier de façon sécurisée.
