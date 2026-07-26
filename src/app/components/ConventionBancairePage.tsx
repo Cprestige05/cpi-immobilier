@@ -1,10 +1,7 @@
-import { Home, ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import { Home, Info } from 'lucide-react';
 
-// Dark forest green from the convention document palette — not in design system tokens
-const FOREST = '#163824';
-const FOREST_LIGHT = '#1F4D32';
-const FOREST_HEADER = '#1B4530';
-const GOLD = '#C8A84B';
+// Harmonisé au système CPI : fond clair, en-têtes bordeaux, accent or (var(--accent)).
+const GOLD = 'var(--accent)';
 
 interface Row {
   label: string;
@@ -53,10 +50,11 @@ function ProductCard({
     <div style={{
       flex: 1,
       minWidth: 0,
-      border: '1px solid rgba(255,255,255,0.12)',
-      borderRadius: '6px',
+      border: '1px solid var(--border)',
+      borderRadius: 'var(--r-md)',
       overflow: 'hidden',
-      background: 'white',
+      background: 'var(--card)',
+      boxShadow: 'var(--elev-sm)',
     }}>
       {/* Card header */}
       <div style={{
@@ -132,8 +130,8 @@ export default function ConventionBancairePage() {
   return (
     <div style={{
       minHeight: '100%',
-      background: FOREST,
-      borderRadius: '4px',
+      background: 'var(--background)',
+      borderRadius: 'var(--r-lg)',
       overflow: 'hidden',
     }}>
       {/* Inner content */}
@@ -159,10 +157,11 @@ export default function ConventionBancairePage() {
         <h1 style={{
           fontFamily: 'var(--font-display)',
           fontSize: 'clamp(1.5rem, 3vw, 2rem)',
-          fontWeight: 700,
-          color: 'white',
+          fontWeight: 800,
+          color: 'var(--foreground)',
           lineHeight: 1.2,
           marginBottom: '28px',
+          letterSpacing: '-0.01em',
         }}>
           Les Deux Produits Financiers Clés
         </h1>
@@ -187,7 +186,7 @@ export default function ConventionBancairePage() {
             subtitle="Pour fonctionnaires sans Titre Foncier (titres précaires)"
             rows={AMSAKAR_ROWS}
             accent="#1A6B44"
-            headerBg={FOREST_HEADER}
+            headerBg="var(--primary)"
             icon={<Home size={15} style={{ color: 'rgba(255,255,255,0.8)', flexShrink: 0 }} />}
           />
         </div>
@@ -197,15 +196,15 @@ export default function ConventionBancairePage() {
           display: 'flex', alignItems: 'center', gap: '8px',
           marginTop: '24px',
           padding: '10px 16px',
-          background: 'rgba(255,255,255,0.07)',
-          borderRadius: '4px',
-          border: '1px solid rgba(255,255,255,0.1)',
+          background: 'var(--secondary)',
+          borderRadius: 'var(--r-sm)',
+          border: '1px solid var(--border)',
         }}>
           <Info size={13} style={{ color: GOLD, flexShrink: 0 }} />
           <span style={{
             fontFamily: 'var(--font-sans)',
             fontSize: '0.75rem',
-            color: 'rgba(255,255,255,0.55)',
+            color: 'var(--muted-foreground)',
           }}>
             Convention de financement · Articles I &amp; II · Taux susceptibles d'évoluer selon conditions marché
           </span>
