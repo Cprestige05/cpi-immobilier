@@ -97,12 +97,12 @@ function MetricTile({ label, value, hint, source, icon: Icon }: {
 }) {
   const isReal = source === 'real';
   return (
-    <div className="p-3" style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10 }}>
+    <div className="p-3" style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 'var(--r-sm)' }}>
       <div className="flex items-center justify-between mb-1.5">
-        <div className="w-7 h-7 flex items-center justify-center" style={{ background: isReal ? C.greenLight : 'rgba(107,74,82,0.10)', borderRadius: 7 }}>
+        <div className="w-7 h-7 flex items-center justify-center" style={{ background: isReal ? C.greenLight : 'rgba(107,74,82,0.10)', borderRadius: 'var(--r-sm)' }}>
           <Icon className="w-3.5 h-3.5" style={{ color: isReal ? C.green : C.muted }} />
         </div>
-        {!isReal && <span style={{ fontSize: '0.5625rem', fontWeight: 700, color: C.muted, background: 'rgba(107,74,82,0.10)', padding: '2px 7px', borderRadius: 99 }}>à connecter</span>}
+        {!isReal && <span style={{ fontSize: '0.5625rem', fontWeight: 700, color: C.muted, background: 'rgba(107,74,82,0.10)', padding: '2px 7px', borderRadius: 'var(--r-full)' }}>à connecter</span>}
       </div>
       <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 800, color: isReal ? C.text : C.muted }}>{isReal ? (value ?? '—') : '—'}</div>
       <div style={{ fontSize: '0.75rem', fontWeight: 600, color: C.text, marginTop: 2 }}>{label}</div>
@@ -569,7 +569,7 @@ export default function StatisticsDashboard({ user }: Props) {
           {activeTab === 'audience' && isAdmin && (
             <div className="space-y-6">
               {/* Bandeau explicatif */}
-              <div className="p-4 flex items-start gap-3" style={{ background: C.bordeauxLight, border: `1px solid rgba(123,26,46,0.15)`, borderRadius: 10 }}>
+              <div className="p-4 flex items-start gap-3" style={{ background: C.bordeauxLight, border: `1px solid rgba(123,26,46,0.15)`, borderRadius: 'var(--r-sm)' }}>
                 <Activity className="w-4 h-4 flex-shrink-0" style={{ color: C.bordeaux, marginTop: 2 }} />
                 <div>
                   <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: C.bordeaux }}>Mesure d'audience — à connecter</div>

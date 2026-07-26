@@ -83,10 +83,10 @@ function CommentModal({ title, cta, onConfirm, onClose }: { title: string; cta: 
   return (
     <div onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       style={{ position: 'fixed', inset: 0, background: 'rgba(11,25,41,0.5)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', padding: 16 }}>
-      <div style={{ background: 'var(--card)', borderRadius: 14, width: '100%', maxWidth: 440, padding: 24, boxShadow: '0 24px 64px rgba(11,25,41,0.28)' }}>
+      <div style={{ background: 'var(--card)', borderRadius: 'var(--r-md)', width: '100%', maxWidth: 440, padding: 24, boxShadow: '0 24px 64px rgba(11,25,41,0.28)' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: 12 }}>{title}</div>
         <textarea value={txt} onChange={e => setTxt(e.target.value)} rows={4} placeholder="Précisez le motif pour le client…"
-          style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid var(--border)', background: 'var(--input-background)', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--foreground)', resize: 'vertical', boxSizing: 'border-box' }} />
+          style={{ width: '100%', padding: '10px 12px', borderRadius: 'var(--r-sm)', border: '1.5px solid var(--border)', background: 'var(--input-background)', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--foreground)', resize: 'vertical', boxSizing: 'border-box' }} />
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
           <button onClick={onClose} style={{ padding: '9px 16px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'transparent', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600, color: 'var(--muted-foreground)', cursor: 'pointer' }}>Annuler</button>
           <button disabled={txt.trim().length < 3} onClick={() => onConfirm(txt.trim())}
@@ -104,7 +104,7 @@ function ParcoursControl({ activeStep, allValid, submitted, onSet, agentName }: 
   onSet: (etape: number) => void; agentName: string;
 }) {
   return (
-    <div style={{ background: 'var(--primary)', borderRadius: 14, padding: '18px 20px', color: '#fff' }}>
+    <div style={{ background: 'var(--primary)', borderRadius: 'var(--r-md)', padding: '18px 20px', color: '#fff' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
         <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 800 }}>Parcours du dossier</span>
         <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.45)' }}>Étape {activeStep + 1}/6 · {TIMELINE_STEPS[activeStep].label}</span>
@@ -141,13 +141,13 @@ function ParcoursControl({ activeStep, allValid, submitted, onSet, agentName }: 
             const done = activeStep > b.etape;
             return (
               <button key={b.etape} onClick={() => onSet(b.etape)} disabled={isCurrent}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 13px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', background: isCurrent ? 'var(--accent)' : done ? 'rgba(26,107,68,0.3)' : 'rgba(255,255,255,0.08)', color: '#fff', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, cursor: isCurrent ? 'default' : 'pointer', opacity: isCurrent ? 1 : 0.95 }}>
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 13px', borderRadius: 'var(--r-sm)', border: '1px solid rgba(255,255,255,0.2)', background: isCurrent ? 'var(--accent)' : done ? 'rgba(26,107,68,0.3)' : 'rgba(255,255,255,0.08)', color: '#fff', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, cursor: isCurrent ? 'default' : 'pointer', opacity: isCurrent ? 1 : 0.95 }}>
                 {done && <CheckCircle2 size={12} />}{b.label}
               </button>
             );
           })}
           {activeStep > DOCS_VALIDES_INDEX && (
-            <button onClick={() => onSet(activeStep - 1)} style={{ padding: '8px 13px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', background: 'transparent', color: 'rgba(255,255,255,0.7)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>← Reculer</button>
+            <button onClick={() => onSet(activeStep - 1)} style={{ padding: '8px 13px', borderRadius: 'var(--r-sm)', border: '1px solid rgba(255,255,255,0.2)', background: 'transparent', color: 'rgba(255,255,255,0.7)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>← Reculer</button>
           )}
         </div>
       )}
@@ -164,7 +164,7 @@ function ParcoursControl({ activeStep, allValid, submitted, onSet, agentName }: 
 
 function Card({ title, sub, right, children }: { title: string; sub?: string; right?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', overflow: 'hidden' }}>
       <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
         <div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 700, color: 'var(--foreground)' }}>{title}</div>
@@ -202,14 +202,14 @@ function DossierFiche({ agentName, onBack }: { agentName: string; onBack: () => 
           <ArrowLeft size={15} /> Tous les dossiers
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-          <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.0625rem', flexShrink: 0 }}>
+          <div style={{ width: 48, height: 48, borderRadius: 'var(--r-md)', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.0625rem', flexShrink: 0 }}>
             {client.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 800, color: 'var(--foreground)' }}>{client.name}</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 3 }}>
               {[client.ref, client.projectNom, client.adresse].filter(x => x && x !== '—').map(x => (
-                <span key={x} style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', background: 'var(--input-background)', padding: '2px 9px', borderRadius: 99 }}>{x}</span>
+                <span key={x} style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', background: 'var(--input-background)', padding: '2px 9px', borderRadius: 'var(--r-full)' }}>{x}</span>
               ))}
             </div>
           </div>
@@ -222,7 +222,7 @@ function DossierFiche({ agentName, onBack }: { agentName: string; onBack: () => 
 
       {/* Pièces justificatives */}
       <Card title="Pièces justificatives" sub={`${validated}/${total} validée${validated > 1 ? 's' : ''}`}
-        right={allValid ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: 'var(--success)', background: 'rgba(26,107,68,0.10)', padding: '3px 9px', borderRadius: 99 }}><CheckCircle2 size={12} /> Complet</span> : undefined}>
+        right={allValid ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: 'var(--success)', background: 'rgba(26,107,68,0.10)', padding: '3px 9px', borderRadius: 'var(--r-full)' }}><CheckCircle2 size={12} /> Complet</span> : undefined}>
         {requisDocs.length === 0 ? (
           <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>Aucune pièce déposée.</div>
         ) : (
@@ -232,23 +232,23 @@ function DossierFiche({ agentName, onBack }: { agentName: string; onBack: () => 
               const Icon = PIECE_ICON[d.id] ?? FileText;
               const canValidate = d.status === 'depose' || d.status === 'verification' || d.status === 'refuse' || d.status === 'a-remplacer';
               return (
-                <div key={d.id} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px' }}>
+                <div key={d.id} style={{ border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '12px 14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                    <div style={{ width: 38, height: 38, borderRadius: 8, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon size={17} style={{ color: cfg.color }} /></div>
+                    <div style={{ width: 38, height: 38, borderRadius: 'var(--r-sm)', background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon size={17} style={{ color: cfg.color }} /></div>
                     <div style={{ flex: 1, minWidth: 140 }}>
                       <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600, color: 'var(--foreground)' }}>{d.label}</div>
                       {d.submittedLabel && <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', color: 'var(--muted-foreground)' }}>{d.submittedLabel}{d.date ? ` · ${d.date}` : ''}</div>}
                     </div>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 99, background: cfg.bg, color: cfg.color, fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, whiteSpace: 'nowrap' }}><cfg.icon size={11} />{cfg.label}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 'var(--r-full)', background: cfg.bg, color: cfg.color, fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, whiteSpace: 'nowrap' }}><cfg.icon size={11} />{cfg.label}</span>
                   </div>
                   {d.commentaire && (
                     <div style={{ marginTop: 8, borderLeft: `3px solid ${d.status === 'accepte' ? 'var(--success)' : 'var(--destructive)'}`, paddingLeft: 10, fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', fontStyle: 'italic' }}>"{d.commentaire}"</div>
                   )}
                   {canValidate && (
                     <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-                      <button onClick={() => acceptDoc(d.id, agentName, client.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, border: 'none', background: 'var(--success)', color: '#fff', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}><CheckCircle2 size={13} /> Valider</button>
-                      <button onClick={() => setModal({ docId: d.id, mode: 'remplacer' })} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}><RefreshCw size={13} /> Remplacement</button>
-                      <button onClick={() => setModal({ docId: d.id, mode: 'refuse' })} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, border: '1px solid rgba(192,57,43,0.3)', background: 'transparent', color: 'var(--destructive)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}><XCircle size={13} /> Refuser</button>
+                      <button onClick={() => acceptDoc(d.id, agentName, client.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 'var(--r-sm)', border: 'none', background: 'var(--success)', color: '#fff', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}><CheckCircle2 size={13} /> Valider</button>
+                      <button onClick={() => setModal({ docId: d.id, mode: 'remplacer' })} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'transparent', color: 'var(--foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}><RefreshCw size={13} /> Remplacement</button>
+                      <button onClick={() => setModal({ docId: d.id, mode: 'refuse' })} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 'var(--r-sm)', border: '1px solid rgba(192,57,43,0.3)', background: 'transparent', color: 'var(--destructive)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}><XCircle size={13} /> Refuser</button>
                     </div>
                   )}
                 </div>
@@ -260,7 +260,7 @@ function DossierFiche({ agentName, onBack }: { agentName: string; onBack: () => 
 
       {/* Documents CPI */}
       <Card title="Documents du dossier (CPI)" sub="Documents transmis au client (téléchargement, signature)"
-        right={<button onClick={() => setShowUpload(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}><Upload size={13} /> Téléverser</button>}>
+        right={<button onClick={() => setShowUpload(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 'var(--r-sm)', border: 'none', background: 'var(--primary)', color: '#fff', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}><Upload size={13} /> Téléverser</button>}>
         {visibleCpi.length === 0 ? (
           <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>Aucun document publié pour ce client.</div>
         ) : (
@@ -269,21 +269,21 @@ function DossierFiche({ agentName, onBack }: { agentName: string; onBack: () => 
               const scfg = CPI_STATUS_CFG[d.status] ?? CPI_STATUS_CFG.disponible;
               const cat = CPI_CAT_CFG[d.categorie];
               return (
-                <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 13px', border: '1px solid var(--border)', borderRadius: 10, flexWrap: 'wrap' }}>
-                  <div style={{ width: 34, height: 34, borderRadius: 8, background: 'var(--input-background)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 13px', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', flexWrap: 'wrap' }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 'var(--r-sm)', background: 'var(--input-background)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     {cat ? <cat.icon size={15} style={{ color: 'var(--primary)' }} /> : <FileText size={15} style={{ color: 'var(--primary)' }} />}
                   </div>
                   <div style={{ flex: 1, minWidth: 140 }}>
                     <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--foreground)' }}>{d.nom}</div>
                     <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', color: 'var(--muted-foreground)' }}>{cat?.label ?? d.categorie}{d.version ? ` · ${d.version}` : ''}</div>
                   </div>
-                  <span style={{ padding: '3px 9px', borderRadius: 99, background: scfg.bg, color: scfg.color, fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, whiteSpace: 'nowrap' }}>{scfg.label}</span>
+                  <span style={{ padding: '3px 9px', borderRadius: 'var(--r-full)', background: scfg.bg, color: scfg.color, fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, whiteSpace: 'nowrap' }}>{scfg.label}</span>
                   <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                     {d.status === 'disponible' && !d.signatureRequise && (
-                      <button onClick={() => requestSignature(d.id, agentName, client.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 8, border: '1px solid var(--primary)', background: 'transparent', color: 'var(--primary)', fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer' }}><PenSquare size={12} /> Demander signature</button>
+                      <button onClick={() => requestSignature(d.id, agentName, client.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 'var(--r-sm)', border: '1px solid var(--primary)', background: 'transparent', color: 'var(--primary)', fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer' }}><PenSquare size={12} /> Demander signature</button>
                     )}
                     {d.status === 'a-signer' && (
-                      <button onClick={() => markSigned(d.id, agentName, client.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--muted-foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer' }}><CheckCircle2 size={12} /> Marquer signé</button>
+                      <button onClick={() => markSigned(d.id, agentName, client.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'transparent', color: 'var(--muted-foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer' }}><CheckCircle2 size={12} /> Marquer signé</button>
                     )}
                   </div>
                 </div>
@@ -293,11 +293,11 @@ function DossierFiche({ agentName, onBack }: { agentName: string; onBack: () => 
         )}
         {/* documents en brouillon à publier */}
         {cpiDocs.filter(d => d.status === 'brouillon').map(d => (
-          <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 13px', border: '1px dashed var(--border)', borderRadius: 10, marginTop: 8, flexWrap: 'wrap' }}>
+          <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 13px', border: '1px dashed var(--border)', borderRadius: 'var(--r-sm)', marginTop: 8, flexWrap: 'wrap' }}>
             <FileText size={15} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />
             <div style={{ flex: 1, minWidth: 140, fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--foreground)' }}>{d.nom}</div>
-            <span style={{ padding: '3px 9px', borderRadius: 99, background: 'var(--muted)', color: 'var(--muted-foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700 }}>Brouillon</span>
-            <button onClick={() => publishDoc(d.id, agentName, client.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer' }}><Send size={12} /> Publier</button>
+            <span style={{ padding: '3px 9px', borderRadius: 'var(--r-full)', background: 'var(--muted)', color: 'var(--muted-foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700 }}>Brouillon</span>
+            <button onClick={() => publishDoc(d.id, agentName, client.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 'var(--r-sm)', border: 'none', background: 'var(--primary)', color: '#fff', fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer' }}><Send size={12} /> Publier</button>
           </div>
         ))}
       </Card>
@@ -354,7 +354,7 @@ function UploadDocModal({ onClose, onPublish }: { onClose: () => void; onPublish
   return (
     <div onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       style={{ position: 'fixed', inset: 0, background: 'rgba(11,25,41,0.5)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', padding: 16 }}>
-      <div style={{ background: 'var(--card)', borderRadius: 14, width: '100%', maxWidth: 480, maxHeight: '92vh', overflowY: 'auto', padding: 24, boxShadow: '0 24px 64px rgba(11,25,41,0.28)' }}>
+      <div style={{ background: 'var(--card)', borderRadius: 'var(--r-md)', width: '100%', maxWidth: 480, maxHeight: '92vh', overflowY: 'auto', padding: 24, boxShadow: '0 24px 64px rgba(11,25,41,0.28)' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: 4 }}>Téléverser un document</div>
         <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', marginBottom: 16 }}>Le document sera transmis au client, qui pourra le télécharger et le signer si nécessaire.</div>
 
@@ -365,21 +365,21 @@ function UploadDocModal({ onClose, onPublish }: { onClose: () => void; onPublish
             onDragLeave={() => setDragging(false)}
             onDrop={e => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) startUpload(f.name, f.size / 1048576); }}
             onClick={() => inputRef.current?.click()}
-            style={{ border: `2px dashed ${dragging ? 'var(--primary)' : 'var(--border)'}`, borderRadius: 12, padding: '26px 16px', textAlign: 'center', cursor: 'pointer', background: dragging ? 'var(--secondary)' : 'var(--input-background)' }}>
+            style={{ border: `2px dashed ${dragging ? 'var(--primary)' : 'var(--border)'}`, borderRadius: 'var(--r-md)', padding: '26px 16px', textAlign: 'center', cursor: 'pointer', background: dragging ? 'var(--secondary)' : 'var(--input-background)' }}>
             <Upload size={26} style={{ color: 'var(--primary)', margin: '0 auto 8px', display: 'block' }} />
             <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600, color: 'var(--foreground)' }}>Glissez le fichier ici, ou cliquez</div>
             <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: 2 }}>PDF, JPG ou PNG · 10 Mo max</div>
             <input ref={inputRef} type="file" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) startUpload(f.name, f.size / 1048576); }} />
           </div>
         ) : (
-          <div style={{ background: 'var(--input-background)', borderRadius: 10, padding: 14 }}>
+          <div style={{ background: 'var(--input-background)', borderRadius: 'var(--r-sm)', padding: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
               <FileText size={18} style={{ color: 'var(--primary)', flexShrink: 0 }} />
               <span style={{ flex: 1, fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file}</span>
               {done && <CheckCircle2 size={16} style={{ color: 'var(--success)' }} />}
             </div>
-            <div style={{ height: 6, background: 'var(--border)', borderRadius: 99, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${progress}%`, background: done ? 'var(--success)' : 'var(--primary)', borderRadius: 99, transition: 'width 0.2s' }} />
+            <div style={{ height: 6, background: 'var(--border)', borderRadius: 'var(--r-full)', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${progress}%`, background: done ? 'var(--success)' : 'var(--primary)', borderRadius: 'var(--r-full)', transition: 'width 0.2s' }} />
             </div>
           </div>
         )}
@@ -389,12 +389,12 @@ function UploadDocModal({ onClose, onPublish }: { onClose: () => void; onPublish
           <div>
             <label style={{ display: 'block', fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Nom du document</label>
             <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Ex : Convention de financement"
-              style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid var(--border)', background: 'var(--input-background)', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--foreground)', boxSizing: 'border-box' }} />
+              style={{ width: '100%', padding: '10px 12px', borderRadius: 'var(--r-sm)', border: '1.5px solid var(--border)', background: 'var(--input-background)', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--foreground)', boxSizing: 'border-box' }} />
           </div>
           <div>
             <label style={{ display: 'block', fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Catégorie</label>
             <select value={categorie} onChange={e => setCategorie(e.target.value)}
-              style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid var(--border)', background: 'var(--input-background)', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--foreground)', boxSizing: 'border-box' }}>
+              style={{ width: '100%', padding: '10px 12px', borderRadius: 'var(--r-sm)', border: '1.5px solid var(--border)', background: 'var(--input-background)', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--foreground)', boxSizing: 'border-box' }}>
               {Object.entries(CPI_CAT_CFG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
             </select>
           </div>
@@ -456,8 +456,8 @@ export default function AgentDossiersReels({ agentName, mode = 'actifs' }: { age
     }).filter(a => a.reasons.length > 0);
 
     const KPI = ({ label, value, color, bg }: { label: string; value: number; color: string; bg: string }) => (
-      <div style={{ flex: '1 1 140px', minWidth: 140, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 18px' }}>
-        <div style={{ width: 34, height: 34, borderRadius: 9, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+      <div style={{ flex: '1 1 140px', minWidth: 140, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: '16px 18px' }}>
+        <div style={{ width: 34, height: 34, borderRadius: 'var(--r-sm)', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
           <FileText size={17} style={{ color }} />
         </div>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem', fontWeight: 800, color: 'var(--foreground)', lineHeight: 1 }}>{value}</div>
@@ -482,14 +482,14 @@ export default function AgentDossiersReels({ agentName, mode = 'actifs' }: { age
         </div>
 
         {/* Répartition par étape */}
-        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 18px' }}>
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: '16px 18px' }}>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: 14 }}>Répartition par étape</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {parEtape.map((e, i) => (
               <div key={e.label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <span style={{ width: 130, fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', flexShrink: 0 }}>{i + 1}. {e.label}</span>
-                <div style={{ flex: 1, height: 8, background: 'var(--muted)', borderRadius: 99, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${nbTotal ? (e.n / nbTotal) * 100 : 0}%`, background: i >= SIGNATURE_INDEX ? 'var(--success)' : 'var(--primary)', borderRadius: 99 }} />
+                <div style={{ flex: 1, height: 8, background: 'var(--muted)', borderRadius: 'var(--r-full)', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${nbTotal ? (e.n / nbTotal) * 100 : 0}%`, background: i >= SIGNATURE_INDEX ? 'var(--success)' : 'var(--primary)', borderRadius: 'var(--r-full)' }} />
                 </div>
                 <span style={{ width: 20, textAlign: 'right', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 700, color: 'var(--foreground)' }}>{e.n}</span>
               </div>
@@ -498,10 +498,10 @@ export default function AgentDossiersReels({ agentName, mode = 'actifs' }: { age
         </div>
 
         {/* Actions requises */}
-        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', overflow: 'hidden' }}>
           <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 700, color: 'var(--foreground)' }}>Actions requises</div>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: actions.length ? 'var(--accent)' : 'var(--success)', background: actions.length ? 'rgba(200,146,26,0.10)' : 'rgba(26,107,68,0.10)', padding: '3px 9px', borderRadius: 99 }}>{actions.length} dossier{actions.length > 1 ? 's' : ''}</span>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: actions.length ? 'var(--accent)' : 'var(--success)', background: actions.length ? 'rgba(200,146,26,0.10)' : 'rgba(26,107,68,0.10)', padding: '3px 9px', borderRadius: 'var(--r-full)' }}>{actions.length} dossier{actions.length > 1 ? 's' : ''}</span>
           </div>
           <div style={{ padding: 14 }}>
             {actions.length === 0 ? (
@@ -513,8 +513,8 @@ export default function AgentDossiersReels({ agentName, mode = 'actifs' }: { age
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {actions.map(a => (
                   <button key={a.summary.id} onClick={() => openFiche(a.summary.id)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'var(--input-background)', border: '1px solid var(--border)', borderRadius: 10, cursor: 'pointer', textAlign: 'left', width: '100%', flexWrap: 'wrap' }}>
-                    <div style={{ width: 38, height: 38, borderRadius: 9, background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.8125rem', flexShrink: 0 }}>
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'var(--input-background)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', cursor: 'pointer', textAlign: 'left', width: '100%', flexWrap: 'wrap' }}>
+                    <div style={{ width: 38, height: 38, borderRadius: 'var(--r-sm)', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.8125rem', flexShrink: 0 }}>
                       {a.summary.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
                     </div>
                     <div style={{ flex: 1, minWidth: 150 }}>
@@ -523,7 +523,7 @@ export default function AgentDossiersReels({ agentName, mode = 'actifs' }: { age
                     </div>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       {a.reasons.map((r, i) => (
-                        <span key={i} style={{ fontFamily: 'var(--font-sans)', fontSize: '0.625rem', fontWeight: 700, color: r.color, background: 'var(--card)', border: `1px solid ${r.color}33`, padding: '3px 8px', borderRadius: 99, whiteSpace: 'nowrap' }}>{r.txt}</span>
+                        <span key={i} style={{ fontFamily: 'var(--font-sans)', fontSize: '0.625rem', fontWeight: 700, color: r.color, background: 'var(--card)', border: `1px solid ${r.color}33`, padding: '3px 8px', borderRadius: 'var(--r-full)', whiteSpace: 'nowrap' }}>{r.txt}</span>
                       ))}
                     </div>
                     <ChevronRight size={16} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />
@@ -557,7 +557,7 @@ export default function AgentDossiersReels({ agentName, mode = 'actifs' }: { age
       </div>
 
       {filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px 20px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14 }}>
+        <div style={{ textAlign: 'center', padding: '40px 20px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)' }}>
           <User size={26} style={{ color: 'var(--muted-foreground)', margin: '0 auto 10px', display: 'block' }} />
           <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>Aucun dossier dans cette catégorie.</div>
         </div>
@@ -569,8 +569,8 @@ export default function AgentDossiersReels({ agentName, mode = 'actifs' }: { age
             return (
               <button key={summary.id}
                 onClick={() => { setSelectedClientId(summary.id); setOpenId(summary.id); }}
-                style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', background: 'var(--card)', border: `1px solid ${needsAttention ? 'rgba(200,146,26,0.28)' : 'var(--border)'}`, borderRadius: 12, cursor: 'pointer', textAlign: 'left', width: '100%' }}>
-                <div style={{ width: 44, height: 44, borderRadius: 10, background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9375rem', flexShrink: 0 }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', background: 'var(--card)', border: `1px solid ${needsAttention ? 'rgba(200,146,26,0.28)' : 'var(--border)'}`, borderRadius: 'var(--r-md)', cursor: 'pointer', textAlign: 'left', width: '100%' }}>
+                <div style={{ width: 44, height: 44, borderRadius: 'var(--r-sm)', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9375rem', flexShrink: 0 }}>
                   {summary.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -578,7 +578,7 @@ export default function AgentDossiersReels({ agentName, mode = 'actifs' }: { age
                   <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>{summary.ref} · {summary.projectNom}</div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: 'var(--primary)', background: 'var(--secondary)', padding: '3px 9px', borderRadius: 99, whiteSpace: 'nowrap' }}>Étape {st.activeStep + 1}/6 · {stepLabel}</span>
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: 'var(--primary)', background: 'var(--secondary)', padding: '3px 9px', borderRadius: 'var(--r-full)', whiteSpace: 'nowrap' }}>Étape {st.activeStep + 1}/6 · {stepLabel}</span>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.625rem', fontWeight: 700, color: 'var(--success)' }}>{st.validated}/{st.total} pièces</span>
                     {st.docs.some(d => d.status === 'depose') && <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.625rem', fontWeight: 700, color: 'var(--chart-4)' }}>· à vérifier</span>}

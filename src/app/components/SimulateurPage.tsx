@@ -189,7 +189,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
   const ChartTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
     return (
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px 16px', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
+      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '12px 16px', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--foreground)', marginBottom: '8px' }}>{label}</div>
         {payload.map((p: any) => (
           <div key={p.dataKey} style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', marginBottom: '4px' }}>
@@ -212,7 +212,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <div className="sim-no-print" style={{
           background: 'linear-gradient(120deg, var(--primary) 0%, #1E4D8C 100%)',
-          borderRadius: '16px', padding: '26px 32px', marginBottom: '22px',
+          borderRadius: 'var(--r-lg)', padding: '26px 32px', marginBottom: '22px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap',
         }}>
           <div>
@@ -237,7 +237,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
             ].map(({ label, value, sub }) => (
               <div key={label} style={{
                 background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)',
-                borderRadius: '11px', padding: '12px 18px', textAlign: 'center', minWidth: '100px',
+                borderRadius: 'var(--r-md)', padding: '12px 18px', textAlign: 'center', minWidth: '100px',
               }}>
                 <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.5625rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.4)', marginBottom: '3px' }}>{label}</div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, color: '#FFC65A' }}>{value}</div>
@@ -253,13 +253,13 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
           {/* ── LEFT: Inputs ────────────────────────────────────────────── */}
           <div className="sim-left-sticky" style={{
             background: 'var(--card)', border: '1px solid var(--border)',
-            borderRadius: '14px', padding: '24px',
+            borderRadius: 'var(--r-md)', padding: '24px',
           }}>
             <div style={{
               display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px',
               paddingBottom: '16px', borderBottom: '1px solid var(--border)',
             }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '9px', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: 'var(--r-sm)', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Calculator size={15} style={{ color: 'var(--primary)' }} />
               </div>
               <div>
@@ -285,7 +285,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
                       style={{
                         fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 800,
                         color: 'var(--primary)', border: '1px solid var(--border)',
-                        borderRadius: '8px', padding: '5px 10px', background: 'var(--secondary)',
+                        borderRadius: 'var(--r-sm)', padding: '5px 10px', background: 'var(--secondary)',
                         width: '128px', textAlign: 'right', outline: 'none',
                       }}
                     />
@@ -322,7 +322,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
                       onClick={() => setTaux(r)}
                       style={{
                         fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 600,
-                        padding: '3px 9px', borderRadius: '6px', cursor: 'pointer', border: 'none',
+                        padding: '3px 9px', borderRadius: 'var(--r-xs)', cursor: 'pointer', border: 'none',
                         background: taux === r ? 'var(--primary)' : 'var(--secondary)',
                         color: taux === r ? '#fff' : 'var(--muted-foreground)',
                         transition: 'all 0.12s',
@@ -376,7 +376,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
                       onClick={() => setDuree(y)}
                       style={{
                         fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 600,
-                        padding: '3px 9px', borderRadius: '6px', cursor: 'pointer', border: 'none',
+                        padding: '3px 9px', borderRadius: 'var(--r-xs)', cursor: 'pointer', border: 'none',
                         background: dureeAns === y ? 'var(--primary)' : 'var(--secondary)',
                         color: dureeAns === y ? '#fff' : 'var(--muted-foreground)',
                         transition: 'all 0.12s',
@@ -398,7 +398,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
                   value={dateDebut}
                   onChange={e => { setDateDebut(e.target.value); setPage(0); }}
                   style={{
-                    width: '100%', padding: '9px 12px', borderRadius: '9px',
+                    width: '100%', padding: '9px 12px', borderRadius: 'var(--r-sm)',
                     border: '1px solid var(--border)', background: 'var(--input-background)',
                     fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--foreground)',
                     outline: 'none', cursor: 'pointer', boxSizing: 'border-box',
@@ -408,7 +408,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
 
               {/* Fixed params */}
               <div style={{
-                background: 'var(--secondary)', borderRadius: '10px', padding: '13px 16px',
+                background: 'var(--secondary)', borderRadius: 'var(--r-sm)', padding: '13px 16px',
                 display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px',
               }}>
                 {[
@@ -424,7 +424,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
               </div>
 
               {/* Info box */}
-              <div style={{ display: 'flex', gap: '8px', padding: '11px 13px', background: 'rgba(26,58,110,0.06)', borderRadius: '9px', border: '1px solid rgba(26,58,110,0.1)' }}>
+              <div style={{ display: 'flex', gap: '8px', padding: '11px 13px', background: 'rgba(26,58,110,0.06)', borderRadius: 'var(--r-sm)', border: '1px solid rgba(26,58,110,0.1)' }}>
                 <Info size={14} style={{ color: 'var(--primary)', flexShrink: 0, marginTop: '1px' }} />
                 <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', lineHeight: 1.55 }}>
                   Le paiement calculé est basé sur un taux d'amortissement constant. La dernière échéance peut légèrement différer par arrondi.
@@ -439,7 +439,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
             {/* Big mensualité */}
             <div style={{
               background: 'linear-gradient(135deg, var(--primary) 0%, #1E4D8C 55%, #163878 100%)',
-              borderRadius: '14px', padding: '26px 28px',
+              borderRadius: 'var(--r-md)', padding: '26px 28px',
               display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'center', justifyContent: 'space-between',
             }}>
               <div>
@@ -479,7 +479,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
                 { label: 'Total intérêts', value: fmt(totalInterets), color: 'var(--accent)', bg: 'rgba(200,146,26,0.08)' },
                 { label: 'Coût total crédit', value: fmt(totalPaye), color: 'var(--success)', bg: 'rgba(26,107,68,0.07)' },
               ].map(k => (
-                <div key={k.label} style={{ background: k.bg, border: '1px solid var(--border)', borderRadius: '12px', padding: '14px 16px' }}>
+                <div key={k.label} style={{ background: k.bg, border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: '14px 16px' }}>
                   <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6rem', fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '7px' }}>{k.label}</div>
                   <div style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 800, color: k.color }}>{k.value}</div>
                   <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.625rem', color: 'var(--muted-foreground)', marginTop: '2px' }}>FCFA</div>
@@ -488,11 +488,11 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
             </div>
 
             {/* Capital / Intérêts ratio bar */}
-            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px 20px' }}>
+            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: '16px 20px' }}>
               <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--foreground)', marginBottom: '12px' }}>
                 Répartition Capital / Intérêts
               </div>
-              <div style={{ height: '11px', borderRadius: '99px', overflow: 'hidden', display: 'flex', marginBottom: '10px' }}>
+              <div style={{ height: '11px', borderRadius: 'var(--r-full)', overflow: 'hidden', display: 'flex', marginBottom: '10px' }}>
                 <div style={{ width: `${pctCapital * 100}%`, background: 'var(--primary)', transition: 'width 0.45s cubic-bezier(.4,0,.2,1)' }} />
                 <div style={{ flex: 1, background: 'var(--accent)', opacity: 0.82 }} />
               </div>
@@ -513,7 +513,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
             </div>
 
             {/* Chart / Table section */}
-            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '14px', overflow: 'hidden' }}>
+            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', overflow: 'hidden' }}>
 
               {/* Tab bar */}
               <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', padding: '0 20px', gap: '0', background: 'var(--card)', overflowX: 'auto' }}>
@@ -607,10 +607,10 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
                       <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
                         Année {page + 1} / {totalPages} · Pér. {page * ROWS_PER_PAGE + 1}–{Math.min((page + 1) * ROWS_PER_PAGE, dureeMonths)}
                       </span>
-                      <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ width: '28px', height: '28px', borderRadius: '7px', border: '1px solid var(--border)', background: page === 0 ? 'var(--muted)' : 'var(--card)', cursor: page === 0 ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--foreground)' }}>
+                      <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ width: '28px', height: '28px', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: page === 0 ? 'var(--muted)' : 'var(--card)', cursor: page === 0 ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--foreground)' }}>
                         <ChevronLeft size={13} />
                       </button>
-                      <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} style={{ width: '28px', height: '28px', borderRadius: '7px', border: '1px solid var(--border)', background: page >= totalPages - 1 ? 'var(--muted)' : 'var(--card)', cursor: page >= totalPages - 1 ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--foreground)' }}>
+                      <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} style={{ width: '28px', height: '28px', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: page >= totalPages - 1 ? 'var(--muted)' : 'var(--card)', cursor: page >= totalPages - 1 ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--foreground)' }}>
                         <ChevronRight size={13} />
                       </button>
                     </div>
@@ -712,7 +712,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
 
                   {/* Pagination — 1 button per year */}
                   <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                    <button onClick={() => setPage(0)} disabled={page === 0} style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600, padding: '5px 12px', borderRadius: '7px', border: '1px solid var(--border)', background: 'var(--card)', color: page === 0 ? 'var(--muted-foreground)' : 'var(--foreground)', cursor: page === 0 ? 'default' : 'pointer' }}>
+                    <button onClick={() => setPage(0)} disabled={page === 0} style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600, padding: '5px 12px', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--card)', color: page === 0 ? 'var(--muted-foreground)' : 'var(--foreground)', cursor: page === 0 ? 'default' : 'pointer' }}>
                       ← Départ
                     </button>
                     <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -722,7 +722,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
                           onClick={() => setPage(p)}
                           title={`Année ${p + 1} · Pér. ${p * 12 + 1}–${Math.min((p + 1) * 12, dureeMonths)}`}
                           style={{
-                            width: '28px', height: '28px', borderRadius: '6px',
+                            width: '28px', height: '28px', borderRadius: 'var(--r-xs)',
                             border: '1px solid var(--border)',
                             fontFamily: 'var(--font-sans)', fontSize: '0.6875rem',
                             fontWeight: page === p ? 800 : 400,
@@ -736,7 +736,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
                         </button>
                       ))}
                     </div>
-                    <button onClick={() => setPage(totalPages - 1)} disabled={page >= totalPages - 1} style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600, padding: '5px 12px', borderRadius: '7px', border: '1px solid var(--border)', background: 'var(--card)', color: page >= totalPages - 1 ? 'var(--muted-foreground)' : 'var(--foreground)', cursor: page >= totalPages - 1 ? 'default' : 'pointer' }}>
+                    <button onClick={() => setPage(totalPages - 1)} disabled={page >= totalPages - 1} style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600, padding: '5px 12px', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--card)', color: page >= totalPages - 1 ? 'var(--muted-foreground)' : 'var(--foreground)', cursor: page >= totalPages - 1 ? 'default' : 'pointer' }}>
                       Fin →
                     </button>
                   </div>
@@ -745,7 +745,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
             </div>
 
             {/* Global recap */}
-            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '13px', padding: '18px 22px' }}>
+            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: '18px 22px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '14px' }}>
                 <TrendingDown size={14} style={{ color: 'var(--primary)' }} />
                 <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.875rem', fontWeight: 700, color: 'var(--foreground)' }}>

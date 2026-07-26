@@ -64,7 +64,7 @@ function Badge({ children, variant = 'default' }: {
       ...styles[variant],
       fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700,
       letterSpacing: '0.04em', textTransform: 'uppercase',
-      padding: '3px 9px', borderRadius: '99px',
+      padding: '3px 9px', borderRadius: 'var(--r-full)',
       display: 'inline-flex', alignItems: 'center', gap: '4px',
     }}>{children}</span>
   );
@@ -80,7 +80,7 @@ function SectionHeader({ icon: Icon, title, sub, action }: {
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <div style={{
-          width: '34px', height: '34px', borderRadius: '9px',
+          width: '34px', height: '34px', borderRadius: 'var(--r-sm)',
           background: 'var(--secondary)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0,
@@ -99,10 +99,10 @@ function SectionHeader({ icon: Icon, title, sub, action }: {
 
 function ProgressBar({ value, color = 'var(--primary)', thin = false }: { value: number; color?: string; thin?: boolean }) {
   return (
-    <div style={{ height: thin ? '4px' : '7px', background: 'var(--muted)', borderRadius: '99px', overflow: 'hidden' }}>
+    <div style={{ height: thin ? '4px' : '7px', background: 'var(--muted)', borderRadius: 'var(--r-full)', overflow: 'hidden' }}>
       <div style={{
         height: '100%', width: `${Math.max(0, Math.min(100, value))}%`,
-        background: color, borderRadius: '99px',
+        background: color, borderRadius: 'var(--r-full)',
         transition: 'width 1s cubic-bezier(.4,0,.2,1)',
       }} />
     </div>
@@ -113,7 +113,7 @@ function Card({ children, style }: { children: React.ReactNode; style?: React.CS
   return (
     <div style={{
       background: 'var(--card)', border: '1px solid var(--border)',
-      borderRadius: '14px', overflow: 'hidden', ...style,
+      borderRadius: 'var(--r-md)', overflow: 'hidden', ...style,
     }}>{children}</div>
   );
 }
@@ -127,7 +127,7 @@ function TrancheCard({ t }: { t: Tranche }) {
   return (
     <div style={{
       border: `1px solid ${t.etat === 'en-cours' ? 'var(--primary)' : 'var(--border)'}`,
-      borderRadius: '14px', overflow: 'hidden',
+      borderRadius: 'var(--r-md)', overflow: 'hidden',
       background: 'var(--card)',
       boxShadow: t.etat === 'en-cours' ? '0 4px 20px rgba(26,58,110,0.1)' : 'none',
       transition: 'box-shadow 0.2s',
@@ -197,13 +197,13 @@ function TrancheCard({ t }: { t: Tranche }) {
               <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--muted-foreground)', marginBottom: '6px' }}>Validations</div>
               <div style={{ display: 'flex', gap: '6px' }}>
                 <span style={{
-                  padding: '3px 10px', borderRadius: '99px',
+                  padding: '3px 10px', borderRadius: 'var(--r-full)',
                   fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700,
                   color: t.cpiOk ? 'var(--success)' : 'var(--muted-foreground)',
                   background: t.cpiOk ? 'rgba(26,107,68,0.12)' : 'var(--muted)',
                 }}>CPI {t.cpiOk ? '✓' : '···'}</span>
                 <span style={{
-                  padding: '3px 10px', borderRadius: '99px',
+                  padding: '3px 10px', borderRadius: 'var(--r-full)',
                   fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700,
                   color: t.banqueOk ? 'var(--success)' : 'var(--muted-foreground)',
                   background: t.banqueOk ? 'rgba(26,107,68,0.12)' : 'var(--muted)',
@@ -215,7 +215,7 @@ function TrancheCard({ t }: { t: Tranche }) {
           {t.commentaire && (
             <div style={{
               display: 'flex', gap: '10px', padding: '12px 14px',
-              background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '10px',
+              background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)',
               marginBottom: t.photos > 0 ? '12px' : '0',
             }}>
               <AlertCircle size={14} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: '2px' }} />
@@ -228,7 +228,7 @@ function TrancheCard({ t }: { t: Tranche }) {
           {t.photos > 0 && (
             <button style={{
               display: 'inline-flex', alignItems: 'center', gap: '6px',
-              padding: '6px 14px', borderRadius: '8px',
+              padding: '6px 14px', borderRadius: 'var(--r-sm)',
               border: '1px solid var(--border)', background: 'var(--card)',
               fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600,
               color: 'var(--primary)', cursor: 'pointer', marginTop: '4px',
@@ -368,7 +368,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
 
       {/* ═══ 1. HERO ═══════════════════════════════════════════════════════════ */}
       <div style={{
-        position: 'relative', borderRadius: '20px', overflow: 'hidden',
+        position: 'relative', borderRadius: 'var(--r-xl)', overflow: 'hidden',
         backgroundImage: `url(${HERO_PHOTO})`, backgroundSize: 'cover', backgroundPosition: 'center',
         minHeight: '280px',
       }}>
@@ -416,11 +416,11 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
                     {heroProgress}%
                   </span>
                 </div>
-                <div style={{ height: '8px', background: 'rgba(255,255,255,0.12)', borderRadius: '99px', overflow: 'hidden' }}>
+                <div style={{ height: '8px', background: 'rgba(255,255,255,0.12)', borderRadius: 'var(--r-full)', overflow: 'hidden' }}>
                   <div style={{
                     height: '100%', width: `${heroProgress}%`,
                     background: 'linear-gradient(90deg, var(--accent), #FFC65A)',
-                    borderRadius: '99px', transition: 'width 1.2s cubic-bezier(.4,0,.2,1)',
+                    borderRadius: 'var(--r-full)', transition: 'width 1.2s cubic-bezier(.4,0,.2,1)',
                   }} />
                 </div>
               </div>
@@ -439,7 +439,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
                   padding: '9px 14px',
                   background: 'rgba(255,255,255,0.07)',
                   border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '10px',
+                  borderRadius: 'var(--r-sm)',
                   transition: 'background 0.15s',
                 }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.12)')}
@@ -492,7 +492,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
         ].map(kpi => (
           <div key={kpi.label} style={{
             background: kpi.bg,
-            border: '1px solid var(--border)', borderRadius: '12px',
+            border: '1px solid var(--border)', borderRadius: 'var(--r-md)',
             padding: '14px 16px',
             display: 'flex', flexDirection: 'column', gap: '8px',
             transition: 'box-shadow 0.15s, transform 0.15s',
@@ -553,7 +553,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
                         <span style={{
                           background: 'rgba(26,58,110,0.1)', color: 'var(--primary)',
                           fontFamily: 'var(--font-sans)', fontSize: '0.625rem', fontWeight: 700,
-                          padding: '2px 6px', borderRadius: '99px',
+                          padding: '2px 6px', borderRadius: 'var(--r-full)',
                         }}>{phase.pct}%</span>
                       </div>
                     )}
@@ -583,7 +583,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
           action={
             <button style={{
               display: 'inline-flex', alignItems: 'center', gap: '6px',
-              padding: '7px 14px', borderRadius: '9px',
+              padding: '7px 14px', borderRadius: 'var(--r-sm)',
               border: '1px solid var(--border)', background: 'transparent',
               fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600,
               color: 'var(--foreground)', cursor: 'pointer',
@@ -619,7 +619,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
                     fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700,
                     background: active ? 'var(--secondary)' : 'var(--input-background)',
                     color: active ? 'var(--primary)' : 'var(--muted-foreground)',
-                    padding: '1px 6px', borderRadius: '99px',
+                    padding: '1px 6px', borderRadius: 'var(--r-full)',
                   }}>{tab.count}</span>
                 </button>
               );
@@ -630,7 +630,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
             <div style={{ display: 'flex', gap: '4px' }}>
               {[{ id: 'all', label: 'Tout' }, { id: 'T1', label: 'T1' }, { id: 'T2', label: 'T2' }].map(f => (
                 <button key={f.id} onClick={() => setGalleryFilter(f.id as 'all' | 'T1' | 'T2')} style={{
-                  padding: '5px 12px', borderRadius: '7px',
+                  padding: '5px 12px', borderRadius: 'var(--r-sm)',
                   border: `1px solid ${galleryFilter === f.id ? 'var(--primary)' : 'var(--border)'}`,
                   background: galleryFilter === f.id ? 'var(--secondary)' : 'transparent',
                   fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600,
@@ -646,7 +646,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '8px' }}>
             {galleryItems.map((item, i) => (
               <div key={i} style={{
-                aspectRatio: '4/3', borderRadius: '10px', overflow: 'hidden',
+                aspectRatio: '4/3', borderRadius: 'var(--r-sm)', overflow: 'hidden',
                 background: item.bg, position: 'relative', cursor: 'pointer',
                 transition: 'transform 0.18s, box-shadow 0.18s',
               }}
@@ -668,7 +668,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '8px 10px', background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }}>
                   <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: '#fff' }}>{item.label}</div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '2px' }}>
-                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.5625rem', fontWeight: 700, color: 'rgba(255,255,255,0.65)', background: 'rgba(255,255,255,0.15)', padding: '1px 5px', borderRadius: '4px' }}>{item.tranche}</span>
+                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.5625rem', fontWeight: 700, color: 'rgba(255,255,255,0.65)', background: 'rgba(255,255,255,0.15)', padding: '1px 5px', borderRadius: 'var(--r-xs)' }}>{item.tranche}</span>
                     {item.date && <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.5625rem', color: 'rgba(255,255,255,0.5)' }}>{item.date}</span>}
                   </div>
                 </div>
@@ -677,7 +677,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
           </div>
         )}
         {galleryTab !== 'photos' && (
-          <div style={{ padding: '48px', textAlign: 'center', border: '1px dashed var(--border)', borderRadius: '12px', background: 'var(--input-background)' }}>
+          <div style={{ padding: '48px', textAlign: 'center', border: '1px dashed var(--border)', borderRadius: 'var(--r-md)', background: 'var(--input-background)' }}>
             <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
               Aucun contenu disponible pour cet onglet pour le moment.
             </div>
@@ -719,7 +719,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
                       onMouseEnter={e => (e.currentTarget.style.background = 'var(--input-background)')}
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                     >
-                      <div style={{ width: '30px', height: '30px', borderRadius: '8px', flexShrink: 0, background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: '30px', height: '30px', borderRadius: 'var(--r-sm)', flexShrink: 0, background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Icon size={14} style={{ color: typeColor }} />
                       </div>
                       <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--foreground)', lineHeight: 1.55, flex: 1 }}>{entry.text}</span>
@@ -796,7 +796,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--input-background)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
-                  <div style={{ width: '36px', height: '36px', borderRadius: '9px', flexShrink: 0, background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: 'var(--r-sm)', flexShrink: 0, background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <TypeIcon size={15} style={{ color: (evt as { color: string }).color }} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -821,7 +821,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
           action={
             <button onClick={() => setHistoryExpanded(v => !v)} style={{
               display: 'inline-flex', alignItems: 'center', gap: '6px',
-              padding: '6px 14px', borderRadius: '8px',
+              padding: '6px 14px', borderRadius: 'var(--r-sm)',
               border: '1px solid var(--border)', background: 'transparent',
               fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600,
               color: 'var(--muted-foreground)', cursor: 'pointer',
@@ -840,7 +840,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
                   {/* Timeline dot */}
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
                     <div style={{
-                      width: '30px', height: '30px', borderRadius: '8px',
+                      width: '30px', height: '30px', borderRadius: 'var(--r-sm)',
                       background: 'var(--secondary)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       flexShrink: 0,
@@ -930,13 +930,13 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
           ].map(action => (
             <button key={action.label} onClick={'onClick' in action ? action.onClick : undefined} style={{
               display: 'flex', alignItems: 'center', gap: '10px',
-              padding: '13px 16px', borderRadius: '12px',
+              padding: '13px 16px', borderRadius: 'var(--r-md)',
               background: action.primary ? 'var(--primary)' : 'var(--card)',
               border: `1px solid ${action.primary ? 'var(--primary)' : 'var(--border)'}`,
               fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600,
               color: action.primary ? 'var(--primary-foreground)' : 'var(--foreground)',
               cursor: 'pointer', textAlign: 'left', width: '100%',
-              transition: 'all 0.15s',
+              transition: 'all var(--dur-1) var(--ease-out)',
             }}
               onMouseEnter={e => {
                 if (action.primary) { (e.currentTarget as HTMLElement).style.opacity = '0.88'; }

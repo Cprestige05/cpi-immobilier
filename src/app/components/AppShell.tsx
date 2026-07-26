@@ -144,7 +144,7 @@ function SupportPage() {
       {/* Header */}
       <div style={{
         background: 'linear-gradient(120deg, var(--primary) 0%, #1E4D8C 100%)',
-        borderRadius: '14px', padding: '24px 28px',
+        borderRadius: 'var(--r-md)', padding: '24px 28px',
         display: 'flex', alignItems: 'center', gap: '16px',
       }}>
         <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -173,7 +173,7 @@ function SupportPage() {
             <div style={{
               background: ch.bg,
               border: `1px solid ${ch.border}`,
-              borderRadius: '12px', padding: '18px 20px',
+              borderRadius: 'var(--r-md)', padding: '18px 20px',
               display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap',
               cursor: 'pointer', transition: 'box-shadow 0.15s, transform 0.12s',
             }}
@@ -181,7 +181,7 @@ function SupportPage() {
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; (e.currentTarget as HTMLElement).style.transform = 'none'; }}
             >
               {/* Icon */}
-              <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'var(--card)', border: `1px solid ${ch.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: 'var(--r-md)', background: 'var(--card)', border: `1px solid ${ch.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <ch.icon size={20} style={{ color: ch.color }} />
               </div>
               {/* Info */}
@@ -192,7 +192,7 @@ function SupportPage() {
               </div>
               {/* CTA */}
               <div style={{
-                padding: '8px 16px', borderRadius: '8px',
+                padding: '8px 16px', borderRadius: 'var(--r-sm)',
                 background: ch.color, color: '#fff',
                 fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 700,
                 whiteSpace: 'nowrap', flexShrink: 0,
@@ -212,10 +212,10 @@ function SupportPage() {
       </div>
 
       {/* Ticket section */}
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '14px', overflow: 'hidden' }}>
+      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', overflow: 'hidden' }}>
         <div style={{ padding: '18px 22px', borderBottom: ticketOpen ? '1px solid var(--border)' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '38px', height: '38px', borderRadius: 'var(--r-sm)', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <ScrollText size={17} style={{ color: 'var(--primary)' }} />
             </div>
             <div>
@@ -226,11 +226,11 @@ function SupportPage() {
           <button
             onClick={() => setTicketOpen(o => !o)}
             style={{
-              padding: '8px 18px', borderRadius: '9px', border: '1px solid var(--border)',
+              padding: '8px 18px', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)',
               background: ticketOpen ? 'var(--secondary)' : 'var(--primary)',
               color: ticketOpen ? 'var(--foreground)' : '#fff',
               fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 700,
-              cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s',
+              cursor: 'pointer', flexShrink: 0, transition: 'all var(--dur-1) var(--ease-out)',
             }}
           >
             {ticketOpen ? 'Annuler' : 'Nouveau ticket'}
@@ -258,7 +258,7 @@ function SupportPage() {
                     onChange={e => setTicketSubject(e.target.value)}
                     required
                     style={{
-                      width: '100%', padding: '10px 12px', borderRadius: '9px',
+                      width: '100%', padding: '10px 12px', borderRadius: 'var(--r-sm)',
                       border: '1px solid var(--border)', background: 'var(--input-background)',
                       fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: ticketSubject ? 'var(--foreground)' : 'var(--muted-foreground)',
                       outline: 'none', cursor: 'pointer', appearance: 'none', boxSizing: 'border-box',
@@ -285,7 +285,7 @@ function SupportPage() {
                     rows={4}
                     placeholder="Décrivez votre problème ou votre question en détail…"
                     style={{
-                      width: '100%', padding: '10px 12px', borderRadius: '9px',
+                      width: '100%', padding: '10px 12px', borderRadius: 'var(--r-sm)',
                       border: '1px solid var(--border)', background: 'var(--input-background)',
                       fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--foreground)',
                       outline: 'none', resize: 'vertical', boxSizing: 'border-box', lineHeight: 1.6,
@@ -302,7 +302,7 @@ function SupportPage() {
                   <button
                     type="submit"
                     style={{
-                      padding: '9px 22px', borderRadius: '9px', border: 'none',
+                      padding: '9px 22px', borderRadius: 'var(--r-sm)', border: 'none',
                       background: 'var(--primary)', color: '#fff',
                       fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700,
                       cursor: 'pointer', transition: 'opacity 0.15s',
@@ -320,7 +320,7 @@ function SupportPage() {
       </div>
 
       {/* Horaires */}
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px 20px', display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: '16px 20px', display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--muted-foreground)' }}>
           <Bell size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
           <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--foreground)' }}>Horaires d'ouverture</span>
@@ -489,7 +489,7 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
             <button
               onClick={() => navigate('notifications')}
               className="relative p-2 transition-colors"
-              style={{ color: 'var(--muted-foreground)', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '6px' }}
+              style={{ color: 'var(--muted-foreground)', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 'var(--r-xs)' }}
               onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--foreground)'; (e.currentTarget as HTMLButtonElement).style.background = 'var(--input-background)'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--muted-foreground)'; (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
             >

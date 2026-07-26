@@ -155,7 +155,7 @@ function DossierStatusBadge({ status }: { status: DossierStatus }) {
   const cfg = STATUS_CONFIG[status];
   const Icon = cfg.icon;
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 11px', borderRadius: '99px', background: cfg.bg, fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, color: cfg.color, whiteSpace: 'nowrap' }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 11px', borderRadius: 'var(--r-full)', background: cfg.bg, fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, color: cfg.color, whiteSpace: 'nowrap' }}>
       <Icon size={11} style={{ flexShrink: 0 }} />{cfg.label}
     </span>
   );
@@ -192,9 +192,9 @@ function Section({ icon: Icon, iconBg, iconColor, title, subtitle, right, childr
   right?: React.ReactNode; children: React.ReactNode;
 }) {
   return (
-    <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '14px', overflow: 'hidden' }}>
+    <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', overflow: 'hidden' }}>
       <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ width: '36px', height: '36px', borderRadius: 'var(--r-sm)', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <Icon size={17} style={{ color: iconColor }} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -217,7 +217,7 @@ function DossierJourneyBanner() {
 
   return (
     <div style={{
-      background: 'var(--primary)', borderRadius: '16px', overflow: 'hidden',
+      background: 'var(--primary)', borderRadius: 'var(--r-lg)', overflow: 'hidden',
       position: 'relative', marginBottom: '16px', boxShadow: '0 8px 32px rgba(26,58,110,0.18)',
     }}>
       <style>{`
@@ -239,7 +239,7 @@ function DossierJourneyBanner() {
             Étape {activeStep + 1} sur {total}
           </span>
         </div>
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, padding: '4px 12px', borderRadius: '99px', background: 'rgba(200,146,26,0.18)', color: 'var(--accent)', border: '1px solid rgba(200,146,26,0.25)', whiteSpace: 'nowrap' }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, padding: '4px 12px', borderRadius: 'var(--r-full)', background: 'rgba(200,146,26,0.18)', color: 'var(--accent)', border: '1px solid rgba(200,146,26,0.25)', whiteSpace: 'nowrap' }}>
           {nextEtape}
         </span>
       </div>
@@ -341,7 +341,7 @@ function ProjectHeader({ clientName }: { clientName: string }) {
   ].filter(c => c.text && c.text !== '—' && c.text !== 'Non assigné');
 
   return (
-    <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '14px', overflow: 'hidden' }}>
+    <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', overflow: 'hidden' }}>
       <div style={{ padding: '18px 20px 14px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '12px' }}>
           <div style={{ minWidth: 0 }}>
@@ -350,15 +350,15 @@ function ProjectHeader({ clientName }: { clientName: string }) {
               {client.projectNom} <span style={{ color: 'var(--muted-foreground)', fontWeight: 500 }}>—</span> {client.adresse}
             </div>
             {client.ref && client.ref !== '—' && (
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: 'var(--muted-foreground)', background: 'var(--input-background)', padding: '2px 8px', borderRadius: '4px', marginTop: '6px', display: 'inline-block' }}>Réf. {client.ref}</span>
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: 'var(--muted-foreground)', background: 'var(--input-background)', padding: '2px 8px', borderRadius: 'var(--r-xs)', marginTop: '6px', display: 'inline-block' }}>Réf. {client.ref}</span>
             )}
           </div>
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, padding: '4px 12px', borderRadius: '99px', background: 'rgba(200,146,26,0.12)', color: 'var(--accent)', whiteSpace: 'nowrap' }}>{client.statut}</span>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, padding: '4px 12px', borderRadius: 'var(--r-full)', background: 'rgba(200,146,26,0.12)', color: 'var(--accent)', whiteSpace: 'nowrap' }}>{client.statut}</span>
         </div>
         {chips.length > 0 && (
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
             {chips.map(m => (
-              <span key={m.text} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 9px', borderRadius: '99px', background: 'var(--input-background)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
+              <span key={m.text} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 9px', borderRadius: 'var(--r-full)', background: 'var(--input-background)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
                 <m.Icon size={10} style={{ flexShrink: 0 }} />{m.text}
               </span>
             ))}
@@ -371,15 +371,15 @@ function ProjectHeader({ clientName }: { clientName: string }) {
           <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.625rem', color: 'var(--muted-foreground)', marginTop: '2px' }}>pièces validées</span>
         </div>
         <div style={{ flex: 1, minWidth: '160px' }}>
-          <div style={{ height: '8px', borderRadius: '99px', background: 'var(--muted)', overflow: 'hidden', marginBottom: '8px' }}>
-            <div style={{ height: '100%', borderRadius: '99px', background: pct >= 100 ? 'var(--success)' : 'var(--primary)', width: anim ? `${pct}%` : '0%', transition: 'width 1.1s cubic-bezier(0.4,0,0.2,1)' }} />
+          <div style={{ height: '8px', borderRadius: 'var(--r-full)', background: 'var(--muted)', overflow: 'hidden', marginBottom: '8px' }}>
+            <div style={{ height: '100%', borderRadius: 'var(--r-full)', background: pct >= 100 ? 'var(--success)' : 'var(--primary)', width: anim ? `${pct}%` : '0%', transition: 'width 1.1s cubic-bezier(0.4,0,0.2,1)' }} />
           </div>
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: '99px', background: 'rgba(26,107,68,0.10)', fontFamily: 'var(--font-sans)', fontSize: '0.625rem', fontWeight: 700, color: 'var(--success)' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: 'var(--r-full)', background: 'rgba(26,107,68,0.10)', fontFamily: 'var(--font-sans)', fontSize: '0.625rem', fontWeight: 700, color: 'var(--success)' }}>
               <CheckCircle2 size={10} />Validées : {validated}/{total}
             </span>
             {missing > 0 && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: '99px', background: 'rgba(192,57,43,0.08)', fontFamily: 'var(--font-sans)', fontSize: '0.625rem', fontWeight: 700, color: 'var(--destructive)' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: 'var(--r-full)', background: 'rgba(192,57,43,0.08)', fontFamily: 'var(--font-sans)', fontSize: '0.625rem', fontWeight: 700, color: 'var(--destructive)' }}>
                 <AlertCircle size={10} />À compléter : {missing}
               </span>
             )}
@@ -409,9 +409,9 @@ function PiecesSection() {
           const Icon = d.icon;
           const needsAction = d.status === 'en-attente' || d.status === 'refuse' || d.status === 'a-remplacer';
           return (
-            <div key={d.id} style={{ border: `1px solid ${d.status === 'accepte' ? 'rgba(26,107,68,0.2)' : needsAction ? 'rgba(192,57,43,0.16)' : 'var(--border)'}`, borderRadius: '10px', overflow: 'hidden' }}>
+            <div key={d.id} style={{ border: `1px solid ${d.status === 'accepte' ? 'rgba(26,107,68,0.2)' : needsAction ? 'rgba(192,57,43,0.16)' : 'var(--border)'}`, borderRadius: 'var(--r-sm)', overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '13px 15px', flexWrap: 'wrap' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '9px', background: d.status === 'accepte' ? 'rgba(26,107,68,0.1)' : d.accentBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: 'var(--r-sm)', background: d.status === 'accepte' ? 'rgba(26,107,68,0.1)' : d.accentBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   {d.status === 'accepte' ? <CheckCircle2 size={19} style={{ color: 'var(--success)' }} /> : <Icon size={18} style={{ color: d.accent }} />}
                 </div>
                 <div style={{ flex: 1, minWidth: '140px' }}>
@@ -513,7 +513,7 @@ function buildDocPreview(doc: SignDocTarget, client: ReturnType<typeof useClient
 function DocumentPreview({ doc, client }: { doc: SignDocTarget; client: ReturnType<typeof useClientData> }) {
   const content = buildDocPreview(doc, client);
   return (
-    <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: '8px', padding: '22px 22px 18px', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.04)', color: '#1a1a1a' }}>
+    <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '22px 22px 18px', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.04)', color: '#1a1a1a' }}>
       {/* En-tête officiel */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', paddingBottom: '12px', borderBottom: '2px solid var(--primary)', marginBottom: '16px' }}>
         <div>
@@ -585,7 +585,7 @@ function PreviewModal({ doc, onClose }: { doc: SignDocTarget; onClose: () => voi
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       style={{ position: 'fixed', inset: 0, background: 'rgba(11,25,41,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', padding: '16px' }}>
-      <div style={{ background: 'var(--card)', borderRadius: '14px', width: '100%', maxWidth: '560px', maxHeight: '92vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 64px rgba(11,25,41,0.28)' }}>
+      <div style={{ background: 'var(--card)', borderRadius: 'var(--r-md)', width: '100%', maxWidth: '560px', maxHeight: '92vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 64px rgba(11,25,41,0.28)' }}>
         <div style={{ padding: '16px 22px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
             <Eye size={18} style={{ color: 'var(--primary)', flexShrink: 0 }} />
@@ -631,7 +631,7 @@ function SignatureModal({ doc, onClose }: { doc: SignDocTarget; onClose: () => v
       onClick={e => { if (e.target === e.currentTarget && phase !== 'processing') onClose(); }}
       style={{ position: 'fixed', inset: 0, background: 'rgba(11,25,41,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', padding: '16px' }}>
       <style>{`@keyframes cpiSpin { to { transform: rotate(360deg); } }`}</style>
-      <div style={{ background: 'var(--card)', borderRadius: '14px', width: '100%', maxWidth: '500px', maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(11,25,41,0.28)' }}>
+      <div style={{ background: 'var(--card)', borderRadius: 'var(--r-md)', width: '100%', maxWidth: '500px', maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(11,25,41,0.28)' }}>
 
         {phase === 'done' ? (
           <div style={{ padding: '36px 28px', textAlign: 'center' }}>
@@ -649,7 +649,7 @@ function SignatureModal({ doc, onClose }: { doc: SignDocTarget; onClose: () => v
             {/* Header */}
             <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
-                <div style={{ width: 38, height: 38, borderRadius: '10px', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 'var(--r-sm)', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <PenSquare size={18} style={{ color: 'var(--primary)' }} />
                 </div>
                 <div>
@@ -668,7 +668,7 @@ function SignatureModal({ doc, onClose }: { doc: SignDocTarget; onClose: () => v
               <div>
                 <button
                   onClick={() => setShowPreview(v => !v)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '14px 16px', background: 'var(--input-background)', borderRadius: '10px', border: '1px solid var(--border)', cursor: 'pointer', textAlign: 'left' }}>
+                  style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '14px 16px', background: 'var(--input-background)', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', cursor: 'pointer', textAlign: 'left' }}>
                   <FileText size={22} style={{ color: 'var(--primary)', flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600, color: 'var(--foreground)' }}>{doc.nom}</div>
@@ -679,14 +679,14 @@ function SignatureModal({ doc, onClose }: { doc: SignDocTarget; onClose: () => v
                   </span>
                 </button>
                 {showPreview && (
-                  <div style={{ marginTop: '10px', maxHeight: '320px', overflowY: 'auto', background: 'var(--muted)', borderRadius: '10px', padding: '10px' }}>
+                  <div style={{ marginTop: '10px', maxHeight: '320px', overflowY: 'auto', background: 'var(--muted)', borderRadius: 'var(--r-sm)', padding: '10px' }}>
                     <DocumentPreview doc={doc} client={client} />
                   </div>
                 )}
               </div>
 
               {/* Engagement légal */}
-              <div style={{ display: 'flex', gap: '10px', padding: '12px 14px', background: 'rgba(26,58,110,0.04)', border: '1px solid rgba(26,58,110,0.12)', borderRadius: '10px' }}>
+              <div style={{ display: 'flex', gap: '10px', padding: '12px 14px', background: 'rgba(26,58,110,0.04)', border: '1px solid rgba(26,58,110,0.12)', borderRadius: 'var(--r-sm)' }}>
                 <ShieldCheck size={16} style={{ color: 'var(--primary)', flexShrink: 0, marginTop: '1px' }} />
                 <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', margin: 0, lineHeight: 1.6 }}>
                   Votre signature électronique a la même valeur juridique qu'une signature manuscrite. Elle est horodatée et associée à votre dossier de façon sécurisée.
@@ -700,7 +700,7 @@ function SignatureModal({ doc, onClose }: { doc: SignDocTarget; onClose: () => v
                   value={signature}
                   onChange={e => setSignature(e.target.value)}
                   placeholder="Saisissez votre nom complet"
-                  style={{ width: '100%', padding: '12px 14px', borderRadius: '10px', border: '1.5px solid var(--border)', background: 'var(--input-background)', fontFamily: 'Segoe Script, "Brush Script MT", cursive', fontSize: '1.375rem', fontStyle: 'italic', color: 'var(--foreground)', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '12px 14px', borderRadius: 'var(--r-sm)', border: '1.5px solid var(--border)', background: 'var(--input-background)', fontFamily: 'Segoe Script, "Brush Script MT", cursive', fontSize: '1.375rem', fontStyle: 'italic', color: 'var(--foreground)', boxSizing: 'border-box' }}
                 />
                 <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: '6px' }}>Fait le {now}</div>
               </div>
@@ -744,9 +744,9 @@ const CPI_CAT_ORDER = ['contrats', 'conventions', 'autorisations', 'bancaires', 
 function SignatureBanner({ docs, onSign }: { docs: CpiListDoc[]; onSign: (d: CpiListDoc) => void }) {
   const n = docs.length;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', flexWrap: 'wrap', padding: '14px 18px', background: 'rgba(200,146,26,0.10)', border: '1px solid rgba(200,146,26,0.28)', borderRadius: '14px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', flexWrap: 'wrap', padding: '14px 18px', background: 'rgba(200,146,26,0.10)', border: '1px solid rgba(200,146,26,0.28)', borderRadius: 'var(--r-md)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '13px', minWidth: 0 }}>
-        <div style={{ width: 40, height: 40, borderRadius: '10px', background: 'rgba(200,146,26,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ width: 40, height: 40, borderRadius: 'var(--r-sm)', background: 'rgba(200,146,26,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <PenSquare size={19} style={{ color: 'var(--accent)' }} />
         </div>
         <div style={{ minWidth: 0 }}>
@@ -783,9 +783,9 @@ function CpiDocsSection({ docs, onSign, onPreview, onDownload }: {
   const renderCard = (doc: CpiListDoc, i: number) => {
     const cfg = CPI_STATUS_MAP[doc.statut] || { color: 'var(--muted-foreground)', bg: 'var(--muted)' };
     return (
-      <div key={doc.id + i} style={{ border: `1px solid ${doc.canSign ? 'rgba(192,57,43,0.15)' : 'var(--border)'}`, borderRadius: '10px', overflow: 'hidden', borderLeft: `3px solid ${doc.statut === 'Signé' ? 'var(--success)' : doc.canSign ? 'var(--destructive)' : 'var(--border)'}` }}>
+      <div key={doc.id + i} style={{ border: `1px solid ${doc.canSign ? 'rgba(192,57,43,0.15)' : 'var(--border)'}`, borderRadius: 'var(--r-sm)', overflow: 'hidden', borderLeft: `3px solid ${doc.statut === 'Signé' ? 'var(--success)' : doc.canSign ? 'var(--destructive)' : 'var(--border)'}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', flexWrap: 'wrap' }}>
-          <div style={{ width: '38px', height: '38px', borderRadius: '8px', background: 'var(--input-background)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <div style={{ width: '38px', height: '38px', borderRadius: 'var(--r-sm)', background: 'var(--input-background)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <FileText size={17} style={{ color: doc.statut === 'Signé' ? 'var(--success)' : doc.canSign ? 'var(--destructive)' : 'var(--primary)' }} />
           </div>
           <div style={{ flex: 1, minWidth: '140px' }}>
@@ -795,7 +795,7 @@ function CpiDocsSection({ docs, onSign, onPreview, onDownload }: {
               <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', color: 'var(--muted-foreground)' }}>· {doc.version} · {doc.date}</span>
             </div>
           </div>
-          <span style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 9px', borderRadius: '99px', background: cfg.bg, fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: cfg.color, whiteSpace: 'nowrap' }}>{doc.statut}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 9px', borderRadius: 'var(--r-full)', background: cfg.bg, fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: cfg.color, whiteSpace: 'nowrap' }}>{doc.statut}</span>
           <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
             {doc.statut !== 'À venir' && <ActionBtn icon={Eye} label="Voir" onClick={() => onPreview(doc)} />}
             {doc.statut !== 'À venir' && <ActionBtn icon={Download} label="Télécharger" onClick={() => onDownload(doc)} />}
@@ -807,7 +807,7 @@ function CpiDocsSection({ docs, onSign, onPreview, onDownload }: {
   };
 
   const pill = (active: boolean): React.CSSProperties => ({
-    padding: '5px 12px', borderRadius: '99px', border: `1px solid ${active ? 'var(--primary)' : 'var(--border)'}`,
+    padding: '5px 12px', borderRadius: 'var(--r-full)', border: `1px solid ${active ? 'var(--primary)' : 'var(--border)'}`,
     background: active ? 'var(--primary)' : 'transparent', color: active ? 'var(--primary-foreground)' : 'var(--muted-foreground)',
     fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
   });
@@ -834,7 +834,7 @@ function CpiDocsSection({ docs, onSign, onPreview, onDownload }: {
               { label: 'Signés',      value: signed,    color: 'var(--success)',     bg: 'rgba(26,107,68,0.10)' },
               { label: 'Disponibles', value: available, color: 'var(--muted-foreground)', bg: 'var(--input-background)' },
             ].map(s => (
-              <div key={s.label} style={{ flex: '1 1 auto', minWidth: '84px', padding: '9px 12px', borderRadius: '10px', background: s.bg }}>
+              <div key={s.label} style={{ flex: '1 1 auto', minWidth: '84px', padding: '9px 12px', borderRadius: 'var(--r-sm)', background: s.bg }}>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
                 <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', color: 'var(--muted-foreground)', marginTop: '3px' }}>{s.label}</div>
               </div>
@@ -856,7 +856,7 @@ function CpiDocsSection({ docs, onSign, onPreview, onDownload }: {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '8px' }}>
                   <g.Icon size={13} style={{ color: 'var(--muted-foreground)' }} />
                   <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: 'var(--muted-foreground)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{g.label}</span>
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.625rem', fontWeight: 700, color: 'var(--muted-foreground)', background: 'var(--input-background)', padding: '0 6px', borderRadius: '4px' }}>{g.items.length}</span>
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.625rem', fontWeight: 700, color: 'var(--muted-foreground)', background: 'var(--input-background)', padding: '0 6px', borderRadius: 'var(--r-xs)' }}>{g.items.length}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {g.items.map(renderCard)}
@@ -927,12 +927,12 @@ function HistoriqueSection() {
                   const cfg = iconMap[e.icon] || iconMap.info;
                   const EntryIcon = cfg.El;
                   return (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '11px 14px', background: 'var(--input-background)', border: '1px solid var(--border)', borderRadius: '8px' }}>
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '11px 14px', background: 'var(--input-background)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)' }}>
                       <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <EntryIcon size={13} style={{ color: cfg.color }} />
                       </div>
                       <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--foreground)', flex: 1 }}>{e.text}</span>
-                      {e.agent && <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: 'var(--muted-foreground)', background: 'var(--card)', padding: '2px 8px', borderRadius: '4px', whiteSpace: 'nowrap', flexShrink: 0 }}>{e.agent}</span>}
+                      {e.agent && <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: 'var(--muted-foreground)', background: 'var(--card)', padding: '2px 8px', borderRadius: 'var(--r-xs)', whiteSpace: 'nowrap', flexShrink: 0 }}>{e.agent}</span>}
                     </div>
                   );
                 })}
@@ -975,7 +975,7 @@ function BanksSection({ clientId }: { clientId: string }) {
               return (
                 <div key={a.bankId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', padding: '12px 14px', background: 'var(--secondary)', borderRadius: 'var(--radius)' }}>
                   <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600, color: 'var(--foreground)' }}>{a.bankName}</span>
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: st.color, background: st.bg, padding: '3px 10px', borderRadius: '99px' }}>{st.label}</span>
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: st.color, background: st.bg, padding: '3px 10px', borderRadius: 'var(--r-full)' }}>{st.label}</span>
                 </div>
               );
             })}
@@ -988,7 +988,7 @@ function BanksSection({ clientId }: { clientId: string }) {
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             {banks.map(b => (
-              <span key={b.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 14px', background: 'var(--secondary)', borderRadius: '99px', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--foreground)' }}>
+              <span key={b.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 14px', background: 'var(--secondary)', borderRadius: 'var(--r-full)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--foreground)' }}>
                 <span style={{ width: 10, height: 10, borderRadius: '50%', background: b.color }} />
                 {b.name}{b.rate && b.rate !== '—' ? ` · ${b.rate}` : ''}
               </span>

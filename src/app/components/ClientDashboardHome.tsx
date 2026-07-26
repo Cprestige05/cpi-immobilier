@@ -466,7 +466,7 @@ export default function ClientDashboardHome({ user }: Props) {
                   </div>
                   <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: 2 }}>{step.sub}</div>
                   {step.active && (
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6, padding: '3px 8px', borderRadius: 6, background: 'rgba(200,146,26,0.1)', border: '1px solid rgba(200,146,26,0.2)' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6, padding: '3px 8px', borderRadius: 'var(--r-xs)', background: 'rgba(200,146,26,0.1)', border: '1px solid rgba(200,146,26,0.2)' }}>
                       <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent)' }} />
                       <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: 'var(--accent)' }}>Étape en cours</span>
                     </div>

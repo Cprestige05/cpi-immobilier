@@ -112,7 +112,7 @@ function SectionCard({ title, icon, iconBg, children, accent }: {
   return (
     <div style={{ background: 'var(--card)', border: CARD_BORDER, borderRadius: CARD_RADIUS, overflow: 'hidden', boxShadow: CARD_SHADOW }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: SECTION_PAD, borderBottom: '1px solid rgba(26,58,110,0.06)' }}>
-        <div style={{ width: 38, height: 38, borderRadius: 12, flexShrink: 0, background: iconBg ?? 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: accent ?? 'var(--primary)' }}>
+        <div style={{ width: 38, height: 38, borderRadius: 'var(--r-md)', flexShrink: 0, background: iconBg ?? 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: accent ?? 'var(--primary)' }}>
           {icon}
         </div>
         <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
@@ -137,7 +137,7 @@ function FieldGroup({ label, children }: { label: string; children: React.ReactN
 
 const INPUT_BASE: React.CSSProperties = {
   fontFamily: 'var(--font-sans)', fontSize: '0.9375rem',
-  border: '1.5px solid var(--border)', borderRadius: 10,
+  border: '1.5px solid var(--border)', borderRadius: 'var(--r-sm)',
   padding: '11px 14px', outline: 'none',
   width: '100%', boxSizing: 'border-box',
   transition: 'border-color 0.18s, box-shadow 0.18s',
@@ -188,7 +188,7 @@ function ToastStack({ toasts }: { toasts: ToastItem[] }) {
         return (
           <div key={t.id} style={{
             display: 'flex', alignItems: 'center', gap: 10,
-            padding: '12px 18px', borderRadius: 12,
+            padding: '12px 18px', borderRadius: 'var(--r-md)',
             background: colors.bg, color: '#fff',
             fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600,
             boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
@@ -230,7 +230,7 @@ function InlineDepot({ label, onDeposit }: { label: string; onDeposit: (fileName
         onDragLeave={() => setDragging(false)}
         onDrop={e => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) startUpload(f.name); }}
         onClick={() => inputRef.current?.click()}
-        style={{ border: `2px dashed ${dragging ? 'var(--primary)' : 'var(--border)'}`, borderRadius: 12, padding: '18px 16px', textAlign: 'center', cursor: 'pointer', background: dragging ? 'var(--secondary)' : 'var(--muted)', transition: 'all 0.15s' }}
+        style={{ border: `2px dashed ${dragging ? 'var(--primary)' : 'var(--border)'}`, borderRadius: 'var(--r-md)', padding: '18px 16px', textAlign: 'center', cursor: 'pointer', background: dragging ? 'var(--secondary)' : 'var(--muted)', transition: 'all var(--dur-1) var(--ease-out)' }}
       >
         <FileUp size={22} style={{ color: 'var(--primary)', margin: '0 auto 6px', display: 'block' }} />
         <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--foreground)' }}>Glissez votre fichier ici, ou cliquez pour parcourir</div>
@@ -241,14 +241,14 @@ function InlineDepot({ label, onDeposit }: { label: string; onDeposit: (fileName
   }
 
   return (
-    <div style={{ background: 'var(--muted)', borderRadius: 12, padding: '14px 16px' }}>
+    <div style={{ background: 'var(--muted)', borderRadius: 'var(--r-md)', padding: '14px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
         <FileText size={18} style={{ color: 'var(--primary)', flexShrink: 0 }} />
         <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--foreground)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file}</span>
         {done && <CheckCircle2 size={16} style={{ color: 'var(--success)', flexShrink: 0 }} />}
       </div>
-      <div style={{ height: 6, background: 'var(--border)', borderRadius: 99, overflow: 'hidden' }}>
-        <div style={{ height: '100%', borderRadius: 99, background: done ? 'var(--success)' : 'var(--primary)', width: `${progress}%`, transition: 'width 0.2s ease, background 0.3s' }} />
+      <div style={{ height: 6, background: 'var(--border)', borderRadius: 'var(--r-full)', overflow: 'hidden' }}>
+        <div style={{ height: '100%', borderRadius: 'var(--r-full)', background: done ? 'var(--success)' : 'var(--primary)', width: `${progress}%`, transition: 'width 0.2s ease, background 0.3s' }} />
       </div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 12 }}>
         <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>{done ? 'Chargement terminé' : `${progress}%`}</span>
@@ -354,7 +354,7 @@ export default function MaDemandePage({ user: _user }: Props) {
               <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem', fontWeight: 800, color: 'var(--foreground)', margin: 0, letterSpacing: '-0.01em' }}>
                 Ma demande
               </h1>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 13px', borderRadius: 100, background: sc.bg, color: sc.color, fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 700 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 13px', borderRadius: 'var(--r-full)', background: sc.bg, color: sc.color, fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 700 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: sc.dot, display: 'inline-block' }} />
                 {sc.label}
               </span>
@@ -374,15 +374,15 @@ export default function MaDemandePage({ user: _user }: Props) {
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {isEditing ? (
                 <>
-                  <button onClick={() => { setIsEditing(false); setDemande(d => ({ ...d, form: loadDemandeState(client, isNewClient).form })); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 10, border: '1.5px solid var(--border)', background: 'transparent', color: 'var(--muted-foreground)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600 }}>
+                  <button onClick={() => { setIsEditing(false); setDemande(d => ({ ...d, form: loadDemandeState(client, isNewClient).form })); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 'var(--r-sm)', border: '1.5px solid var(--border)', background: 'transparent', color: 'var(--muted-foreground)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600 }}>
                     <X size={14} /> Annuler
                   </button>
-                  <button onClick={() => { setIsEditing(false); addToast('success', 'Modifications enregistrées'); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 20px', borderRadius: 100, border: 'none', background: 'var(--primary)', color: 'var(--primary-foreground)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700, boxShadow: '0 2px 8px rgba(26,58,110,0.25)' }}>
+                  <button onClick={() => { setIsEditing(false); addToast('success', 'Modifications enregistrées'); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 20px', borderRadius: 'var(--r-full)', border: 'none', background: 'var(--primary)', color: 'var(--primary-foreground)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700, boxShadow: '0 2px 8px rgba(26,58,110,0.25)' }}>
                     <Save size={14} /> Enregistrer
                   </button>
                 </>
               ) : (
-                <button onClick={() => setIsEditing(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 18px', borderRadius: 10, border: '1.5px solid var(--primary)', background: 'transparent', color: 'var(--primary)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700 }}>
+                <button onClick={() => setIsEditing(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 18px', borderRadius: 'var(--r-sm)', border: '1.5px solid var(--primary)', background: 'transparent', color: 'var(--primary)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700 }}>
                   <Edit3 size={14} /> Modifier la demande
                 </button>
               )}
@@ -391,7 +391,7 @@ export default function MaDemandePage({ user: _user }: Props) {
         </div>
 
         {!demande.submitted && (
-          <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', background: 'rgba(26,58,110,0.05)', border: '1px solid rgba(26,58,110,0.12)', borderRadius: 12 }}>
+          <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', background: 'rgba(26,58,110,0.05)', border: '1px solid rgba(26,58,110,0.12)', borderRadius: 'var(--r-md)' }}>
             <AlertCircle size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>
               Remplissez les informations de votre projet ci-dessous, puis envoyez votre demande pour qu'elle soit étudiée par votre conseiller.
@@ -400,7 +400,7 @@ export default function MaDemandePage({ user: _user }: Props) {
         )}
 
         {/* Progress */}
-        <div style={{ marginTop: 20, background: 'var(--card)', border: CARD_BORDER, borderRadius: 16, padding: '18px 22px', boxShadow: CARD_SHADOW }}>
+        <div style={{ marginTop: 20, background: 'var(--card)', border: CARD_BORDER, borderRadius: 'var(--r-lg)', padding: '18px 22px', boxShadow: CARD_SHADOW }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 500, color: 'var(--muted-foreground)' }}>
               Avancement global de la demande
@@ -409,16 +409,16 @@ export default function MaDemandePage({ user: _user }: Props) {
               {progressPct}<span style={{ fontSize: '0.8em', fontWeight: 600 }}>%</span>
             </span>
           </div>
-          <div style={{ height: 10, background: 'var(--muted)', borderRadius: 100, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${progressPct}%`, background: 'linear-gradient(90deg, var(--primary) 0%, var(--chart-4) 100%)', borderRadius: 100, transition: 'width 1.2s cubic-bezier(0.22,1,0.36,1)' }} />
+          <div style={{ height: 10, background: 'var(--muted)', borderRadius: 'var(--r-full)', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${progressPct}%`, background: 'linear-gradient(90deg, var(--primary) 0%, var(--chart-4) 100%)', borderRadius: 'var(--r-full)', transition: 'width 1.2s cubic-bezier(0.22,1,0.36,1)' }} />
           </div>
           {demande.submitted && totalDocs > 0 && (
             <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-              <span style={{ padding: '3px 11px', borderRadius: 100, background: 'rgba(26,107,68,0.1)', color: 'var(--success)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600 }}>
+              <span style={{ padding: '3px 11px', borderRadius: 'var(--r-full)', background: 'rgba(26,107,68,0.1)', color: 'var(--success)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600 }}>
                 {validDocs}/{totalDocs} document{totalDocs > 1 ? 's' : ''} validé{validDocs > 1 ? 's' : ''}
               </span>
               {hasDocIssue && (
-                <span style={{ padding: '3px 11px', borderRadius: 100, background: 'rgba(192,57,43,0.1)', color: 'var(--destructive)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600 }}>
+                <span style={{ padding: '3px 11px', borderRadius: 'var(--r-full)', background: 'rgba(192,57,43,0.1)', color: 'var(--destructive)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600 }}>
                   Action requise sur un document
                 </span>
               )}
@@ -458,7 +458,7 @@ export default function MaDemandePage({ user: _user }: Props) {
                 <FInput value={form.apport} onChange={set('apport')} placeholder="0 si aucun" disabled={!isEditing} />
               </FieldGroup>
             </div>
-            <div style={{ background: 'var(--secondary)', borderRadius: 14, padding: '18px 20px' }}>
+            <div style={{ background: 'var(--secondary)', borderRadius: 'var(--r-md)', padding: '18px 20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 16 }}>
                 <MapPin size={13} style={{ color: 'var(--muted-foreground)' }} />
                 <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Localisation du projet</span>
@@ -500,7 +500,7 @@ export default function MaDemandePage({ user: _user }: Props) {
               </div>
             </div>
             <button onClick={handleSubmitDemande} disabled={!canSubmit}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '13px 28px', borderRadius: 100, border: 'none', background: canSubmit ? 'var(--primary)' : 'var(--muted)', color: canSubmit ? 'var(--primary-foreground)' : 'var(--muted-foreground)', cursor: canSubmit ? 'pointer' : 'not-allowed', fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', fontWeight: 700, boxShadow: canSubmit ? '0 4px 14px rgba(26,58,110,0.28)' : 'none', whiteSpace: 'nowrap' }}>
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '13px 28px', borderRadius: 'var(--r-full)', border: 'none', background: canSubmit ? 'var(--primary)' : 'var(--muted)', color: canSubmit ? 'var(--primary-foreground)' : 'var(--muted-foreground)', cursor: canSubmit ? 'pointer' : 'not-allowed', fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', fontWeight: 700, boxShadow: canSubmit ? '0 4px 14px rgba(26,58,110,0.28)' : 'none', whiteSpace: 'nowrap' }}>
               <Send size={16} /> Envoyer ma demande
             </button>
           </div>
@@ -517,7 +517,7 @@ export default function MaDemandePage({ user: _user }: Props) {
               const needsDepot = doc.status === 'en-attente' || doc.status === 'refuse' || doc.status === 'a-remplacer';
               const isOpen = depotDocId === doc.id;
               return (
-                <div key={doc.id} style={{ border: `1px solid ${needsDepot ? 'rgba(192,57,43,0.16)' : 'var(--border)'}`, borderRadius: 12, overflow: 'hidden' }}>
+                <div key={doc.id} style={{ border: `1px solid ${needsDepot ? 'rgba(192,57,43,0.16)' : 'var(--border)'}`, borderRadius: 'var(--r-md)', overflow: 'hidden' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', flexWrap: 'wrap' }}>
                     <div style={{ flex: 1, minWidth: 200 }}>
                       <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600, color: 'var(--foreground)' }}>{doc.label}</div>
@@ -526,9 +526,9 @@ export default function MaDemandePage({ user: _user }: Props) {
                         <div style={{ marginTop: 5, fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--destructive)', fontStyle: 'italic' }}>"{doc.commentaire}"</div>
                       )}
                     </div>
-                    <span style={{ padding: '4px 11px', borderRadius: 100, background: cfg.bg, color: cfg.color, fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, whiteSpace: 'nowrap' }}>{cfg.label}</span>
+                    <span style={{ padding: '4px 11px', borderRadius: 'var(--r-full)', background: cfg.bg, color: cfg.color, fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, whiteSpace: 'nowrap' }}>{cfg.label}</span>
                     {needsDepot && !isOpen && (
-                      <button onClick={() => setDepotDocId(doc.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: 'none', background: 'var(--primary)', color: '#fff', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                      <button onClick={() => setDepotDocId(doc.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 'var(--r-sm)', border: 'none', background: 'var(--primary)', color: '#fff', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
                         <FileUp size={13} /> {doc.status === 'a-remplacer' || doc.status === 'refuse' ? 'Remplacer' : 'Déposer'}
                       </button>
                     )}
@@ -552,13 +552,13 @@ export default function MaDemandePage({ user: _user }: Props) {
           {/* Résumé */}
           <div style={{ background: 'var(--card)', border: CARD_BORDER, borderRadius: CARD_RADIUS, overflow: 'hidden', boxShadow: CARD_SHADOW }}>
             <div style={{ padding: SECTION_PAD, borderBottom: '1px solid rgba(26,58,110,0.06)', display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 12, background: 'rgba(26,58,110,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+              <div style={{ width: 38, height: 38, borderRadius: 'var(--r-md)', background: 'rgba(26,58,110,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
                 <LayoutGrid size={17} />
               </div>
               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>Résumé de la demande</h3>
             </div>
             <div style={{ padding: '8px 28px 24px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border)', borderRadius: 12, overflow: 'hidden', margin: '16px 0' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border)', borderRadius: 'var(--r-md)', overflow: 'hidden', margin: '16px 0' }}>
                 {[
                   { label: 'Montant demandé', value: form.montant || '—', sub: 'FCFA', icon: <Banknote size={14} />, color: 'var(--primary)' },
                   { label: 'Durée', value: form.duree, sub: 'ans', icon: <Timer size={14} />, color: 'var(--accent)' },
@@ -590,7 +590,7 @@ export default function MaDemandePage({ user: _user }: Props) {
                   <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--foreground)', textAlign: 'right' }}>{row.value}</span>
                 </div>
               ))}
-              <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 12, background: sc.bg, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 'var(--r-md)', background: sc.bg, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>Statut actuel</span>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700, color: sc.color }}>
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: sc.dot, display: 'inline-block' }} /> {sc.label}
@@ -602,7 +602,7 @@ export default function MaDemandePage({ user: _user }: Props) {
           {/* Historique (réel — actions de votre conseiller CPI) */}
           <div style={{ background: 'var(--card)', border: CARD_BORDER, borderRadius: CARD_RADIUS, overflow: 'hidden', boxShadow: CARD_SHADOW }}>
             <div style={{ padding: SECTION_PAD, borderBottom: '1px solid rgba(26,58,110,0.06)', display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 12, background: 'rgba(200,146,26,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)' }}>
+              <div style={{ width: 38, height: 38, borderRadius: 'var(--r-md)', background: 'rgba(200,146,26,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)' }}>
                 <Clock size={17} />
               </div>
               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>Historique de traitement</h3>
@@ -629,7 +629,7 @@ export default function MaDemandePage({ user: _user }: Props) {
                       <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9rem', fontWeight: 500, color: 'var(--foreground)', lineHeight: 1.4 }}>
                         {ev.action}
                       </div>
-                      <span style={{ display: 'inline-block', marginTop: 5, padding: '2px 8px', borderRadius: 6, background: 'var(--secondary)', fontFamily: 'var(--font-sans)', fontSize: '0.7rem', color: 'var(--muted-foreground)', fontWeight: 500 }}>
+                      <span style={{ display: 'inline-block', marginTop: 5, padding: '2px 8px', borderRadius: 'var(--r-xs)', background: 'var(--secondary)', fontFamily: 'var(--font-sans)', fontSize: '0.7rem', color: 'var(--muted-foreground)', fontWeight: 500 }}>
                         {ev.date} · {ev.heure}
                       </span>
                     </div>
@@ -643,7 +643,7 @@ export default function MaDemandePage({ user: _user }: Props) {
         {/* 4 — Actions disponibles */}
         <div style={{ background: 'var(--card)', border: CARD_BORDER, borderRadius: CARD_RADIUS, overflow: 'hidden', boxShadow: CARD_SHADOW }}>
           <div style={{ padding: '20px 28px', borderBottom: '1px solid rgba(26,58,110,0.07)', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 'var(--r-sm)', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Send size={15} style={{ color: 'var(--primary)' }} />
             </div>
             <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>Actions disponibles</h3>
@@ -651,7 +651,7 @@ export default function MaDemandePage({ user: _user }: Props) {
 
           <div style={{ padding: '8px 0' }}>
             <button onClick={() => navigate('mon-dossier')} style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%', padding: '13px 28px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(26,58,110,0.06)', cursor: 'pointer', textAlign: 'left' }}>
-              <div style={{ width: 38, height: 38, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(200,146,26,0.12)', border: '1px solid rgba(200,146,26,0.2)' }}>
+              <div style={{ width: 38, height: 38, borderRadius: 'var(--r-sm)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(200,146,26,0.12)', border: '1px solid rgba(200,146,26,0.2)' }}>
                 <FolderOpen size={16} style={{ color: 'var(--accent)' }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -665,7 +665,7 @@ export default function MaDemandePage({ user: _user }: Props) {
               onClick={() => { addToast('info', 'Génération du PDF en cours…'); setTimeout(() => addToast('success', 'Récapitulatif téléchargé avec succès'), 1600); }}
               style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%', padding: '13px 28px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(26,58,110,0.06)', cursor: 'pointer', textAlign: 'left' }}
             >
-              <div style={{ width: 38, height: 38, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--secondary)' }}>
+              <div style={{ width: 38, height: 38, borderRadius: 'var(--r-sm)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--secondary)' }}>
                 <Printer size={16} style={{ color: 'var(--primary)' }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -676,7 +676,7 @@ export default function MaDemandePage({ user: _user }: Props) {
             </button>
 
             <button onClick={() => navigate('support')} style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%', padding: '13px 28px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-              <div style={{ width: 38, height: 38, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--secondary)' }}>
+              <div style={{ width: 38, height: 38, borderRadius: 'var(--r-sm)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--secondary)' }}>
                 <MessageSquare size={16} style={{ color: 'var(--primary)' }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -690,21 +690,21 @@ export default function MaDemandePage({ user: _user }: Props) {
           {/* ── Bandeau bas — contextuel ── */}
           {demande.submitted && (
             statut === 'validee' ? (
-              <div style={{ margin: '0 20px 20px', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'rgba(26,107,68,0.07)', border: '1px solid rgba(26,107,68,0.18)', borderRadius: 12 }}>
+              <div style={{ margin: '0 20px 20px', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'rgba(26,107,68,0.07)', border: '1px solid rgba(26,107,68,0.18)', borderRadius: 'var(--r-md)' }}>
                 <CheckCircle2 size={15} style={{ color: 'var(--success)', flexShrink: 0 }} />
                 <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', margin: 0, lineHeight: 1.6 }}>
                   <strong style={{ color: 'var(--success)', fontWeight: 700 }}>Dossier complet.</strong> Tous les documents obligatoires ont été validés par votre conseiller.
                 </p>
               </div>
             ) : hasDocIssue ? (
-              <div style={{ margin: '0 20px 20px', display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px', background: 'rgba(192,57,43,0.06)', border: '1px solid rgba(192,57,43,0.18)', borderRadius: 12 }}>
+              <div style={{ margin: '0 20px 20px', display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px', background: 'rgba(192,57,43,0.06)', border: '1px solid rgba(192,57,43,0.18)', borderRadius: 'var(--r-md)' }}>
                 <AlertCircle size={15} style={{ color: 'var(--destructive)', flexShrink: 0, marginTop: 1 }} />
                 <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', margin: 0, lineHeight: 1.65 }}>
                   <strong style={{ color: 'var(--destructive)', fontWeight: 700 }}>Action requise</strong> — un ou plusieurs documents ont été refusés par votre conseiller. Remplacez-les dans la section « Documents requis » ci-dessus.
                 </p>
               </div>
             ) : (
-              <div style={{ margin: '0 20px 20px', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'rgba(200,146,26,0.07)', border: '1px solid rgba(200,146,26,0.2)', borderRadius: 12 }}>
+              <div style={{ margin: '0 20px 20px', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'rgba(200,146,26,0.07)', border: '1px solid rgba(200,146,26,0.2)', borderRadius: 'var(--r-md)' }}>
                 <AlertCircle size={15} style={{ color: 'var(--accent)', flexShrink: 0 }} />
                 <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', margin: 0, lineHeight: 1.6 }}>
                   Votre demande est en cours d'étude par votre conseiller CPI.

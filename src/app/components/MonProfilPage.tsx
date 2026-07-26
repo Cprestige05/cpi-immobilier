@@ -39,7 +39,7 @@ function CopyButton({ value }: { value: string }) {
         background: 'none', border: 'none', padding: '2px 4px',
         cursor: 'pointer', color: copied ? '#1A6B44' : 'var(--muted-foreground)',
         display: 'inline-flex', alignItems: 'center', transition: 'color 0.15s',
-        borderRadius: '4px',
+        borderRadius: 'var(--r-xs)',
       }}
       onMouseEnter={e => { if (!copied) e.currentTarget.style.color = 'var(--primary)'; }}
       onMouseLeave={e => { if (!copied) e.currentTarget.style.color = 'var(--muted-foreground)'; }}
@@ -92,7 +92,7 @@ function FieldRow({
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '14px 0' }}>
       {Icon && (
         <div style={{
-          width: '32px', height: '32px', borderRadius: '8px',
+          width: '32px', height: '32px', borderRadius: 'var(--r-sm)',
           background: 'var(--secondary)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0, marginTop: '1px',
@@ -141,7 +141,7 @@ function SectionCard({
     <div style={{
       background: 'var(--card)',
       border: '1px solid var(--border)',
-      borderRadius: '16px',
+      borderRadius: 'var(--r-lg)',
       overflow: 'hidden',
     }}>
       {/* Header */}
@@ -152,7 +152,7 @@ function SectionCard({
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{
-            width: '36px', height: '36px', borderRadius: '10px',
+            width: '36px', height: '36px', borderRadius: 'var(--r-sm)',
             background: 'var(--secondary)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
@@ -177,12 +177,12 @@ function SectionCard({
             onClick={onEdit}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '6px',
-              padding: '7px 14px', borderRadius: '9px',
+              padding: '7px 14px', borderRadius: 'var(--r-sm)',
               border: `1px solid ${editing ? 'var(--primary)' : 'var(--border)'}`,
               background: editing ? 'var(--secondary)' : 'transparent',
               fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600,
               color: editing ? 'var(--primary)' : 'var(--muted-foreground)',
-              cursor: 'pointer', transition: 'all 0.15s',
+              cursor: 'pointer', transition: 'all var(--dur-1) var(--ease-out)',
             }}
             onMouseEnter={e => {
               if (!editing) {
@@ -320,7 +320,7 @@ function ClientProfile({ user }: { user: AuthUser }) {
       {/* ─── HERO ──────────────────────────────────────────────────────────── */}
       <div style={{
         background: 'var(--primary)',
-        borderRadius: '20px',
+        borderRadius: 'var(--r-xl)',
         overflow: 'hidden',
         position: 'relative',
       }}>
@@ -385,7 +385,7 @@ function ClientProfile({ user }: { user: AuthUser }) {
                 background: 'rgba(110,240,168,0.18)', color: '#6EF0A8',
                 fontFamily: 'var(--font-sans)', fontSize: '0.6875rem',
                 fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
-                padding: '3px 10px', borderRadius: '99px',
+                padding: '3px 10px', borderRadius: 'var(--r-full)',
               }}>
                 <BadgeCheck size={11} />
                 Compte actif
@@ -397,7 +397,7 @@ function ClientProfile({ user }: { user: AuthUser }) {
                 background: 'rgba(200,146,26,0.22)', color: '#FFC65A',
                 fontFamily: 'var(--font-sans)', fontSize: '0.75rem',
                 fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase',
-                padding: '3px 10px', borderRadius: '99px',
+                padding: '3px 10px', borderRadius: 'var(--r-full)',
               }}>
                 {PROFILE.typeProfile}
               </span>
@@ -420,7 +420,7 @@ function ClientProfile({ user }: { user: AuthUser }) {
                 <div key={m.label} style={{
                   background: 'rgba(255,255,255,0.07)',
                   border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: '8px', padding: '6px 12px',
+                  borderRadius: 'var(--r-sm)', padding: '6px 12px',
                 }}>
                   <div style={{
                     fontFamily: 'var(--font-sans)', fontSize: '0.5625rem',
@@ -458,7 +458,7 @@ function ClientProfile({ user }: { user: AuthUser }) {
               onClick={() => setEditing('identite')}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: '8px',
-                padding: '9px 16px', borderRadius: '10px',
+                padding: '9px 16px', borderRadius: 'var(--r-sm)',
                 background: 'rgba(255,255,255,0.1)',
                 border: '1px solid rgba(255,255,255,0.18)',
                 fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600,
@@ -543,12 +543,12 @@ function ClientProfile({ user }: { user: AuthUser }) {
             flex: 1, minWidth: '260px',
             background: 'var(--secondary)',
             border: '1px solid var(--border)',
-            borderRadius: '12px',
+            borderRadius: 'var(--r-md)',
             padding: '16px 20px',
             display: 'flex', alignItems: 'center', gap: '16px',
           }}>
             <div style={{
-              width: '44px', height: '44px', borderRadius: '10px',
+              width: '44px', height: '44px', borderRadius: 'var(--r-sm)',
               background: 'var(--primary)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
@@ -577,7 +577,7 @@ function ClientProfile({ user }: { user: AuthUser }) {
                       background: 'rgba(26,107,68,0.1)', color: '#1A6B44',
                       fontFamily: 'var(--font-sans)', fontSize: '0.6875rem',
                       fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
-                      padding: '2px 8px', borderRadius: '99px',
+                      padding: '2px 8px', borderRadius: 'var(--r-full)',
                       display: 'inline-flex', alignItems: 'center', gap: '4px',
                     }}>
                       <CheckCircle size={9} /> Valide
@@ -592,7 +592,7 @@ function ClientProfile({ user }: { user: AuthUser }) {
                     background: 'var(--muted)', color: 'var(--muted-foreground)',
                     fontFamily: 'var(--font-sans)', fontSize: '0.6875rem',
                     fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
-                    padding: '2px 8px', borderRadius: '99px',
+                    padding: '2px 8px', borderRadius: 'var(--r-full)',
                   }}>Non renseignée</span>
                 )}
               </div>
@@ -606,7 +606,7 @@ function ClientProfile({ user }: { user: AuthUser }) {
             padding: '12px 16px',
             background: 'rgba(200,146,26,0.07)',
             border: '1px solid rgba(200,146,26,0.2)',
-            borderRadius: '10px',
+            borderRadius: 'var(--r-sm)',
             display: 'flex', alignItems: 'center', gap: '8px',
           }}>
             <AlertCircle size={14} style={{ color: '#C8921A', flexShrink: 0 }} />
@@ -644,7 +644,7 @@ function ClientProfile({ user }: { user: AuthUser }) {
                 padding: '12px 16px',
                 background: 'var(--secondary)',
                 border: '1px solid var(--border)',
-                borderRadius: '12px',
+                borderRadius: 'var(--r-md)',
                 textDecoration: 'none',
                 transition: 'border-color 0.15s, background 0.15s',
               }}
@@ -658,7 +658,7 @@ function ClientProfile({ user }: { user: AuthUser }) {
               }}
             >
               <div style={{
-                width: '32px', height: '32px', borderRadius: '8px',
+                width: '32px', height: '32px', borderRadius: 'var(--r-sm)',
                 background: 'var(--primary)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexShrink: 0,
@@ -696,7 +696,7 @@ function ClientProfile({ user }: { user: AuthUser }) {
             }}>Localisation GPS</div>
             <button style={{
               display: 'inline-flex', alignItems: 'center', gap: '6px',
-              padding: '5px 12px', borderRadius: '8px',
+              padding: '5px 12px', borderRadius: 'var(--r-sm)',
               border: '1px dashed var(--border)', background: 'transparent',
               fontFamily: 'var(--font-sans)', fontSize: '0.8125rem',
               fontWeight: 600, color: 'var(--primary)', cursor: 'pointer',
@@ -723,7 +723,7 @@ function ClientProfile({ user }: { user: AuthUser }) {
             padding: '10px 18px',
             background: 'var(--secondary)',
             border: '1px solid var(--border)',
-            borderRadius: '12px',
+            borderRadius: 'var(--r-md)',
           }}>
             <div style={{
               width: '8px', height: '8px', borderRadius: '50%',
@@ -760,7 +760,7 @@ function ClientProfile({ user }: { user: AuthUser }) {
               }}>
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div key={i} style={{
-                    width: '20px', height: '5px', borderRadius: '99px',
+                    width: '20px', height: '5px', borderRadius: 'var(--r-full)',
                     background: i < 3 ? 'var(--primary)' : 'var(--muted)',
                   }} />
                 ))}
@@ -826,7 +826,7 @@ function ClientProfile({ user }: { user: AuthUser }) {
             <div key={card.label} style={{
               background: card.bg,
               border: '1px solid var(--border)',
-              borderRadius: '12px',
+              borderRadius: 'var(--r-md)',
               padding: '14px 16px',
             }}>
               <div style={{
@@ -860,9 +860,9 @@ function ClientProfile({ user }: { user: AuthUser }) {
               fontWeight: 600, color: 'var(--foreground)',
             }}>{fmt(revenuTotal)}</span>
           </div>
-          <div style={{ height: '8px', borderRadius: '99px', background: 'var(--muted)', overflow: 'hidden' }}>
+          <div style={{ height: '8px', borderRadius: 'var(--r-full)', background: 'var(--muted)', overflow: 'hidden' }}>
             <div style={{
-              height: '100%', borderRadius: '99px',
+              height: '100%', borderRadius: 'var(--r-full)',
               background: `linear-gradient(90deg, var(--primary) ${100 - tauxEndettement}%, #C8921A ${100 - tauxEndettement}%)`,
               width: '100%',
             }} />
@@ -899,12 +899,12 @@ function ClientProfile({ user }: { user: AuthUser }) {
             flex: 1, minWidth: '280px',
             background: 'var(--secondary)',
             border: '1px solid var(--border)',
-            borderRadius: '14px',
+            borderRadius: 'var(--r-md)',
             padding: '18px 20px',
             display: 'flex', alignItems: 'center', gap: '16px',
           }}>
             <div style={{
-              width: '48px', height: '48px', borderRadius: '12px',
+              width: '48px', height: '48px', borderRadius: 'var(--r-md)',
               background: 'var(--primary)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
@@ -993,7 +993,7 @@ function StaffProfile({ user, onLogout }: { user: AuthUser; onLogout?: () => voi
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '20px', fontFamily: 'var(--font-sans)', paddingBottom: '48px' }}>
 
       {/* HERO */}
-      <div style={{ background: 'var(--primary)', borderRadius: '20px', overflow: 'hidden', position: 'relative' }}>
+      <div style={{ background: 'var(--primary)', borderRadius: 'var(--r-xl)', overflow: 'hidden', position: 'relative' }}>
         <div style={{ position: 'absolute', top: '-60px', right: '-60px', width: '260px', height: '260px', borderRadius: '50%', background: 'rgba(255,255,255,0.04)', pointerEvents: 'none' }} />
         <div style={{ padding: '32px 36px', display: 'flex', alignItems: 'center', gap: '28px', flexWrap: 'wrap', position: 'relative' }}>
           {/* Avatar */}
@@ -1013,7 +1013,7 @@ function StaffProfile({ user, onLogout }: { user: AuthUser; onLogout?: () => voi
           <div style={{ flex: 1, minWidth: '200px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '6px' }}>
               <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 800, color: '#fff', margin: 0, lineHeight: 1.2 }}>{user.name}</h1>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(200,146,26,0.22)', color: '#FFC65A', fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: '99px' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(200,146,26,0.22)', color: '#FFC65A', fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: 'var(--r-full)' }}>
                 <Shield size={11} /> {roleLabel}
               </span>
             </div>
@@ -1026,7 +1026,7 @@ function StaffProfile({ user, onLogout }: { user: AuthUser; onLogout?: () => voi
           </div>
 
           {avatar && (
-            <button onClick={removeAvatar} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '10px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            <button onClick={removeAvatar} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: 'var(--r-sm)', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap' }}>
               <Trash2 size={13} /> Retirer la photo
             </button>
           )}
@@ -1050,36 +1050,36 @@ function StaffProfile({ user, onLogout }: { user: AuthUser; onLogout?: () => voi
         <div style={{ padding: '8px 24px 16px' }}>
           {/* Mot de passe */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 0', flexWrap: 'wrap' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><KeyRound size={14} style={{ color: 'var(--primary)' }} /></div>
+            <div style={{ width: '32px', height: '32px', borderRadius: 'var(--r-sm)', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><KeyRound size={14} style={{ color: 'var(--primary)' }} /></div>
             <div style={{ flex: 1, minWidth: 140 }}>
               <div style={{ fontSize: '0.6875rem', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--muted-foreground)', marginBottom: '3px' }}>Mot de passe</div>
               <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', fontWeight: 500, color: 'var(--foreground)', letterSpacing: '0.15em' }}>••••••••</div>
             </div>
-            <button onClick={() => showToast('Le changement de mot de passe sera disponible une fois le backend connecté.')} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '9px', border: '1px solid var(--border)', background: 'transparent', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--muted-foreground)', cursor: 'pointer' }}>
+            <button onClick={() => showToast('Le changement de mot de passe sera disponible une fois le backend connecté.')} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'transparent', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--muted-foreground)', cursor: 'pointer' }}>
               <Edit3 size={13} /> Modifier
-              <span style={{ fontSize: '0.5625rem', fontWeight: 700, color: 'var(--muted-foreground)', background: 'rgba(107,74,82,0.10)', padding: '2px 7px', borderRadius: 99 }}>backend</span>
+              <span style={{ fontSize: '0.5625rem', fontWeight: 700, color: 'var(--muted-foreground)', background: 'rgba(107,74,82,0.10)', padding: '2px 7px', borderRadius: 'var(--r-full)' }}>backend</span>
             </button>
           </div>
           <Divider />
           {/* Connexion sécurisée */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 0' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Shield size={14} style={{ color: 'var(--primary)' }} /></div>
+            <div style={{ width: '32px', height: '32px', borderRadius: 'var(--r-sm)', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Shield size={14} style={{ color: 'var(--primary)' }} /></div>
             <div style={{ flex: 1, minWidth: 140 }}>
               <div style={{ fontSize: '0.6875rem', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--muted-foreground)', marginBottom: '3px' }}>Connexion sécurisée</div>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', fontWeight: 600, color: httpsOk ? '#1A6B44' : '#C0392B' }}>
-                <span style={{ width: 7, height: 7, borderRadius: 99, background: httpsOk ? '#1A6B44' : '#C0392B' }} /> {httpsOk ? 'HTTPS actif' : 'Non sécurisé'}
+                <span style={{ width: 7, height: 7, borderRadius: 'var(--r-full)', background: httpsOk ? '#1A6B44' : '#C0392B' }} /> {httpsOk ? 'HTTPS actif' : 'Non sécurisé'}
               </div>
             </div>
           </div>
           <Divider />
           {/* Dernière connexion */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 0', flexWrap: 'wrap' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Clock size={14} style={{ color: 'var(--primary)' }} /></div>
+            <div style={{ width: '32px', height: '32px', borderRadius: 'var(--r-sm)', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Clock size={14} style={{ color: 'var(--primary)' }} /></div>
             <div style={{ flex: 1, minWidth: 140 }}>
               <div style={{ fontSize: '0.6875rem', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--muted-foreground)', marginBottom: '3px' }}>Dernière connexion</div>
               <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', fontWeight: 500, color: 'var(--muted-foreground)' }}>Historisée côté serveur</div>
             </div>
-            <span style={{ fontSize: '0.5625rem', fontWeight: 700, color: 'var(--muted-foreground)', background: 'rgba(107,74,82,0.10)', padding: '2px 7px', borderRadius: 99 }}>backend</span>
+            <span style={{ fontSize: '0.5625rem', fontWeight: 700, color: 'var(--muted-foreground)', background: 'rgba(107,74,82,0.10)', padding: '2px 7px', borderRadius: 'var(--r-full)' }}>backend</span>
           </div>
         </div>
       </SectionCard>
@@ -1094,14 +1094,14 @@ function StaffProfile({ user, onLogout }: { user: AuthUser; onLogout?: () => voi
         <div style={{ padding: '4px 24px 22px' }}>
           <button
             onClick={() => onLogout?.()}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 18px', borderRadius: '10px', border: '1px solid rgba(192,57,43,0.3)', background: 'rgba(192,57,43,0.06)', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700, color: '#C0392B', cursor: 'pointer' }}>
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 18px', borderRadius: 'var(--r-sm)', border: '1px solid rgba(192,57,43,0.3)', background: 'rgba(192,57,43,0.06)', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700, color: '#C0392B', cursor: 'pointer' }}>
             <LogOut size={15} /> Se déconnecter
           </button>
         </div>
       </SectionCard>
 
       {toast && (
-        <div style={{ position: 'fixed', bottom: 24, right: 24, background: 'var(--foreground)', color: 'var(--background)', padding: '12px 18px', borderRadius: 10, fontSize: '0.875rem', fontWeight: 600, zIndex: 300, maxWidth: 360 }}>{toast}</div>
+        <div style={{ position: 'fixed', bottom: 24, right: 24, background: 'var(--foreground)', color: 'var(--background)', padding: '12px 18px', borderRadius: 'var(--r-sm)', fontSize: '0.875rem', fontWeight: 600, zIndex: 300, maxWidth: 360 }}>{toast}</div>
       )}
     </div>
   );

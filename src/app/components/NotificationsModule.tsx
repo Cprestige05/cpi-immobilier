@@ -68,7 +68,7 @@ export default function NotificationsModule({ agentName = 'Agent CPI' }: Props) 
     return unique.sort((a, b) => sortKey(b.date, b.heure).localeCompare(sortKey(a.date, a.heure)));
   }, [allHistoryByClient]);
 
-  const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '9px 11px', borderRadius: 10, background: 'var(--input-background)', border: '1px solid var(--border)', outline: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--foreground)' };
+  const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '9px 11px', borderRadius: 'var(--r-sm)', background: 'var(--input-background)', border: '1px solid var(--border)', outline: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--foreground)' };
   const labelStyle: React.CSSProperties = { display: 'block', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.05em' };
 
   return (
@@ -80,7 +80,7 @@ export default function NotificationsModule({ agentName = 'Agent CPI' }: Props) 
       </div>
 
       {/* Compose */}
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: '20px' }}>
+      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: '20px' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Bell size={15} style={{ color: 'var(--primary)' }} /> Composer une notification
         </div>
@@ -90,7 +90,7 @@ export default function NotificationsModule({ agentName = 'Agent CPI' }: Props) 
           <label style={labelStyle}>Destinataire</label>
           <div style={{ display: 'flex', gap: '8px' }}>
             {([['client', 'Un client', User], ['tous', 'Tous les clients', Users]] as const).map(([val, lbl, Icon]) => (
-              <button key={val} onClick={() => setCible(val)} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '9px 14px', borderRadius: 10, border: `1px solid ${cible === val ? 'var(--primary)' : 'var(--border)'}`, background: cible === val ? 'var(--primary)' : 'transparent', color: cible === val ? 'var(--primary-foreground)' : 'var(--muted-foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: cible === val ? 700 : 500, cursor: 'pointer' }}>
+              <button key={val} onClick={() => setCible(val)} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '9px 14px', borderRadius: 'var(--r-sm)', border: `1px solid ${cible === val ? 'var(--primary)' : 'var(--border)'}`, background: cible === val ? 'var(--primary)' : 'transparent', color: cible === val ? 'var(--primary-foreground)' : 'var(--muted-foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: cible === val ? 700 : 500, cursor: 'pointer' }}>
                 <Icon size={14} /> {lbl}
               </button>
             ))}
@@ -112,7 +112,7 @@ export default function NotificationsModule({ agentName = 'Agent CPI' }: Props) 
           <label style={labelStyle}>Canal</label>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {(Object.keys(TYPE_CFG) as NotifType[]).map(t => (
-              <button key={t} onClick={() => setType(t)} style={{ padding: '6px 14px', borderRadius: 99, border: `1px solid ${type === t ? TYPE_CFG[t].color : 'var(--border)'}`, background: type === t ? TYPE_CFG[t].bg : 'transparent', color: type === t ? TYPE_CFG[t].color : 'var(--muted-foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: type === t ? 700 : 500, cursor: 'pointer' }}>
+              <button key={t} onClick={() => setType(t)} style={{ padding: '6px 14px', borderRadius: 'var(--r-full)', border: `1px solid ${type === t ? TYPE_CFG[t].color : 'var(--border)'}`, background: type === t ? TYPE_CFG[t].bg : 'transparent', color: type === t ? TYPE_CFG[t].color : 'var(--muted-foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: type === t ? 700 : 500, cursor: 'pointer' }}>
                 {TYPE_CFG[t].label}
               </button>
             ))}
@@ -130,30 +130,30 @@ export default function NotificationsModule({ agentName = 'Agent CPI' }: Props) 
           <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', marginBottom: '6px' }}>Messages types :</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {TEMPLATES.map((t, i) => (
-              <button key={i} onClick={() => setMessage(t)} style={{ textAlign: 'left', padding: '8px 11px', borderRadius: 8, background: 'var(--input-background)', border: '1px solid var(--border)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--foreground)', cursor: 'pointer' }}>{t}</button>
+              <button key={i} onClick={() => setMessage(t)} style={{ textAlign: 'left', padding: '8px 11px', borderRadius: 'var(--r-sm)', background: 'var(--input-background)', border: '1px solid var(--border)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--foreground)', cursor: 'pointer' }}>{t}</button>
             ))}
           </div>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <button onClick={handleSend} disabled={!canSend} style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '10px 20px', borderRadius: 10, background: canSend ? 'var(--primary)' : 'var(--muted)', color: canSend ? 'var(--primary-foreground)' : 'var(--muted-foreground)', border: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', fontWeight: 700, cursor: canSend ? 'pointer' : 'not-allowed' }}>
+          <button onClick={handleSend} disabled={!canSend} style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '10px 20px', borderRadius: 'var(--r-sm)', background: canSend ? 'var(--primary)' : 'var(--muted)', color: canSend ? 'var(--primary-foreground)' : 'var(--muted-foreground)', border: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', fontWeight: 700, cursor: canSend ? 'pointer' : 'not-allowed' }}>
             <Send size={15} /> Envoyer
           </button>
         </div>
       </div>
 
       {/* History — envois réels */}
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', overflow: 'hidden' }}>
         <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 700, color: 'var(--foreground)' }}>Historique des envois</div>
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: 'var(--muted-foreground)', background: 'var(--muted)', padding: '3px 9px', borderRadius: 99 }}>{sent.length}</span>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: 'var(--muted-foreground)', background: 'var(--muted)', padding: '3px 9px', borderRadius: 'var(--r-full)' }}>{sent.length}</span>
         </div>
         <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {sent.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '24px', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>Aucune notification envoyée pour l'instant.</div>
           ) : sent.map(n => (
-            <div key={n.id} style={{ display: 'flex', gap: 12, padding: '12px 14px', background: 'var(--input-background)', border: '1px solid var(--border)', borderRadius: 10, flexWrap: 'wrap' }}>
-              <div style={{ width: 34, height: 34, borderRadius: 8, background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Bell size={15} style={{ color: 'var(--primary)' }} /></div>
+            <div key={n.id} style={{ display: 'flex', gap: 12, padding: '12px 14px', background: 'var(--input-background)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', flexWrap: 'wrap' }}>
+              <div style={{ width: 34, height: 34, borderRadius: 'var(--r-sm)', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Bell size={15} style={{ color: 'var(--primary)' }} /></div>
               <div style={{ flex: 1, minWidth: 160 }}>
                 <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--foreground)', lineHeight: 1.45 }}>{n.action}</div>
                 <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', color: 'var(--muted-foreground)', marginTop: 3 }}>→ {n.cible} · {n.date} · {n.heure}</div>
@@ -164,7 +164,7 @@ export default function NotificationsModule({ agentName = 'Agent CPI' }: Props) 
       </div>
 
       {toast && (
-        <div style={{ position: 'fixed', bottom: '24px', right: '24px', background: 'var(--foreground)', color: 'var(--background)', padding: '12px 18px', borderRadius: 10, fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600, zIndex: 300, maxWidth: '360px' }}>
+        <div style={{ position: 'fixed', bottom: '24px', right: '24px', background: 'var(--foreground)', color: 'var(--background)', padding: '12px 18px', borderRadius: 'var(--r-sm)', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600, zIndex: 300, maxWidth: '360px' }}>
           {toast}
         </div>
       )}

@@ -201,7 +201,7 @@ export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Prop
     return ub - ua;
   });
 
-  const card: React.CSSProperties = { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, marginBottom: '12px', overflow: 'hidden' };
+  const card: React.CSSProperties = { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', marginBottom: '12px', overflow: 'hidden' };
   const FILTERS: [typeof filter, string][] = [['tous', 'Tous'], ['verifier', 'À vérifier'], ['corriger', 'À corriger'], ['complets', 'Complets']];
   const SORTS: [typeof sort, string][] = [['urgence', 'Urgence'], ['nom', 'Nom'], ['ref', 'Référence']];
 
@@ -221,7 +221,7 @@ export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Prop
           { l: 'À vérifier', v: kAVerifier, c: '#C8921A' },
           { l: 'À corriger', v: kACorriger, c: '#C0392B' },
         ].map(s => (
-          <div key={s.l} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px' }}>
+          <div key={s.l} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: '14px 16px' }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 800, color: s.c }}>{s.v}</div>
             <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: 2 }}>{s.l}</div>
           </div>
@@ -229,8 +229,8 @@ export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Prop
       </div>
 
       {/* (N1) Recherche + filtres + tri */}
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: 14, marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--background)' }}>
+      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: 14, marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', background: 'var(--background)' }}>
           <Search size={16} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Rechercher (nom, n° de dossier)…"
             style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: '0.875rem', color: 'var(--foreground)' }} />
@@ -239,14 +239,14 @@ export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Prop
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {FILTERS.map(([val, lbl]) => (
               <button key={val} onClick={() => setFilter(val)}
-                style={{ padding: '5px 12px', borderRadius: 99, border: `1px solid ${filter === val ? 'var(--primary)' : 'var(--border)'}`, cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700, background: filter === val ? 'var(--primary)' : 'var(--card)', color: filter === val ? 'var(--primary-foreground)' : 'var(--muted-foreground)' }}>{lbl}</button>
+                style={{ padding: '5px 12px', borderRadius: 'var(--r-full)', border: `1px solid ${filter === val ? 'var(--primary)' : 'var(--border)'}`, cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700, background: filter === val ? 'var(--primary)' : 'var(--card)', color: filter === val ? 'var(--primary-foreground)' : 'var(--muted-foreground)' }}>{lbl}</button>
             ))}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: '0.6875rem', color: 'var(--muted-foreground)' }}>Trier :</span>
             {SORTS.map(([val, lbl]) => (
               <button key={val} onClick={() => setSort(val)}
-                style={{ padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: '0.6875rem', fontWeight: 700, background: sort === val ? 'var(--secondary)' : 'transparent', color: sort === val ? 'var(--primary)' : 'var(--muted-foreground)' }}>{lbl}</button>
+                style={{ padding: '4px 10px', borderRadius: 'var(--r-xs)', border: 'none', cursor: 'pointer', fontSize: '0.6875rem', fontWeight: 700, background: sort === val ? 'var(--secondary)' : 'transparent', color: sort === val ? 'var(--primary)' : 'var(--muted-foreground)' }}>{lbl}</button>
             ))}
           </div>
         </div>
@@ -254,7 +254,7 @@ export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Prop
 
       {/* (N2) File d'attente "À traiter" */}
       {queue.length > 0 && (
-        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, marginBottom: 16, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', marginBottom: 16, overflow: 'hidden' }}>
           <button onClick={() => setQueueOpen(o => !o)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', background: 'rgba(200,146,26,0.06)', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
             <ListChecks size={18} style={{ color: '#C8921A', flexShrink: 0 }} />
             <span style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 700, color: 'var(--foreground)', flex: 1 }}>File d'attente — {queue.length} pièce{queue.length > 1 ? 's' : ''} à traiter</span>
@@ -263,7 +263,7 @@ export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Prop
           {queueOpen && (
             <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8, borderTop: '1px solid var(--border)' }}>
               {queue.map(({ clientId, clientName, ref, doc }) => (
-                <div key={clientId + doc.id} style={{ background: 'var(--background)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <div key={clientId + doc.id} style={{ background: 'var(--background)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: 180 }}>
                     <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--foreground)' }}>{doc.label}</div>
                     <div style={{ fontSize: '0.6875rem', color: 'var(--muted-foreground)', marginTop: 1 }}>{clientName} · {ref}</div>
@@ -297,13 +297,13 @@ export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Prop
         return (
           <div key={client.id} style={card}>
             <button onClick={() => setExpanded(isOpen ? null : client.id)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', flexWrap: 'wrap' }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: 10, background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9375rem', color: 'var(--primary)' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: 'var(--r-sm)', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9375rem', color: 'var(--primary)' }}>
                 {client.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
               </div>
               <div style={{ flex: 1, minWidth: 150 }}>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 700, color: 'var(--foreground)' }}>{client.name}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 3 }}>
-                  <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--primary)', background: 'var(--secondary)', padding: '2px 8px', borderRadius: 6, whiteSpace: 'nowrap' }}>Dossier {client.ref}</span>
+                  <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--primary)', background: 'var(--secondary)', padding: '2px 8px', borderRadius: 'var(--r-xs)', whiteSpace: 'nowrap' }}>Dossier {client.ref}</span>
                   <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>{client.project}</span>
                 </div>
               </div>
@@ -324,7 +324,7 @@ export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Prop
                 {/* (N4) Tout accepter */}
                 {pending > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <button onClick={() => acceptAll(client)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, border: '1px solid rgba(26,107,68,0.25)', background: 'rgba(26,107,68,0.08)', color: 'var(--success)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>
+                    <button onClick={() => acceptAll(client)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 'var(--r-sm)', border: '1px solid rgba(26,107,68,0.25)', background: 'rgba(26,107,68,0.08)', color: 'var(--success)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>
                       <CheckCircle2 size={13} /> Tout accepter ({pending})
                     </button>
                   </div>
@@ -332,9 +332,9 @@ export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Prop
                 {client.docs.map(doc => {
                   const cfg = DOC_STATUS_CFG[doc.status];
                   return (
-                    <div key={doc.id} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px' }}>
+                    <div key={doc.id} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '12px 14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                        <div style={{ width: 36, height: 36, borderRadius: 8, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <div style={{ width: 36, height: 36, borderRadius: 'var(--r-sm)', background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                           <FileText size={16} style={{ color: cfg.color }} />
                         </div>
                         <div style={{ flex: 1, minWidth: 150 }}>
@@ -346,7 +346,7 @@ export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Prop
                             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.6875rem', color: '#C8921A', fontWeight: 600, marginTop: 3 }}><Clock size={11} /> {ageLabel(doc.date)}</div>
                           )}
                         </div>
-                        <span style={{ padding: '4px 10px', borderRadius: 99, background: cfg.bg, color: cfg.color, fontSize: '0.6875rem', fontWeight: 700, whiteSpace: 'nowrap' }}>{cfg.label}</span>
+                        <span style={{ padding: '4px 10px', borderRadius: 'var(--r-full)', background: cfg.bg, color: cfg.color, fontSize: '0.6875rem', fontWeight: 700, whiteSpace: 'nowrap' }}>{cfg.label}</span>
                       </div>
                       {doc.comment && (
                         <div style={{ marginTop: 8, borderLeft: '3px solid #C0392B', paddingLeft: 10, fontSize: '0.75rem', color: '#C0392B', fontStyle: 'italic' }}>"{doc.comment}"</div>
@@ -383,17 +383,17 @@ export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Prop
         return (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
             <div onClick={() => setPreview(null)} style={{ position: 'absolute', inset: 0 }} />
-            <div style={{ position: 'relative', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto', padding: 24 }}>
+            <div style={{ position: 'relative', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-lg)', width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto', padding: 24 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
                 <div>
                   <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.0625rem', color: 'var(--foreground)' }}>{preview.doc.label}</div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>{preview.clientName} · {preview.ref}</div>
                 </div>
-                <button onClick={() => setPreview(null)} style={{ background: 'var(--secondary)', border: 'none', borderRadius: 8, padding: 6, cursor: 'pointer' }}><X size={16} style={{ color: 'var(--muted-foreground)' }} /></button>
+                <button onClick={() => setPreview(null)} style={{ background: 'var(--secondary)', border: 'none', borderRadius: 'var(--r-sm)', padding: 6, cursor: 'pointer' }}><X size={16} style={{ color: 'var(--muted-foreground)' }} /></button>
               </div>
 
               {/* Rendu placeholder du document */}
-              <div style={{ background: 'var(--background)', border: '1px dashed var(--border)', borderRadius: 12, padding: '28px 20px', textAlign: 'center', marginBottom: 14 }}>
+              <div style={{ background: 'var(--background)', border: '1px dashed var(--border)', borderRadius: 'var(--r-md)', padding: '28px 20px', textAlign: 'center', marginBottom: 14 }}>
                 <FileText size={30} style={{ color: cfg.color, margin: '0 auto 8px', display: 'block' }} />
                 <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--foreground)' }}>{preview.doc.file}</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: 2 }}>{preview.doc.file === '—' ? 'Pièce non déposée' : `${preview.doc.size} · v${preview.doc.version}`}</div>
@@ -452,7 +452,7 @@ export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Prop
       {/* Modal commentaire (refus / remplacement) */}
       {commentModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: '480px', padding: '24px' }}>
+          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-lg)', width: '100%', maxWidth: '480px', padding: '24px' }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: '6px' }}>
               {commentModal.mode === 'refus' ? 'Refuser ce document' : 'Demander un remplacement'}
             </div>
@@ -464,7 +464,7 @@ export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Prop
             <textarea value={commentText} onChange={e => setCommentText(e.target.value)}
               placeholder={commentModal.mode === 'refus' ? 'Ex : Document expiré ou non conforme au type requis.' : 'Ex : Relevés illisibles, merci de redéposer des fichiers plus nets.'}
               rows={4}
-              style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: 'var(--background)', border: '1px solid var(--border)', borderRadius: 8, outline: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--foreground)', resize: 'vertical', lineHeight: 1.55 }}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: 'var(--background)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', outline: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--foreground)', resize: 'vertical', lineHeight: 1.55 }}
             />
             <div style={{ display: 'flex', gap: '10px', marginTop: '14px', justifyContent: 'flex-end' }}>
               <button onClick={() => setCommentModal(null)} style={btnOutline}>Annuler</button>
@@ -477,7 +477,7 @@ export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Prop
       )}
 
       {toast && (
-        <div style={{ position: 'fixed', bottom: '24px', right: '24px', background: 'var(--foreground)', color: 'var(--background)', padding: '12px 18px', borderRadius: 10, fontSize: '0.875rem', fontWeight: 600, zIndex: 300, maxWidth: '340px' }}>
+        <div style={{ position: 'fixed', bottom: '24px', right: '24px', background: 'var(--foreground)', color: 'var(--background)', padding: '12px 18px', borderRadius: 'var(--r-sm)', fontSize: '0.875rem', fontWeight: 600, zIndex: 300, maxWidth: '340px' }}>
           {toast}
         </div>
       )}
@@ -486,7 +486,7 @@ export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Prop
 }
 
 function btnSm(color: string, bg: string): React.CSSProperties {
-  return { display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 10px', background: bg, color, border: 'none', borderRadius: 7, fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' };
+  return { display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 10px', background: bg, color, border: 'none', borderRadius: 'var(--r-sm)', fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' };
 }
-const btnPrimary: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 16px', background: 'var(--primary)', color: 'var(--primary-foreground)', border: 'none', borderRadius: 8, fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer' };
-const btnOutline: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 16px', background: 'transparent', color: 'var(--foreground)', border: '1px solid var(--border)', borderRadius: 8, fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' };
+const btnPrimary: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 16px', background: 'var(--primary)', color: 'var(--primary-foreground)', border: 'none', borderRadius: 'var(--r-sm)', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer' };
+const btnOutline: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 16px', background: 'transparent', color: 'var(--foreground)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' };

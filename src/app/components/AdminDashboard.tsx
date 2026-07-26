@@ -314,7 +314,7 @@ export default function AdminDashboard({ user, activeNav }: Props) {
   ];
 
   const card = 'bg-white p-5 sm:p-6';
-  const cardStyle: React.CSSProperties = { border: `1px solid ${A.border}`, borderRadius: 14 };
+  const cardStyle: React.CSSProperties = { border: `1px solid ${A.border}`, borderRadius: 'var(--r-md)' };
 
   return (
     <div className="space-y-6" style={{ width: '100%' }}>
@@ -330,7 +330,7 @@ export default function AdminDashboard({ user, activeNav }: Props) {
           {/* Bandeau état système */}
           <div className="bg-white flex flex-wrap items-center gap-x-5 gap-y-2 px-5 py-3" style={cardStyle}>
             <div className="flex items-center gap-2">
-              <span style={{ width: 8, height: 8, borderRadius: 99, background: A.green, boxShadow: `0 0 0 3px rgba(26,107,68,0.15)` }} />
+              <span style={{ width: 8, height: 8, borderRadius: 'var(--r-full)', background: A.green, boxShadow: `0 0 0 3px rgba(26,107,68,0.15)` }} />
               <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: A.text }}>Plateforme opérationnelle</span>
             </div>
             {[
@@ -345,14 +345,14 @@ export default function AdminDashboard({ user, activeNav }: Props) {
               </div>
             ))}
             <button onClick={exportCSV} className="ml-auto flex items-center gap-2 px-3 py-1.5"
-              style={{ border: `1px solid ${A.border}`, borderRadius: 8, fontSize: '0.8125rem', fontWeight: 600, color: A.bordeaux, background: 'white', cursor: 'pointer' }}>
+              style={{ border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 600, color: A.bordeaux, background: 'white', cursor: 'pointer' }}>
               <Download className="w-3.5 h-3.5" /> Exporter (CSV)
             </button>
           </div>
 
           {/* Recherche rapide */}
           <div className={card} style={cardStyle}>
-            <div className="flex items-center gap-2 px-3 py-2" style={{ border: `1px solid ${A.border}`, borderRadius: 10, background: '#FAF7F7' }}>
+            <div className="flex items-center gap-2 px-3 py-2" style={{ border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', background: '#FAF7F7' }}>
               <Search className="w-4 h-4" style={{ color: A.muted, flexShrink: 0 }} />
               <input
                 value={query}
@@ -367,8 +367,8 @@ export default function AdminDashboard({ user, activeNav }: Props) {
                 {searchResults.length === 0 ? (
                   <div style={{ fontSize: '0.8125rem', color: A.muted }}>Aucun résultat pour « {query} ».</div>
                 ) : searchResults.map(r => (
-                  <button key={r.c.id} onClick={() => navigate('demandes')} className="w-full flex items-center gap-3 p-2 text-left" style={{ background: '#FAF7F7', borderRadius: 8, border: 'none', cursor: 'pointer' }}>
-                    <div className="w-8 h-8 flex items-center justify-center text-white flex-shrink-0" style={{ background: A.bordeaux, fontSize: '0.6875rem', fontWeight: 700, borderRadius: 8 }}>
+                  <button key={r.c.id} onClick={() => navigate('demandes')} className="w-full flex items-center gap-3 p-2 text-left" style={{ background: '#FAF7F7', borderRadius: 'var(--r-sm)', border: 'none', cursor: 'pointer' }}>
+                    <div className="w-8 h-8 flex items-center justify-center text-white flex-shrink-0" style={{ background: A.bordeaux, fontSize: '0.6875rem', fontWeight: 700, borderRadius: 'var(--r-sm)' }}>
                       {r.c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -394,7 +394,7 @@ export default function AdminDashboard({ user, activeNav }: Props) {
               return (
                 <div key={kpi.label} className={card} style={cardStyle}>
                   <div className="flex items-center justify-between mb-3">
-                    <div className="w-8 h-8 flex items-center justify-center" style={{ background: `${kpi.color}12`, borderRadius: 8 }}>
+                    <div className="w-8 h-8 flex items-center justify-center" style={{ background: `${kpi.color}12`, borderRadius: 'var(--r-sm)' }}>
                       <Icon className="w-4 h-4" style={{ color: kpi.color }} />
                     </div>
                   </div>
@@ -412,7 +412,7 @@ export default function AdminDashboard({ user, activeNav }: Props) {
               <div className={card} style={cardStyle}>
                 <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: A.text, marginBottom: 16 }}>Actions prioritaires</h3>
                 {priorityActions.length === 0 ? (
-                  <div className="flex items-center gap-3 p-4" style={{ background: 'rgba(26,107,68,0.06)', borderRadius: 10 }}>
+                  <div className="flex items-center gap-3 p-4" style={{ background: 'rgba(26,107,68,0.06)', borderRadius: 'var(--r-sm)' }}>
                     <CheckCircle2 className="w-5 h-5" style={{ color: A.green }} />
                     <span style={{ fontSize: '0.875rem', fontWeight: 600, color: A.text }}>Tout est à jour — aucune action requise.</span>
                   </div>
@@ -421,8 +421,8 @@ export default function AdminDashboard({ user, activeNav }: Props) {
                     {priorityActions.map(a => {
                       const Icon = a.icon;
                       return (
-                        <div key={a.key} className="flex items-center gap-3 p-3 flex-wrap" style={{ background: '#FAF7F7', borderRadius: 10 }}>
-                          <div className="w-9 h-9 flex items-center justify-center flex-shrink-0" style={{ background: `${a.color}14`, borderRadius: 8 }}>
+                        <div key={a.key} className="flex items-center gap-3 p-3 flex-wrap" style={{ background: '#FAF7F7', borderRadius: 'var(--r-sm)' }}>
+                          <div className="w-9 h-9 flex items-center justify-center flex-shrink-0" style={{ background: `${a.color}14`, borderRadius: 'var(--r-sm)' }}>
                             <Icon className="w-4 h-4" style={{ color: a.color }} />
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
@@ -433,7 +433,7 @@ export default function AdminDashboard({ user, activeNav }: Props) {
                             <div style={{ fontSize: '0.75rem', color: A.muted }}>{a.hint}</div>
                           </div>
                           <button onClick={() => navigate(a.nav)} className="flex items-center gap-1 px-3 py-1.5 flex-shrink-0"
-                            style={{ background: a.color, color: 'white', border: 'none', borderRadius: 8, fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>
+                            style={{ background: a.color, color: 'white', border: 'none', borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>
                             Gérer <ChevronRight className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -458,8 +458,8 @@ export default function AdminDashboard({ user, activeNav }: Props) {
                             <span style={{ fontSize: '0.8125rem', color: A.text, fontWeight: 500 }}>{s.name}</span>
                             <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: A.text }}>{s.value} <span style={{ color: A.muted, fontWeight: 400 }}>({pct}%)</span></span>
                           </div>
-                          <div className="h-1.5" style={{ background: '#EDE4E6', borderRadius: 99 }}>
-                            <div className="h-full" style={{ width: `${pct}%`, background: s.color, borderRadius: 99 }} />
+                          <div className="h-1.5" style={{ background: '#EDE4E6', borderRadius: 'var(--r-full)' }}>
+                            <div className="h-full" style={{ width: `${pct}%`, background: s.color, borderRadius: 'var(--r-full)' }} />
                           </div>
                         </div>
                       );
@@ -472,10 +472,10 @@ export default function AdminDashboard({ user, activeNav }: Props) {
               <div className={card} style={cardStyle}>
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                   <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: A.text }}>Évolution de l'activité</h3>
-                  <div className="flex items-center gap-1" style={{ background: '#F5ECEE', borderRadius: 8, padding: 2 }}>
+                  <div className="flex items-center gap-1" style={{ background: '#F5ECEE', borderRadius: 'var(--r-sm)', padding: 2 }}>
                     {([['mensuel', 'Mensuel'], ['semestriel', 'Semestriel'], ['annuel', 'Annuel']] as const).map(([val, lbl]) => (
                       <button key={val} onClick={() => setGranularity(val)}
-                        style={{ padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: '0.6875rem', fontWeight: 700,
+                        style={{ padding: '4px 10px', borderRadius: 'var(--r-xs)', border: 'none', cursor: 'pointer', fontSize: '0.6875rem', fontWeight: 700,
                           background: granularity === val ? A.bordeaux : 'transparent', color: granularity === val ? 'white' : A.muted }}>
                         {lbl}
                       </button>
@@ -488,7 +488,7 @@ export default function AdminDashboard({ user, activeNav }: Props) {
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(123,26,46,0.06)" vertical={false} />
                       <XAxis dataKey="label" tick={{ fontSize: 11, fill: A.muted }} axisLine={false} tickLine={false} />
                       <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: A.muted }} axisLine={false} tickLine={false} />
-                      <Tooltip contentStyle={{ border: `1px solid ${A.border}`, borderRadius: 8, fontSize: 12, background: 'white' }} cursor={{ fill: 'rgba(123,26,46,0.04)' }} />
+                      <Tooltip contentStyle={{ border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: 12, background: 'white' }} cursor={{ fill: 'rgba(123,26,46,0.04)' }} />
                       <Legend wrapperStyle={{ fontSize: '0.75rem', paddingTop: 8 }} />
                       <Bar dataKey="Inscriptions" fill={A.gold} radius={[3, 3, 0, 0]} />
                       <Bar dataKey="Activité" fill={A.bordeaux} radius={[3, 3, 0, 0]} />
@@ -496,7 +496,7 @@ export default function AdminDashboard({ user, activeNav }: Props) {
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="flex flex-col items-center justify-center gap-2 text-center" style={{ height: 220, border: `1px dashed ${A.border}`, borderRadius: 10, background: '#FAF7F7' }}>
+                  <div className="flex flex-col items-center justify-center gap-2 text-center" style={{ height: 220, border: `1px dashed ${A.border}`, borderRadius: 'var(--r-sm)', background: '#FAF7F7' }}>
                     <TrendingUp className="w-6 h-6" style={{ color: A.border }} />
                     <span style={{ fontSize: '0.8125rem', color: A.muted, maxWidth: 320 }}>Aucune activité sur cette période. Le diagramme se remplit au fil des dépôts, validations et publications réels.</span>
                   </div>
@@ -533,10 +533,10 @@ export default function AdminDashboard({ user, activeNav }: Props) {
               <div className={card} style={cardStyle}>
                 <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                   <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: A.text }}>Activité récente</h3>
-                  <div className="flex items-center gap-1" style={{ background: '#F5ECEE', borderRadius: 8, padding: 2 }}>
+                  <div className="flex items-center gap-1" style={{ background: '#F5ECEE', borderRadius: 'var(--r-sm)', padding: 2 }}>
                     {([['tout', 'Tout'], ['30j', '30j'], ['7j', '7j'], ['jour', "Auj."]] as const).map(([val, lbl]) => (
                       <button key={val} onClick={() => setPeriod(val)}
-                        style={{ padding: '3px 8px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: '0.6875rem', fontWeight: 700,
+                        style={{ padding: '3px 8px', borderRadius: 'var(--r-xs)', border: 'none', cursor: 'pointer', fontSize: '0.6875rem', fontWeight: 700,
                           background: period === val ? A.bordeaux : 'transparent', color: period === val ? 'white' : A.muted }}>
                         {lbl}
                       </button>
@@ -629,8 +629,8 @@ export default function AdminDashboard({ user, activeNav }: Props) {
                           <span style={{ fontSize: '0.75rem', color: A.text, fontWeight: 500 }}>{step.label}</span>
                           <span style={{ fontSize: '0.75rem', fontWeight: 700, color: A.text }}>{step.value}</span>
                         </div>
-                        <div className="h-6 flex items-center" style={{ background: 'rgba(123,26,46,0.06)', borderRadius: 6 }}>
-                          <div className="h-full flex items-center justify-end pr-2" style={{ width: `${width}%`, background: isEnd ? A.green : A.bordeaux, borderRadius: 6, minWidth: 24 }}>
+                        <div className="h-6 flex items-center" style={{ background: 'rgba(123,26,46,0.06)', borderRadius: 'var(--r-xs)' }}>
+                          <div className="h-full flex items-center justify-end pr-2" style={{ width: `${width}%`, background: isEnd ? A.green : A.bordeaux, borderRadius: 'var(--r-xs)', minWidth: 24 }}>
                             <span style={{ fontSize: '0.625rem', fontWeight: 700, color: 'white' }}>{width}%</span>
                           </div>
                         </div>
@@ -693,16 +693,16 @@ export default function AdminDashboard({ user, activeNav }: Props) {
                   const Icon = h.icon;
                   const dot = h.ok === true ? A.green : h.ok === false ? A.red : A.muted;
                   return (
-                    <div key={h.label} className="flex items-center gap-3 p-2.5" style={{ background: '#FAF7F7', borderRadius: 10 }}>
-                      <div className="w-8 h-8 flex items-center justify-center flex-shrink-0" style={{ background: `${dot}14`, borderRadius: 8 }}>
+                    <div key={h.label} className="flex items-center gap-3 p-2.5" style={{ background: '#FAF7F7', borderRadius: 'var(--r-sm)' }}>
+                      <div className="w-8 h-8 flex items-center justify-center flex-shrink-0" style={{ background: `${dot}14`, borderRadius: 'var(--r-sm)' }}>
                         <Icon className="w-4 h-4" style={{ color: dot }} />
                       </div>
                       <span className="flex-1" style={{ fontSize: '0.75rem', fontWeight: 600, color: A.text, minWidth: 90 }}>{h.label}</span>
                       {h.ok === null ? (
-                        <span style={{ fontSize: '0.625rem', fontWeight: 700, color: A.muted, background: 'rgba(107,74,82,0.10)', padding: '3px 8px', borderRadius: 99, flexShrink: 0 }}>backend</span>
+                        <span style={{ fontSize: '0.625rem', fontWeight: 700, color: A.muted, background: 'rgba(107,74,82,0.10)', padding: '3px 8px', borderRadius: 'var(--r-full)', flexShrink: 0 }}>backend</span>
                       ) : (
                         <span className="flex items-center gap-1.5" style={{ fontSize: '0.6875rem', fontWeight: 700, color: dot, flexShrink: 0, textAlign: 'right' }}>
-                          <span style={{ width: 7, height: 7, borderRadius: 99, background: dot, flexShrink: 0 }} /> {h.value}
+                          <span style={{ width: 7, height: 7, borderRadius: 'var(--r-full)', background: dot, flexShrink: 0 }} /> {h.value}
                         </span>
                       )}
                     </div>
@@ -727,19 +727,19 @@ export default function AdminDashboard({ user, activeNav }: Props) {
                       <span style={{ fontSize: '0.75rem', fontWeight: 600, color: A.text }}>{m.label}</span>
                       <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 800, color: m.pct === null ? A.muted : m.color, flexShrink: 0 }}>{m.pct === null ? '—' : `${m.pct}%`}</span>
                     </div>
-                    <div className="h-1.5" style={{ background: 'rgba(123,26,46,0.06)', borderRadius: 99, overflow: 'hidden' }}>
-                      <div className="h-full" style={{ width: `${m.pct ?? 0}%`, background: m.color, borderRadius: 99, transition: 'width .3s' }} />
+                    <div className="h-1.5" style={{ background: 'rgba(123,26,46,0.06)', borderRadius: 'var(--r-full)', overflow: 'hidden' }}>
+                      <div className="h-full" style={{ width: `${m.pct ?? 0}%`, background: m.color, borderRadius: 'var(--r-full)', transition: 'width .3s' }} />
                     </div>
                     <div style={{ fontSize: '0.625rem', color: A.muted, marginTop: 3 }}>{m.hint}</div>
                   </div>
                 ))}
                 {/* Délai moyen — mesuré côté serveur */}
-                <div className="flex items-center justify-between p-2.5" style={{ background: '#FAF7F7', borderRadius: 10 }}>
+                <div className="flex items-center justify-between p-2.5" style={{ background: '#FAF7F7', borderRadius: 'var(--r-sm)' }}>
                   <div className="flex items-center gap-2">
                     <Timer className="w-3.5 h-3.5" style={{ color: A.muted }} />
                     <span style={{ fontSize: '0.75rem', fontWeight: 600, color: A.text }}>Délai moyen de traitement</span>
                   </div>
-                  <span style={{ fontSize: '0.625rem', fontWeight: 700, color: A.muted, background: 'rgba(107,74,82,0.10)', padding: '3px 8px', borderRadius: 99 }}>backend</span>
+                  <span style={{ fontSize: '0.625rem', fontWeight: 700, color: A.muted, background: 'rgba(107,74,82,0.10)', padding: '3px 8px', borderRadius: 'var(--r-full)' }}>backend</span>
                 </div>
               </div>
             </div>
@@ -754,8 +754,8 @@ export default function AdminDashboard({ user, activeNav }: Props) {
                 {chargeMetrics.map(m => {
                   const Icon = m.icon;
                   return (
-                    <div key={m.label} className="flex items-center gap-3 p-2.5" style={{ background: '#FAF7F7', borderRadius: 10 }}>
-                      <div className="w-8 h-8 flex items-center justify-center flex-shrink-0" style={{ background: `${m.color}14`, borderRadius: 8 }}>
+                    <div key={m.label} className="flex items-center gap-3 p-2.5" style={{ background: '#FAF7F7', borderRadius: 'var(--r-sm)' }}>
+                      <div className="w-8 h-8 flex items-center justify-center flex-shrink-0" style={{ background: `${m.color}14`, borderRadius: 'var(--r-sm)' }}>
                         <Icon className="w-4 h-4" style={{ color: m.color }} />
                       </div>
                       <div className="flex-1" style={{ minWidth: 90 }}>
@@ -778,10 +778,10 @@ export default function AdminDashboard({ user, activeNav }: Props) {
                 const Icon = s.icon;
                 return (
                   <button key={s.nav} onClick={() => navigate(s.nav)} className="flex flex-col items-start gap-2 p-3 text-left"
-                    style={{ background: '#FAF7F7', border: `1px solid ${A.border}`, borderRadius: 10, cursor: 'pointer' }}
+                    style={{ background: '#FAF7F7', border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', cursor: 'pointer' }}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F5ECEE'; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#FAF7F7'; }}>
-                    <div className="w-8 h-8 flex items-center justify-center" style={{ background: `${A.bordeaux}12`, borderRadius: 8 }}>
+                    <div className="w-8 h-8 flex items-center justify-center" style={{ background: `${A.bordeaux}12`, borderRadius: 'var(--r-sm)' }}>
                       <Icon className="w-4 h-4" style={{ color: A.bordeaux }} />
                     </div>
                     <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: A.text, lineHeight: 1.2 }}>{s.label}</span>
@@ -909,7 +909,7 @@ function SystemeView() {
             <div key={row.k} className="flex items-center justify-between gap-3 py-2.5" style={{ borderBottom: i < arr.length - 1 ? '1px solid rgba(123,26,46,0.06)' : 'none' }}>
               <span style={{ fontSize: '0.8125rem', color: A.muted, flexShrink: 0 }}>{row.k}</span>
               <span className="flex items-center gap-1.5" style={{ fontSize: '0.8125rem', fontWeight: 600, color: row.ok === false ? A.red : A.text, textAlign: 'right', wordBreak: 'break-all' }}>
-                {row.ok !== undefined && <span style={{ width: 7, height: 7, borderRadius: 99, background: row.ok ? A.green : A.red, flexShrink: 0 }} />}
+                {row.ok !== undefined && <span style={{ width: 7, height: 7, borderRadius: 'var(--r-full)', background: row.ok ? A.green : A.red, flexShrink: 0 }} />}
                 {row.v}
               </span>
             </div>
@@ -927,17 +927,17 @@ function SystemeView() {
             { l: 'Comptes clients', v: String(clientsCount) },
             { l: 'Banques partenaires', v: String(banksCount) },
           ].map(s => (
-            <div key={s.l} className="p-3" style={{ background: '#FAF7F7', borderRadius: 10 }}>
+            <div key={s.l} className="p-3" style={{ background: '#FAF7F7', borderRadius: 'var(--r-sm)' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, color: A.text }}>{s.v}</div>
               <div style={{ fontSize: '0.6875rem', color: A.muted, marginTop: 2 }}>{s.l}</div>
             </div>
           ))}
         </div>
         <div className="flex flex-wrap gap-2">
-          <button onClick={() => setConfirm('cache')} className="flex items-center gap-2 px-3 py-2" style={{ border: `1px solid ${A.border}`, borderRadius: 8, fontSize: '0.8125rem', fontWeight: 600, color: A.bordeaux, background: 'white', cursor: 'pointer' }}>
+          <button onClick={() => setConfirm('cache')} className="flex items-center gap-2 px-3 py-2" style={{ border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 600, color: A.bordeaux, background: 'white', cursor: 'pointer' }}>
             <RefreshCw className="w-3.5 h-3.5" /> Vider le cache technique
           </button>
-          <button onClick={() => setConfirm('reset')} className="flex items-center gap-2 px-3 py-2" style={{ border: `1px solid ${A.red}33`, borderRadius: 8, fontSize: '0.8125rem', fontWeight: 600, color: A.red, background: 'white', cursor: 'pointer' }}>
+          <button onClick={() => setConfirm('reset')} className="flex items-center gap-2 px-3 py-2" style={{ border: `1px solid ${A.red}33`, borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 600, color: A.red, background: 'white', cursor: 'pointer' }}>
             <Trash2 className="w-3.5 h-3.5" /> Réinitialiser la base
           </button>
         </div>
@@ -953,10 +953,10 @@ function SystemeView() {
           En attendant le backend, exportez régulièrement une sauvegarde complète (comptes, dossiers, documents, banques, journal) et réimportez-la si besoin.
         </p>
         <div className="flex flex-wrap gap-2">
-          <button onClick={exportJSON} className="flex items-center gap-2 px-4 py-2" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 8, fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>
+          <button onClick={exportJSON} className="flex items-center gap-2 px-4 py-2" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>
             <Download className="w-3.5 h-3.5" /> Exporter la sauvegarde (JSON)
           </button>
-          <label className="flex items-center gap-2 px-4 py-2" style={{ border: `1px solid ${A.border}`, borderRadius: 8, fontSize: '0.8125rem', fontWeight: 600, color: A.text, background: 'white', cursor: 'pointer' }}>
+          <label className="flex items-center gap-2 px-4 py-2" style={{ border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 600, color: A.text, background: 'white', cursor: 'pointer' }}>
             <Upload className="w-3.5 h-3.5" /> Importer une sauvegarde
             <input type="file" accept="application/json" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) importJSON(f); e.currentTarget.value = ''; }} />
           </label>
@@ -972,7 +972,7 @@ function SystemeView() {
             { l: 'Agents CPI', v: agentsCount, c: A.bordeaux },
             { l: 'Administrateurs', v: adminsCount, c: '#B45309' },
           ].map(s => (
-            <div key={s.l} className="p-3" style={{ background: '#FAF7F7', borderRadius: 10 }}>
+            <div key={s.l} className="p-3" style={{ background: '#FAF7F7', borderRadius: 'var(--r-sm)' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 800, color: s.c }}>{s.v}</div>
               <div style={{ fontSize: '0.6875rem', color: A.muted, marginTop: 2 }}>{s.l}</div>
             </div>
@@ -991,13 +991,13 @@ function SystemeView() {
           {integrations.map(it => {
             const Icon = it.icon;
             return (
-              <div key={it.label} className="flex items-center gap-3 p-3" style={{ background: '#FAF7F7', borderRadius: 10 }}>
-                <div className="w-8 h-8 flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(107,74,82,0.10)', borderRadius: 8 }}><Icon className="w-4 h-4" style={{ color: A.muted }} /></div>
+              <div key={it.label} className="flex items-center gap-3 p-3" style={{ background: '#FAF7F7', borderRadius: 'var(--r-sm)' }}>
+                <div className="w-8 h-8 flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(107,74,82,0.10)', borderRadius: 'var(--r-sm)' }}><Icon className="w-4 h-4" style={{ color: A.muted }} /></div>
                 <div className="flex-1" style={{ minWidth: 100 }}>
                   <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: A.text }}>{it.label}</div>
                   <div style={{ fontSize: '0.625rem', color: A.muted }}>{it.note}</div>
                 </div>
-                <span style={{ fontSize: '0.625rem', fontWeight: 700, color: A.muted, background: 'rgba(107,74,82,0.10)', padding: '3px 8px', borderRadius: 99, flexShrink: 0 }}>à connecter</span>
+                <span style={{ fontSize: '0.625rem', fontWeight: 700, color: A.muted, background: 'rgba(107,74,82,0.10)', padding: '3px 8px', borderRadius: 'var(--r-full)', flexShrink: 0 }}>à connecter</span>
               </div>
             );
           })}
@@ -1008,7 +1008,7 @@ function SystemeView() {
       {confirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-5">
           <div onClick={() => setConfirm(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(28,8,16,0.45)' }} />
-          <div className="relative bg-white w-full max-w-md p-6" style={{ borderRadius: 16 }}>
+          <div className="relative bg-white w-full max-w-md p-6" style={{ borderRadius: 'var(--r-lg)' }}>
             <div className="flex items-center gap-2 mb-2"><AlertCircle className="w-5 h-5" style={{ color: A.red }} /><h4 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: A.text }}>{confirm === 'cache' ? 'Vider le cache technique ?' : 'Réinitialiser la base ?'}</h4></div>
             <p style={{ fontSize: '0.8125rem', color: A.muted, lineHeight: 1.55, marginBottom: 18 }}>
               {confirm === 'cache'
@@ -1016,8 +1016,8 @@ function SystemeView() {
                 : 'Toutes les données locales (comptes, dossiers, documents, banques, journal) seront définitivement effacées. Cette action est irréversible.'}
             </p>
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setConfirm(null)} className="px-4 py-2" style={{ background: 'white', color: A.muted, border: `1px solid ${A.border}`, borderRadius: 10, fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>Annuler</button>
-              <button onClick={confirm === 'cache' ? doPurgeCache : doReset} className="flex items-center gap-2 px-4 py-2" style={{ background: confirm === 'cache' ? A.bordeaux : A.red, color: 'white', border: 'none', borderRadius: 10, fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>
+              <button onClick={() => setConfirm(null)} className="px-4 py-2" style={{ background: 'white', color: A.muted, border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>Annuler</button>
+              <button onClick={confirm === 'cache' ? doPurgeCache : doReset} className="flex items-center gap-2 px-4 py-2" style={{ background: confirm === 'cache' ? A.bordeaux : A.red, color: 'white', border: 'none', borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>
                 {confirm === 'cache' ? <><RefreshCw className="w-3.5 h-3.5" /> Vider</> : <><Trash2 className="w-3.5 h-3.5" /> Réinitialiser</>}
               </button>
             </div>
@@ -1026,7 +1026,7 @@ function SystemeView() {
       )}
 
       {toast && (
-        <div className="fixed z-50" style={{ bottom: 24, right: 24, background: A.text, color: 'white', padding: '12px 18px', borderRadius: 10, fontSize: '0.875rem', fontWeight: 600, maxWidth: 360 }}>{toast}</div>
+        <div className="fixed z-50" style={{ bottom: 24, right: 24, background: A.text, color: 'white', padding: '12px 18px', borderRadius: 'var(--r-sm)', fontSize: '0.875rem', fontWeight: 600, maxWidth: 360 }}>{toast}</div>
       )}
     </div>
   );
@@ -1065,7 +1065,7 @@ const CPI_STATUS: Record<string, { label: string; color: string }> = {
   archive:    { label: 'Archivé',    color: A.muted },
   refuse:     { label: 'Refusé',     color: A.red },
 };
-const cs: React.CSSProperties = { border: `1px solid ${A.border}`, borderRadius: 14 };
+const cs: React.CSSProperties = { border: `1px solid ${A.border}`, borderRadius: 'var(--r-md)' };
 
 function DemandesView({ agentName }: { agentName: string }) {
   const { navigate } = useNavigate();
@@ -1155,7 +1155,7 @@ function DemandesView({ agentName }: { agentName: string }) {
 
       {/* Recherche + filtres + tri */}
       <div className="bg-white p-4 space-y-3" style={cs}>
-        <div className="flex items-center gap-2 px-3 py-2" style={{ border: `1px solid ${A.border}`, borderRadius: 10, background: '#FAF7F7' }}>
+        <div className="flex items-center gap-2 px-3 py-2" style={{ border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', background: '#FAF7F7' }}>
           <Search className="w-4 h-4" style={{ color: A.muted, flexShrink: 0 }} />
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Rechercher (nom, n° de dossier)…"
             style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: '0.875rem', color: A.text }} />
@@ -1164,7 +1164,7 @@ function DemandesView({ agentName }: { agentName: string }) {
           <div className="flex items-center gap-1 flex-wrap">
             {FILTERS.map(([val, lbl]) => (
               <button key={val} onClick={() => setFilter(val)}
-                style={{ padding: '5px 12px', borderRadius: 99, border: `1px solid ${filter === val ? A.bordeaux : A.border}`, cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700,
+                style={{ padding: '5px 12px', borderRadius: 'var(--r-full)', border: `1px solid ${filter === val ? A.bordeaux : A.border}`, cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700,
                   background: filter === val ? A.bordeaux : 'white', color: filter === val ? 'white' : A.muted }}>{lbl}</button>
             ))}
           </div>
@@ -1172,7 +1172,7 @@ function DemandesView({ agentName }: { agentName: string }) {
             <span style={{ fontSize: '0.6875rem', color: A.muted }}>Trier :</span>
             {SORTS.map(([val, lbl]) => (
               <button key={val} onClick={() => setSort(val)}
-                style={{ padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: '0.6875rem', fontWeight: 700,
+                style={{ padding: '4px 10px', borderRadius: 'var(--r-xs)', border: 'none', cursor: 'pointer', fontSize: '0.6875rem', fontWeight: 700,
                   background: sort === val ? '#F5ECEE' : 'transparent', color: sort === val ? A.bordeaux : A.muted }}>{lbl}</button>
             ))}
           </div>
@@ -1188,24 +1188,24 @@ function DemandesView({ agentName }: { agentName: string }) {
       ) : list.map(r => (
         <div key={r.c.id} className="bg-white p-4" style={cs}>
           <div className="flex items-center gap-4 flex-wrap">
-            <div className="w-11 h-11 flex items-center justify-center flex-shrink-0" style={{ background: '#F5ECEE', color: A.bordeaux, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9375rem', borderRadius: 10 }}>
+            <div className="w-11 h-11 flex items-center justify-center flex-shrink-0" style={{ background: '#F5ECEE', color: A.bordeaux, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9375rem', borderRadius: 'var(--r-sm)' }}>
               {r.c.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
             </div>
             <div className="flex-1" style={{ minWidth: 180 }}>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: A.text, fontSize: '0.9375rem' }}>{r.c.name}</div>
               <div className="flex items-center gap-2 flex-wrap mt-1">
-                <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: A.bordeaux, background: '#F5ECEE', padding: '2px 8px', borderRadius: 6 }}>Dossier {r.c.ref}</span>
+                <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: A.bordeaux, background: '#F5ECEE', padding: '2px 8px', borderRadius: 'var(--r-xs)' }}>Dossier {r.c.ref}</span>
                 <span style={{ fontSize: '0.75rem', color: A.muted }}>{r.c.projectNom}</span>
               </div>
               {/* Barre de progression 6 étapes */}
               <div className="flex gap-1 mt-2" title={TIMELINE_STEPS[r.activeStep]?.label}>
                 {TIMELINE_STEPS.map((s, i) => (
-                  <div key={i} className="flex-1 h-1.5" style={{ background: i <= r.activeStep ? (r.activeStep >= SIGNATURE_INDEX ? A.green : A.bordeaux) : '#EDE4E6', borderRadius: 99 }} />
+                  <div key={i} className="flex-1 h-1.5" style={{ background: i <= r.activeStep ? (r.activeStep >= SIGNATURE_INDEX ? A.green : A.bordeaux) : '#EDE4E6', borderRadius: 'var(--r-full)' }} />
                 ))}
               </div>
             </div>
             <div className="flex flex-col items-end gap-1 flex-shrink-0">
-              <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: A.bordeaux, background: '#F5ECEE', padding: '3px 9px', borderRadius: 99, whiteSpace: 'nowrap' }}>Étape {r.activeStep + 1}/6 · {TIMELINE_STEPS[r.activeStep]?.label}</span>
+              <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: A.bordeaux, background: '#F5ECEE', padding: '3px 9px', borderRadius: 'var(--r-full)', whiteSpace: 'nowrap' }}>Étape {r.activeStep + 1}/6 · {TIMELINE_STEPS[r.activeStep]?.label}</span>
               <div className="flex gap-2 flex-wrap justify-end">
                 <span style={{ fontSize: '0.625rem', fontWeight: 700, color: A.green }}>{r.validated}/{r.total} pièces</span>
                 {r.toVerify > 0 && <span style={{ fontSize: '0.625rem', fontWeight: 700, color: A.gold }}>· {r.toVerify} à vérifier</span>}
@@ -1216,13 +1216,13 @@ function DemandesView({ agentName }: { agentName: string }) {
           </div>
           <div className="flex items-center gap-2 mt-3 flex-wrap">
             <button onClick={() => setSelectedId(r.c.id)} className="flex items-center gap-1 px-3 py-1.5"
-              style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 8, fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>
+              style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 'var(--r-sm)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>
               Ouvrir le dossier <ArrowRight className="w-3.5 h-3.5" />
             </button>
             <button onClick={() => navigate('documents-clients')} className="px-3 py-1.5"
-              style={{ background: 'white', color: A.bordeaux, border: `1px solid ${A.border}`, borderRadius: 8, fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>Gérer les pièces</button>
+              style={{ background: 'white', color: A.bordeaux, border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>Gérer les pièces</button>
             <button onClick={() => navigate('documents-admin')} className="px-3 py-1.5"
-              style={{ background: 'white', color: A.bordeaux, border: `1px solid ${A.border}`, borderRadius: 8, fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>Documents CPI</button>
+              style={{ background: 'white', color: A.bordeaux, border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>Documents CPI</button>
           </div>
         </div>
       ))}
@@ -1238,24 +1238,24 @@ function DemandesView({ agentName }: { agentName: string }) {
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.125rem', color: A.text }}>{selected.c.name}</div>
                 <div style={{ fontSize: '0.75rem', color: A.muted }}>{selected.c.ref} · {selected.c.projectNom}</div>
               </div>
-              <button onClick={() => { setSelectedId(null); setCommentFor(null); }} style={{ background: '#FAF7F7', border: 'none', borderRadius: 8, padding: 6, cursor: 'pointer' }}><X className="w-4 h-4" style={{ color: A.muted }} /></button>
+              <button onClick={() => { setSelectedId(null); setCommentFor(null); }} style={{ background: '#FAF7F7', border: 'none', borderRadius: 'var(--r-sm)', padding: 6, cursor: 'pointer' }}><X className="w-4 h-4" style={{ color: A.muted }} /></button>
             </div>
 
             {/* Parcours + étape */}
-            <div className="p-3 mb-4" style={{ background: '#FAF7F7', borderRadius: 10 }}>
+            <div className="p-3 mb-4" style={{ background: '#FAF7F7', borderRadius: 'var(--r-sm)' }}>
               <div className="flex items-center justify-between mb-2">
                 <span style={{ fontSize: '0.75rem', fontWeight: 700, color: A.text }}>Étape {selected.activeStep + 1}/6 · {TIMELINE_STEPS[selected.activeStep]?.label}</span>
               </div>
               <div className="flex gap-1 mb-3">
                 {TIMELINE_STEPS.map((s, i) => (
-                  <div key={i} className="flex-1 h-1.5" style={{ background: i <= selected.activeStep ? (selected.activeStep >= SIGNATURE_INDEX ? A.green : A.bordeaux) : '#EDE4E6', borderRadius: 99 }} />
+                  <div key={i} className="flex-1 h-1.5" style={{ background: i <= selected.activeStep ? (selected.activeStep >= SIGNATURE_INDEX ? A.green : A.bordeaux) : '#EDE4E6', borderRadius: 'var(--r-full)' }} />
                 ))}
               </div>
               <div style={{ fontSize: '0.6875rem', color: A.muted, marginBottom: 6 }}>Faire avancer le dossier :</div>
               <div className="flex gap-2 flex-wrap">
                 {[3, 4, 5].map(e => (
                   <button key={e} onClick={() => { setDossierEtape(e, agentName, selected.c.id); showToast('Étape mise à jour.'); }}
-                    style={{ padding: '5px 10px', borderRadius: 8, border: `1px solid ${selected.etapeCpi === e ? A.bordeaux : A.border}`, cursor: 'pointer', fontSize: '0.6875rem', fontWeight: 700,
+                    style={{ padding: '5px 10px', borderRadius: 'var(--r-sm)', border: `1px solid ${selected.etapeCpi === e ? A.bordeaux : A.border}`, cursor: 'pointer', fontSize: '0.6875rem', fontWeight: 700,
                       background: selected.etapeCpi === e ? A.bordeaux : 'white', color: selected.etapeCpi === e ? 'white' : A.text }}>
                     → {TIMELINE_STEPS[e]?.label}
                   </button>
@@ -1270,30 +1270,30 @@ function DemandesView({ agentName }: { agentName: string }) {
                 const st = DOC_STATUS[d.status] ?? DOC_STATUS['en-attente'];
                 const canAct = d.status === 'depose' || d.status === 'verification';
                 return (
-                  <div key={d.id} className="p-3" style={{ background: '#FAF7F7', borderRadius: 10 }}>
+                  <div key={d.id} className="p-3" style={{ background: '#FAF7F7', borderRadius: 'var(--r-sm)' }}>
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: A.text }}>{d.label}</span>
-                      <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: st.color, background: `${st.color}14`, padding: '2px 8px', borderRadius: 99 }}>{st.label}</span>
+                      <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: st.color, background: `${st.color}14`, padding: '2px 8px', borderRadius: 'var(--r-full)' }}>{st.label}</span>
                     </div>
                     {d.commentaire && <div style={{ fontSize: '0.6875rem', color: A.muted, marginTop: 4 }}>« {d.commentaire} »</div>}
                     {canAct && commentFor?.docId !== d.id && (
                       <div className="flex gap-2 mt-2 flex-wrap">
                         <button onClick={() => { acceptDoc(d.id, agentName, selected.c.id); showToast('Pièce validée.'); }}
-                          className="flex items-center gap-1 px-2.5 py-1" style={{ background: A.green, color: 'white', border: 'none', borderRadius: 6, fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer' }}><CheckCircle2 className="w-3 h-3" /> Valider</button>
+                          className="flex items-center gap-1 px-2.5 py-1" style={{ background: A.green, color: 'white', border: 'none', borderRadius: 'var(--r-xs)', fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer' }}><CheckCircle2 className="w-3 h-3" /> Valider</button>
                         <button onClick={() => { setCommentFor({ docId: d.id, kind: 'refuse' }); setCommentText(''); }}
-                          className="flex items-center gap-1 px-2.5 py-1" style={{ background: 'white', color: A.red, border: `1px solid ${A.red}30`, borderRadius: 6, fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer' }}><XCircle className="w-3 h-3" /> Refuser</button>
+                          className="flex items-center gap-1 px-2.5 py-1" style={{ background: 'white', color: A.red, border: `1px solid ${A.red}30`, borderRadius: 'var(--r-xs)', fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer' }}><XCircle className="w-3 h-3" /> Refuser</button>
                         <button onClick={() => { setCommentFor({ docId: d.id, kind: 'remplacer' }); setCommentText(''); }}
-                          className="flex items-center gap-1 px-2.5 py-1" style={{ background: 'white', color: A.gold, border: `1px solid ${A.gold}30`, borderRadius: 6, fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer' }}><RefreshCw className="w-3 h-3" /> Remplacement</button>
+                          className="flex items-center gap-1 px-2.5 py-1" style={{ background: 'white', color: A.gold, border: `1px solid ${A.gold}30`, borderRadius: 'var(--r-xs)', fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer' }}><RefreshCw className="w-3 h-3" /> Remplacement</button>
                       </div>
                     )}
                     {commentFor?.docId === d.id && (
                       <div className="mt-2">
                         <textarea value={commentText} onChange={e => setCommentText(e.target.value)} rows={2}
                           placeholder={commentFor.kind === 'refuse' ? 'Motif du refus…' : 'Précisez ce qui doit être corrigé…'}
-                          style={{ width: '100%', boxSizing: 'border-box', border: `1px solid ${A.border}`, borderRadius: 8, padding: 8, fontSize: '0.75rem', outline: 'none', resize: 'vertical' }} />
+                          style={{ width: '100%', boxSizing: 'border-box', border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', padding: 8, fontSize: '0.75rem', outline: 'none', resize: 'vertical' }} />
                         <div className="flex gap-2 mt-1">
-                          <button onClick={() => submitComment(selected.c.id)} className="px-3 py-1" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 6, fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer' }}>Confirmer</button>
-                          <button onClick={() => { setCommentFor(null); setCommentText(''); }} className="px-3 py-1" style={{ background: 'white', color: A.muted, border: `1px solid ${A.border}`, borderRadius: 6, fontSize: '0.6875rem', fontWeight: 600, cursor: 'pointer' }}>Annuler</button>
+                          <button onClick={() => submitComment(selected.c.id)} className="px-3 py-1" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 'var(--r-xs)', fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer' }}>Confirmer</button>
+                          <button onClick={() => { setCommentFor(null); setCommentText(''); }} className="px-3 py-1" style={{ background: 'white', color: A.muted, border: `1px solid ${A.border}`, borderRadius: 'var(--r-xs)', fontSize: '0.6875rem', fontWeight: 600, cursor: 'pointer' }}>Annuler</button>
                         </div>
                       </div>
                     )}
@@ -1308,19 +1308,19 @@ function DemandesView({ agentName }: { agentName: string }) {
               {selected.cpiDocs.length === 0 ? <div style={{ fontSize: '0.8125rem', color: A.muted }}>Aucun document CPI.</div> : selected.cpiDocs.map(d => {
                 const st = CPI_STATUS[d.status] ?? CPI_STATUS.brouillon;
                 return (
-                  <div key={d.id} className="p-3" style={{ background: '#FAF7F7', borderRadius: 10 }}>
+                  <div key={d.id} className="p-3" style={{ background: '#FAF7F7', borderRadius: 'var(--r-sm)' }}>
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: A.text }}>{d.nom}</span>
-                      <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: st.color, background: `${st.color}14`, padding: '2px 8px', borderRadius: 99 }}>{st.label}</span>
+                      <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: st.color, background: `${st.color}14`, padding: '2px 8px', borderRadius: 'var(--r-full)' }}>{st.label}</span>
                     </div>
                     <div className="flex gap-2 mt-2 flex-wrap">
                       {d.status !== 'a-signer' && d.status !== 'signe' && (
                         <button onClick={() => { requestSignature(d.id, agentName, selected.c.id); showToast('Signature demandée.'); }}
-                          className="flex items-center gap-1 px-2.5 py-1" style={{ background: 'white', color: A.bordeaux, border: `1px solid ${A.border}`, borderRadius: 6, fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer' }}><PenLine className="w-3 h-3" /> Demander signature</button>
+                          className="flex items-center gap-1 px-2.5 py-1" style={{ background: 'white', color: A.bordeaux, border: `1px solid ${A.border}`, borderRadius: 'var(--r-xs)', fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer' }}><PenLine className="w-3 h-3" /> Demander signature</button>
                       )}
                       {d.status === 'a-signer' && (
                         <button onClick={() => { markSigned(d.id, agentName, selected.c.id); showToast('Document marqué signé.'); }}
-                          className="flex items-center gap-1 px-2.5 py-1" style={{ background: A.green, color: 'white', border: 'none', borderRadius: 6, fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer' }}><CheckCircle2 className="w-3 h-3" /> Marquer signé</button>
+                          className="flex items-center gap-1 px-2.5 py-1" style={{ background: A.green, color: 'white', border: 'none', borderRadius: 'var(--r-xs)', fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer' }}><CheckCircle2 className="w-3 h-3" /> Marquer signé</button>
                       )}
                     </div>
                   </div>
@@ -1339,18 +1339,18 @@ function DemandesView({ agentName }: { agentName: string }) {
                   {assigned.map(a => {
                     const st = BANK_STATUS_CFG[a.status];
                     return (
-                      <div key={a.bankId} className="p-3" style={{ background: '#FAF7F7', borderRadius: 10 }}>
+                      <div key={a.bankId} className="p-3" style={{ background: '#FAF7F7', borderRadius: 'var(--r-sm)' }}>
                         <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
                           <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: A.text }}>{a.bankName}</span>
                           <div className="flex items-center gap-2">
-                            <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: st.color, background: `${st.color}14`, padding: '2px 8px', borderRadius: 99 }}>{st.label}</span>
-                            <button onClick={() => { removeAssignment(selected.c.id, a.bankId); setAssignMap(loadAssignments()); showToast('Orientation retirée.'); }} style={{ background: 'white', border: `1px solid ${A.border}`, borderRadius: 6, padding: 4, cursor: 'pointer' }}><X className="w-3 h-3" style={{ color: A.muted }} /></button>
+                            <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: st.color, background: `${st.color}14`, padding: '2px 8px', borderRadius: 'var(--r-full)' }}>{st.label}</span>
+                            <button onClick={() => { removeAssignment(selected.c.id, a.bankId); setAssignMap(loadAssignments()); showToast('Orientation retirée.'); }} style={{ background: 'white', border: `1px solid ${A.border}`, borderRadius: 'var(--r-xs)', padding: 4, cursor: 'pointer' }}><X className="w-3 h-3" style={{ color: A.muted }} /></button>
                           </div>
                         </div>
                         <div className="flex gap-1.5 flex-wrap">
                           {(['en-attente', 'accord', 'refus'] as BankStatus[]).map(s => (
                             <button key={s} onClick={() => { setBankStatus(selected.c.id, a.bankId, s); setAssignMap(loadAssignments()); logActivity({ utilisateur: 'Administrateur', role: 'Administrateur', action: `Réponse banque « ${a.bankName} » → ${BANK_STATUS_CFG[s].label}`, type: 'banque', cible: selected.c.name }); showToast('Statut mis à jour.'); }}
-                              style={{ padding: '3px 10px', borderRadius: 6, border: `1px solid ${a.status === s ? BANK_STATUS_CFG[s].color : A.border}`, cursor: 'pointer', fontSize: '0.625rem', fontWeight: 700, background: a.status === s ? BANK_STATUS_CFG[s].color : 'white', color: a.status === s ? 'white' : A.muted }}>{BANK_STATUS_CFG[s].label}</button>
+                              style={{ padding: '3px 10px', borderRadius: 'var(--r-xs)', border: `1px solid ${a.status === s ? BANK_STATUS_CFG[s].color : A.border}`, cursor: 'pointer', fontSize: '0.625rem', fontWeight: 700, background: a.status === s ? BANK_STATUS_CFG[s].color : 'white', color: a.status === s ? 'white' : A.muted }}>{BANK_STATUS_CFG[s].label}</button>
                           ))}
                         </div>
                       </div>
@@ -1360,7 +1360,7 @@ function DemandesView({ agentName }: { agentName: string }) {
                     <div className="flex gap-1.5 flex-wrap pt-1">
                       {available.map(b => (
                         <button key={b.id} onClick={() => { assignBankToClient(selected.c.id, b); setAssignMap(loadAssignments()); logActivity({ utilisateur: 'Administrateur', role: 'Administrateur', action: `Dossier orienté vers ${b.name}`, type: 'banque', cible: selected.c.name }); showToast(`Dossier orienté vers ${b.name}.`); }}
-                          className="flex items-center gap-1 px-2.5 py-1.5" style={{ background: 'white', color: b.color, border: `1px solid ${b.color}40`, borderRadius: 8, fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer' }}><Plus className="w-3 h-3" /> {b.name}</button>
+                          className="flex items-center gap-1 px-2.5 py-1.5" style={{ background: 'white', color: b.color, border: `1px solid ${b.color}40`, borderRadius: 'var(--r-sm)', fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer' }}><Plus className="w-3 h-3" /> {b.name}</button>
                       ))}
                     </div>
                   )}
@@ -1370,8 +1370,8 @@ function DemandesView({ agentName }: { agentName: string }) {
 
             {/* Raccourcis modules */}
             <div className="flex gap-2 flex-wrap">
-              <button onClick={() => navigate('documents-clients')} className="flex-1 px-3 py-2" style={{ background: '#FAF7F7', color: A.bordeaux, border: `1px solid ${A.border}`, borderRadius: 8, fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>Ouvrir Documents clients</button>
-              <button onClick={() => navigate('documents-admin')} className="flex-1 px-3 py-2" style={{ background: '#FAF7F7', color: A.bordeaux, border: `1px solid ${A.border}`, borderRadius: 8, fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>Ouvrir Documents CPI</button>
+              <button onClick={() => navigate('documents-clients')} className="flex-1 px-3 py-2" style={{ background: '#FAF7F7', color: A.bordeaux, border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>Ouvrir Documents clients</button>
+              <button onClick={() => navigate('documents-admin')} className="flex-1 px-3 py-2" style={{ background: '#FAF7F7', color: A.bordeaux, border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>Ouvrir Documents CPI</button>
             </div>
           </div>
         </div>
@@ -1379,7 +1379,7 @@ function DemandesView({ agentName }: { agentName: string }) {
 
       {/* Toast */}
       {toast && (
-        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: A.text, color: 'white', padding: '10px 18px', borderRadius: 10, fontSize: '0.8125rem', fontWeight: 600, zIndex: 70, boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>{toast}</div>
+        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: A.text, color: 'white', padding: '10px 18px', borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 600, zIndex: 70, boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>{toast}</div>
       )}
     </div>
   );
@@ -1486,7 +1486,7 @@ function UsersView({ agentName }: { agentName: string }) {
       <div className="flex items-center justify-between flex-wrap gap-2">
         <p style={{ fontSize: '0.875rem', color: A.muted, margin: 0 }}>Tous les utilisateurs de la plateforme — clients et personnel CPI.</p>
         <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 px-4 py-2"
-          style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 10, fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>
+          style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>
           <UserPlus className="w-4 h-4" /> Ajouter un utilisateur
         </button>
       </div>
@@ -1501,7 +1501,7 @@ function UsersView({ agentName }: { agentName: string }) {
           const Icon = s.icon;
           return (
             <div key={s.l} className="bg-white p-4" style={cs}>
-              <div className="w-8 h-8 flex items-center justify-center mb-2" style={{ background: `${s.c}12`, borderRadius: 8 }}><Icon className="w-4 h-4" style={{ color: s.c }} /></div>
+              <div className="w-8 h-8 flex items-center justify-center mb-2" style={{ background: `${s.c}12`, borderRadius: 'var(--r-sm)' }}><Icon className="w-4 h-4" style={{ color: s.c }} /></div>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 800, color: A.text }}>{s.v}</div>
               <div style={{ fontSize: '0.75rem', color: A.muted }}>{s.l}</div>
             </div>
@@ -1511,7 +1511,7 @@ function UsersView({ agentName }: { agentName: string }) {
 
       {/* Recherche + filtre rôle */}
       <div className="bg-white p-4 space-y-3" style={cs}>
-        <div className="flex items-center gap-2 px-3 py-2" style={{ border: `1px solid ${A.border}`, borderRadius: 10, background: '#FAF7F7' }}>
+        <div className="flex items-center gap-2 px-3 py-2" style={{ border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', background: '#FAF7F7' }}>
           <Search className="w-4 h-4" style={{ color: A.muted, flexShrink: 0 }} />
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Rechercher (nom, e-mail, n° de dossier)…"
             style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: '0.875rem', color: A.text }} />
@@ -1519,7 +1519,7 @@ function UsersView({ agentName }: { agentName: string }) {
         <div className="flex items-center gap-1 flex-wrap">
           {FROLE.map(([val, lbl]) => (
             <button key={val} onClick={() => setRoleFilter(val)}
-              style={{ padding: '5px 12px', borderRadius: 99, border: `1px solid ${roleFilter === val ? A.bordeaux : A.border}`, cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700,
+              style={{ padding: '5px 12px', borderRadius: 'var(--r-full)', border: `1px solid ${roleFilter === val ? A.bordeaux : A.border}`, cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700,
                 background: roleFilter === val ? A.bordeaux : 'white', color: roleFilter === val ? 'white' : A.muted }}>{lbl}</button>
           ))}
         </div>
@@ -1536,18 +1536,18 @@ function UsersView({ agentName }: { agentName: string }) {
           {/* Clients */}
           {filteredClients.map(r => (
             <div key={r.c.id} className="bg-white p-4 flex items-center gap-4 flex-wrap" style={cs}>
-              <div className="w-10 h-10 flex items-center justify-center text-white flex-shrink-0" style={{ background: A.bordeaux, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.8125rem', borderRadius: 10 }}>{initials(r.c.name)}</div>
+              <div className="w-10 h-10 flex items-center justify-center text-white flex-shrink-0" style={{ background: A.bordeaux, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.8125rem', borderRadius: 'var(--r-sm)' }}>{initials(r.c.name)}</div>
               <div className="flex-1" style={{ minWidth: 180 }}>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: A.text, fontSize: '0.9375rem' }}>{r.c.name}</span>
-                  <span style={{ fontSize: '0.625rem', fontWeight: 700, color: A.bordeaux, background: `${A.bordeaux}12`, padding: '2px 8px', borderRadius: 99 }}>Client</span>
+                  <span style={{ fontSize: '0.625rem', fontWeight: 700, color: A.bordeaux, background: `${A.bordeaux}12`, padding: '2px 8px', borderRadius: 'var(--r-full)' }}>Client</span>
                 </div>
                 <div style={{ fontSize: '0.75rem', color: A.muted, marginTop: 2 }}>{r.c.ref}{r.c.dateInscription ? ` · inscrit le ${r.c.dateInscription}` : ''}</div>
               </div>
-              <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: r.activeStep >= SIGNATURE_INDEX ? A.green : A.gold, background: '#F5ECEE', padding: '3px 9px', borderRadius: 99, whiteSpace: 'nowrap' }}>{TIMELINE_STEPS[r.activeStep]?.label}</span>
+              <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: r.activeStep >= SIGNATURE_INDEX ? A.green : A.gold, background: '#F5ECEE', padding: '3px 9px', borderRadius: 'var(--r-full)', whiteSpace: 'nowrap' }}>{TIMELINE_STEPS[r.activeStep]?.label}</span>
               <div className="flex gap-2 flex-shrink-0">
-                <button onClick={() => navigate('demandes')} className="px-3 py-1.5" style={{ background: 'white', color: A.bordeaux, border: `1px solid ${A.border}`, borderRadius: 8, fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>Voir le dossier</button>
-                <button onClick={() => { setNotifyFor({ id: r.c.id, name: r.c.name }); setNotifyText(''); }} className="flex items-center gap-1 px-3 py-1.5" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 8, fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}><Bell className="w-3.5 h-3.5" /> Notifier</button>
+                <button onClick={() => navigate('demandes')} className="px-3 py-1.5" style={{ background: 'white', color: A.bordeaux, border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>Voir le dossier</button>
+                <button onClick={() => { setNotifyFor({ id: r.c.id, name: r.c.name }); setNotifyText(''); }} className="flex items-center gap-1 px-3 py-1.5" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 'var(--r-sm)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}><Bell className="w-3.5 h-3.5" /> Notifier</button>
               </div>
             </div>
           ))}
@@ -1556,15 +1556,15 @@ function UsersView({ agentName }: { agentName: string }) {
             const cfg = ROLE_CFG[s.role];
             return (
               <div key={s.email} className="bg-white p-4 flex items-center gap-4 flex-wrap" style={cs}>
-                <div className="w-10 h-10 flex items-center justify-center text-white flex-shrink-0" style={{ background: cfg.color, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.8125rem', borderRadius: 10 }}>{initials(s.name)}</div>
+                <div className="w-10 h-10 flex items-center justify-center text-white flex-shrink-0" style={{ background: cfg.color, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.8125rem', borderRadius: 'var(--r-sm)' }}>{initials(s.name)}</div>
                 <div className="flex-1" style={{ minWidth: 180 }}>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: A.text, fontSize: '0.9375rem' }}>{s.name}</span>
-                    <span style={{ fontSize: '0.625rem', fontWeight: 700, color: cfg.color, background: `${cfg.color}12`, padding: '2px 8px', borderRadius: 99 }}>{cfg.label}</span>
+                    <span style={{ fontSize: '0.625rem', fontWeight: 700, color: cfg.color, background: `${cfg.color}12`, padding: '2px 8px', borderRadius: 'var(--r-full)' }}>{cfg.label}</span>
                   </div>
                   <div style={{ fontSize: '0.75rem', color: A.muted, marginTop: 2 }}>{s.email}</div>
                 </div>
-                <span style={{ fontSize: '0.625rem', fontWeight: 700, color: A.muted, background: '#FAF7F7', padding: '3px 9px', borderRadius: 99 }}>{s.builtin ? 'Compte système' : 'Ajouté par l’admin'}</span>
+                <span style={{ fontSize: '0.625rem', fontWeight: 700, color: A.muted, background: '#FAF7F7', padding: '3px 9px', borderRadius: 'var(--r-full)' }}>{s.builtin ? 'Compte système' : 'Ajouté par l’admin'}</span>
                 <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: A.green }}>● Actif</span>
               </div>
             );
@@ -1576,10 +1576,10 @@ function UsersView({ agentName }: { agentName: string }) {
       {showAdd && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div onClick={() => setShowAdd(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(28,8,16,0.45)' }} />
-          <div className="p-5" style={{ position: 'relative', width: 'min(440px, 100%)', maxHeight: '90vh', overflowY: 'auto', background: 'white', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.24)' }}>
+          <div className="p-5" style={{ position: 'relative', width: 'min(440px, 100%)', maxHeight: '90vh', overflowY: 'auto', background: 'white', borderRadius: 'var(--r-lg)', boxShadow: '0 24px 64px rgba(0,0,0,0.24)' }}>
             <div className="flex items-center justify-between mb-4">
               <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.125rem', color: A.text }}>Ajouter un utilisateur</h3>
-              <button onClick={() => setShowAdd(false)} style={{ background: '#FAF7F7', border: 'none', borderRadius: 8, padding: 6, cursor: 'pointer' }}><X className="w-4 h-4" style={{ color: A.muted }} /></button>
+              <button onClick={() => setShowAdd(false)} style={{ background: '#FAF7F7', border: 'none', borderRadius: 'var(--r-sm)', padding: 6, cursor: 'pointer' }}><X className="w-4 h-4" style={{ color: A.muted }} /></button>
             </div>
             <div className="space-y-3">
               <div>
@@ -1587,7 +1587,7 @@ function UsersView({ agentName }: { agentName: string }) {
                 <div className="flex gap-2 mt-1 flex-wrap">
                   {(['client', 'agent-cpi', 'admin'] as const).map(rr => (
                     <button key={rr} onClick={() => setForm(f => ({ ...f, role: rr }))}
-                      style={{ padding: '6px 12px', borderRadius: 8, border: `1px solid ${form.role === rr ? A.bordeaux : A.border}`, cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700,
+                      style={{ padding: '6px 12px', borderRadius: 'var(--r-sm)', border: `1px solid ${form.role === rr ? A.bordeaux : A.border}`, cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700,
                         background: form.role === rr ? A.bordeaux : 'white', color: form.role === rr ? 'white' : A.text }}>{ROLE_CFG[rr].label}</button>
                   ))}
                 </div>
@@ -1600,17 +1600,17 @@ function UsersView({ agentName }: { agentName: string }) {
                 <div key={fld.k}>
                   <label style={{ fontSize: '0.75rem', fontWeight: 600, color: A.text }}>{fld.label}</label>
                   <input value={(form as any)[fld.k]} onChange={e => setForm(f => ({ ...f, [fld.k]: e.target.value }))} placeholder={fld.ph}
-                    style={{ width: '100%', boxSizing: 'border-box', marginTop: 4, border: `1px solid ${A.border}`, borderRadius: 8, padding: '9px 12px', fontSize: '0.875rem', outline: 'none' }} />
+                    style={{ width: '100%', boxSizing: 'border-box', marginTop: 4, border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', padding: '9px 12px', fontSize: '0.875rem', outline: 'none' }} />
                 </div>
               ))}
               {form.role !== 'client' && (
-                <div style={{ fontSize: '0.75rem', color: A.muted, background: '#FAF7F7', padding: 10, borderRadius: 8 }}>
+                <div style={{ fontSize: '0.75rem', color: A.muted, background: '#FAF7F7', padding: 10, borderRadius: 'var(--r-sm)' }}>
                   Un <strong>mot de passe provisoire</strong> sera généré pour ce compte professionnel.
                 </div>
               )}
               <div className="flex gap-2 pt-1">
-                <button onClick={addUser} className="flex-1 px-4 py-2" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 10, fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>Créer le compte</button>
-                <button onClick={() => setShowAdd(false)} className="px-4 py-2" style={{ background: 'white', color: A.muted, border: `1px solid ${A.border}`, borderRadius: 10, fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>Annuler</button>
+                <button onClick={addUser} className="flex-1 px-4 py-2" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>Créer le compte</button>
+                <button onClick={() => setShowAdd(false)} className="px-4 py-2" style={{ background: 'white', color: A.muted, border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>Annuler</button>
               </div>
             </div>
           </div>
@@ -1621,7 +1621,7 @@ function UsersView({ agentName }: { agentName: string }) {
       {creds && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 61, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div onClick={() => setCreds(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(28,8,16,0.45)' }} />
-          <div className="p-5" style={{ position: 'relative', width: 'min(460px, 100%)', maxHeight: '90vh', overflowY: 'auto', background: 'white', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.24)' }}>
+          <div className="p-5" style={{ position: 'relative', width: 'min(460px, 100%)', maxHeight: '90vh', overflowY: 'auto', background: 'white', borderRadius: 'var(--r-lg)', boxShadow: '0 24px 64px rgba(0,0,0,0.24)' }}>
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle2 className="w-5 h-5" style={{ color: A.green }} />
               <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.125rem', color: A.text }}>Compte créé — identifiants à transmettre</h3>
@@ -1630,25 +1630,25 @@ function UsersView({ agentName }: { agentName: string }) {
             <div className="space-y-2 mb-3">
               {creds.password ? (
                 <>
-                  <div className="flex items-center justify-between p-3" style={{ background: '#FAF7F7', borderRadius: 8 }}><span style={{ fontSize: '0.75rem', color: A.muted }}>Identifiant</span><span style={{ fontSize: '0.8125rem', fontWeight: 700, color: A.text }}>{creds.email}</span></div>
-                  <div className="flex items-center justify-between p-3" style={{ background: '#FAF7F7', borderRadius: 8 }}><span style={{ fontSize: '0.75rem', color: A.muted }}>Mot de passe</span><span style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: 700, color: A.bordeaux }}>{creds.password}</span></div>
+                  <div className="flex items-center justify-between p-3" style={{ background: '#FAF7F7', borderRadius: 'var(--r-sm)' }}><span style={{ fontSize: '0.75rem', color: A.muted }}>Identifiant</span><span style={{ fontSize: '0.8125rem', fontWeight: 700, color: A.text }}>{creds.email}</span></div>
+                  <div className="flex items-center justify-between p-3" style={{ background: '#FAF7F7', borderRadius: 'var(--r-sm)' }}><span style={{ fontSize: '0.75rem', color: A.muted }}>Mot de passe</span><span style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: 700, color: A.bordeaux }}>{creds.password}</span></div>
                 </>
               ) : (
-                <div className="p-3" style={{ background: '#FAF7F7', borderRadius: 8 }}>
+                <div className="p-3" style={{ background: '#FAF7F7', borderRadius: 'var(--r-sm)' }}>
                   <div style={{ fontSize: '0.75rem', color: A.muted }}>Accès : Espace client (connexion par nom)</div>
                   <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: A.text, marginTop: 2 }}>Dossier {creds.ref}</div>
                 </div>
               )}
             </div>
             <textarea readOnly value={creds.message} rows={6}
-              style={{ width: '100%', boxSizing: 'border-box', border: `1px solid ${A.border}`, borderRadius: 8, padding: 10, fontSize: '0.75rem', color: A.text, background: '#FAFAFA', resize: 'vertical' }} />
+              style={{ width: '100%', boxSizing: 'border-box', border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', padding: 10, fontSize: '0.75rem', color: A.text, background: '#FAFAFA', resize: 'vertical' }} />
             <div style={{ fontSize: '0.6875rem', color: A.muted, margin: '8px 0' }}>
               ⚠️ L'envoi automatique par e-mail nécessitera un backend. Utilisez « Copier » ou « Envoyer par e-mail » (ouvre votre messagerie).
             </div>
             <div className="flex gap-2 flex-wrap">
-              <button onClick={copyCreds} className="flex items-center gap-1 px-3 py-2" style={{ background: 'white', color: A.bordeaux, border: `1px solid ${A.border}`, borderRadius: 8, fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}><Copy className="w-3.5 h-3.5" /> Copier</button>
-              <button onClick={sendEmail} className="flex items-center gap-1 px-3 py-2" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 8, fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}><Mail className="w-3.5 h-3.5" /> Envoyer par e-mail</button>
-              <button onClick={() => setCreds(null)} className="ml-auto px-3 py-2" style={{ background: 'white', color: A.muted, border: `1px solid ${A.border}`, borderRadius: 8, fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>Fermer</button>
+              <button onClick={copyCreds} className="flex items-center gap-1 px-3 py-2" style={{ background: 'white', color: A.bordeaux, border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}><Copy className="w-3.5 h-3.5" /> Copier</button>
+              <button onClick={sendEmail} className="flex items-center gap-1 px-3 py-2" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}><Mail className="w-3.5 h-3.5" /> Envoyer par e-mail</button>
+              <button onClick={() => setCreds(null)} className="ml-auto px-3 py-2" style={{ background: 'white', color: A.muted, border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>Fermer</button>
             </div>
           </div>
         </div>
@@ -1658,14 +1658,14 @@ function UsersView({ agentName }: { agentName: string }) {
       {notifyFor && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 61, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div onClick={() => setNotifyFor(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(28,8,16,0.45)' }} />
-          <div className="p-5" style={{ position: 'relative', width: 'min(420px, 100%)', background: 'white', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.24)' }}>
+          <div className="p-5" style={{ position: 'relative', width: 'min(420px, 100%)', background: 'white', borderRadius: 'var(--r-lg)', boxShadow: '0 24px 64px rgba(0,0,0,0.24)' }}>
             <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.0625rem', color: A.text, marginBottom: 4 }}>Notifier {notifyFor.name}</h3>
             <p style={{ fontSize: '0.75rem', color: A.muted, marginBottom: 10 }}>Le message apparaîtra dans l'espace Notifications du client.</p>
             <textarea value={notifyText} onChange={e => setNotifyText(e.target.value)} rows={3} placeholder="Votre message…"
-              style={{ width: '100%', boxSizing: 'border-box', border: `1px solid ${A.border}`, borderRadius: 8, padding: 10, fontSize: '0.8125rem', outline: 'none', resize: 'vertical' }} />
+              style={{ width: '100%', boxSizing: 'border-box', border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', padding: 10, fontSize: '0.8125rem', outline: 'none', resize: 'vertical' }} />
             <div className="flex gap-2 mt-3">
-              <button onClick={sendNotify} className="flex-1 px-4 py-2" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 10, fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>Envoyer</button>
-              <button onClick={() => setNotifyFor(null)} className="px-4 py-2" style={{ background: 'white', color: A.muted, border: `1px solid ${A.border}`, borderRadius: 10, fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>Annuler</button>
+              <button onClick={sendNotify} className="flex-1 px-4 py-2" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>Envoyer</button>
+              <button onClick={() => setNotifyFor(null)} className="px-4 py-2" style={{ background: 'white', color: A.muted, border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>Annuler</button>
             </div>
           </div>
         </div>
@@ -1673,7 +1673,7 @@ function UsersView({ agentName }: { agentName: string }) {
 
       {/* Toast */}
       {toast && (
-        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: A.text, color: 'white', padding: '10px 18px', borderRadius: 10, fontSize: '0.8125rem', fontWeight: 600, zIndex: 70, boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>{toast}</div>
+        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: A.text, color: 'white', padding: '10px 18px', borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 600, zIndex: 70, boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>{toast}</div>
       )}
     </div>
   );
@@ -1728,7 +1728,7 @@ function PartnersView() {
       {/* En-tête + ajout */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <p style={{ fontSize: '0.875rem', color: A.muted, margin: 0 }}>Banques partenaires de financement. Chaque banque ajoutée ici est vue automatiquement par les autres espaces (client, agent, décaissements).</p>
-        <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 px-4 py-2" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 10, fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>
+        <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 px-4 py-2" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>
           <Plus className="w-4 h-4" /> Ajouter une banque
         </button>
       </div>
@@ -1743,7 +1743,7 @@ function PartnersView() {
           const Icon = s.icon;
           return (
             <div key={s.l} className="bg-white p-4" style={cs}>
-              <div className="w-8 h-8 flex items-center justify-center mb-2" style={{ background: `${s.c}12`, borderRadius: 8 }}><Icon className="w-4 h-4" style={{ color: s.c }} /></div>
+              <div className="w-8 h-8 flex items-center justify-center mb-2" style={{ background: `${s.c}12`, borderRadius: 'var(--r-sm)' }}><Icon className="w-4 h-4" style={{ color: s.c }} /></div>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 800, color: A.text }}>{s.v}</div>
               <div style={{ fontSize: '0.75rem', color: A.muted }}>{s.l}</div>
             </div>
@@ -1753,12 +1753,12 @@ function PartnersView() {
 
       {/* CPI — promoteur (référence, pas une banque) */}
       <div className="bg-white p-4 flex items-center gap-3" style={cs}>
-        <div className="w-10 h-10 flex items-center justify-center flex-shrink-0" style={{ background: `${A.bordeaux}12`, border: `2px solid ${A.bordeaux}25`, borderRadius: 10 }}><Building2 className="w-5 h-5" style={{ color: A.bordeaux }} /></div>
+        <div className="w-10 h-10 flex items-center justify-center flex-shrink-0" style={{ background: `${A.bordeaux}12`, border: `2px solid ${A.bordeaux}25`, borderRadius: 'var(--r-sm)' }}><Building2 className="w-5 h-5" style={{ color: A.bordeaux }} /></div>
         <div className="flex-1">
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: A.text }}>CPI Immobilier</div>
           <div style={{ fontSize: '0.75rem', color: A.muted }}>Promoteur immobilier — orchestrateur des dossiers</div>
         </div>
-        <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: A.bordeaux, background: '#F5ECEE', padding: '3px 10px', borderRadius: 99 }}>Interne</span>
+        <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: A.bordeaux, background: '#F5ECEE', padding: '3px 10px', borderRadius: 'var(--r-full)' }}>Interne</span>
       </div>
 
       {/* Banques */}
@@ -1767,7 +1767,7 @@ function PartnersView() {
         <div className="bg-white p-8 text-center" style={cs}>
           <Landmark className="w-7 h-7 mx-auto mb-2" style={{ color: A.border }} />
           <div style={{ fontSize: '0.875rem', color: A.muted, marginBottom: 12 }}>Aucune banque partenaire pour le moment.<br />Ajoutez une banque dès qu'une convention est signée — elle apparaîtra partout.</div>
-          <button onClick={() => setShowAdd(true)} className="inline-flex items-center gap-2 px-4 py-2" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 10, fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}><Plus className="w-4 h-4" /> Ajouter une banque</button>
+          <button onClick={() => setShowAdd(true)} className="inline-flex items-center gap-2 px-4 py-2" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}><Plus className="w-4 h-4" /> Ajouter une banque</button>
         </div>
       ) : (
         <div className="grid lg:grid-cols-2 gap-4">
@@ -1776,19 +1776,19 @@ function PartnersView() {
             return (
               <div key={b.id} className="bg-white p-4" style={cs}>
                 <div className="flex items-start gap-3 mb-3">
-                  <div className="w-11 h-11 flex items-center justify-center text-white flex-shrink-0" style={{ background: b.color, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', borderRadius: 10 }}>{b.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}</div>
+                  <div className="w-11 h-11 flex items-center justify-center text-white flex-shrink-0" style={{ background: b.color, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', borderRadius: 'var(--r-sm)' }}>{b.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}</div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.0625rem', color: A.text }}>{b.name}</span>
-                      <span style={{ fontSize: '0.625rem', fontWeight: 700, color: active ? A.green : A.red, background: active ? 'rgba(26,107,68,0.1)' : 'rgba(192,57,43,0.1)', padding: '2px 8px', borderRadius: 99 }}>{active ? 'Convention active' : 'Convention expirée'}</span>
+                      <span style={{ fontSize: '0.625rem', fontWeight: 700, color: active ? A.green : A.red, background: active ? 'rgba(26,107,68,0.1)' : 'rgba(192,57,43,0.1)', padding: '2px 8px', borderRadius: 'var(--r-full)' }}>{active ? 'Convention active' : 'Convention expirée'}</span>
                     </div>
                     <div style={{ fontSize: '0.75rem', color: A.muted, marginTop: 2 }}>Signée le {b.conventionDate} · valable jusqu'au {b.validity}</div>
                   </div>
-                  <button onClick={() => setConfirmDel(b)} style={{ background: 'white', border: `1px solid ${A.border}`, borderRadius: 8, padding: 6, cursor: 'pointer' }} title="Retirer"><Trash2 className="w-3.5 h-3.5" style={{ color: A.red }} /></button>
+                  <button onClick={() => setConfirmDel(b)} style={{ background: 'white', border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', padding: 6, cursor: 'pointer' }} title="Retirer"><Trash2 className="w-3.5 h-3.5" style={{ color: A.red }} /></button>
                 </div>
                 {b.products.length > 0 && (
                   <div className="flex gap-1.5 flex-wrap mb-3">
-                    {b.products.map(p => <span key={p} style={{ fontSize: '0.625rem', fontWeight: 700, color: b.color, background: `${b.color}14`, padding: '2px 8px', borderRadius: 99 }}>{p}</span>)}
+                    {b.products.map(p => <span key={p} style={{ fontSize: '0.625rem', fontWeight: 700, color: b.color, background: `${b.color}14`, padding: '2px 8px', borderRadius: 'var(--r-full)' }}>{p}</span>)}
                   </div>
                 )}
                 <div className="grid grid-cols-3 gap-2">
@@ -1797,7 +1797,7 @@ function PartnersView() {
                     { label: 'Dossiers orientés', value: String(countForBank(b.id)) },
                     { label: 'Accords', value: String(accordsForBank(b.id)) },
                   ].map(s => (
-                    <div key={s.label} className="p-2.5 text-center" style={{ background: '#FAF7F7', borderRadius: 8 }}>
+                    <div key={s.label} className="p-2.5 text-center" style={{ background: '#FAF7F7', borderRadius: 'var(--r-sm)' }}>
                       <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: A.text }}>{s.value}</div>
                       <div style={{ fontSize: '0.5625rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em', color: A.muted }}>{s.label}</div>
                     </div>
@@ -1814,10 +1814,10 @@ function PartnersView() {
       {showAdd && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div onClick={() => setShowAdd(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(28,8,16,0.45)' }} />
-          <div className="p-5" style={{ position: 'relative', width: 'min(480px, 100%)', maxHeight: '90vh', overflowY: 'auto', background: 'white', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.24)' }}>
+          <div className="p-5" style={{ position: 'relative', width: 'min(480px, 100%)', maxHeight: '90vh', overflowY: 'auto', background: 'white', borderRadius: 'var(--r-lg)', boxShadow: '0 24px 64px rgba(0,0,0,0.24)' }}>
             <div className="flex items-center justify-between mb-4">
               <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.125rem', color: A.text }}>Ajouter une banque partenaire</h3>
-              <button onClick={() => setShowAdd(false)} style={{ background: '#FAF7F7', border: 'none', borderRadius: 8, padding: 6, cursor: 'pointer' }}><X className="w-4 h-4" style={{ color: A.muted }} /></button>
+              <button onClick={() => setShowAdd(false)} style={{ background: '#FAF7F7', border: 'none', borderRadius: 'var(--r-sm)', padding: 6, cursor: 'pointer' }}><X className="w-4 h-4" style={{ color: A.muted }} /></button>
             </div>
             <div className="space-y-3">
               {[
@@ -1830,7 +1830,7 @@ function PartnersView() {
                 <div key={fld.k}>
                   <label style={{ fontSize: '0.75rem', fontWeight: 600, color: A.text }}>{fld.label}</label>
                   <input value={(form as any)[fld.k]} onChange={e => setForm(f => ({ ...f, [fld.k]: e.target.value }))} placeholder={fld.ph}
-                    style={{ width: '100%', boxSizing: 'border-box', marginTop: 4, border: `1px solid ${A.border}`, borderRadius: 8, padding: '9px 12px', fontSize: '0.875rem', outline: 'none' }} />
+                    style={{ width: '100%', boxSizing: 'border-box', marginTop: 4, border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', padding: '9px 12px', fontSize: '0.875rem', outline: 'none' }} />
                 </div>
               ))}
               <div>
@@ -1838,7 +1838,7 @@ function PartnersView() {
                 <div className="flex gap-1.5 mt-1 flex-wrap">
                   {PRODUCT_OPTIONS.map(p => (
                     <button key={p} onClick={() => toggleProduct(p)}
-                      style={{ padding: '5px 10px', borderRadius: 99, border: `1px solid ${form.products.includes(p) ? A.bordeaux : A.border}`, cursor: 'pointer', fontSize: '0.6875rem', fontWeight: 700, background: form.products.includes(p) ? A.bordeaux : 'white', color: form.products.includes(p) ? 'white' : A.muted }}>{p}</button>
+                      style={{ padding: '5px 10px', borderRadius: 'var(--r-full)', border: `1px solid ${form.products.includes(p) ? A.bordeaux : A.border}`, cursor: 'pointer', fontSize: '0.6875rem', fontWeight: 700, background: form.products.includes(p) ? A.bordeaux : 'white', color: form.products.includes(p) ? 'white' : A.muted }}>{p}</button>
                   ))}
                 </div>
               </div>
@@ -1846,13 +1846,13 @@ function PartnersView() {
                 <label style={{ fontSize: '0.75rem', fontWeight: 600, color: A.text }}>Couleur d'identité</label>
                 <div className="flex gap-2 mt-1">
                   {BANK_COLORS.map(c => (
-                    <button key={c} onClick={() => setForm(f => ({ ...f, color: c }))} style={{ width: 26, height: 26, borderRadius: 8, background: c, border: form.color === c ? `3px solid ${A.text}` : '2px solid white', boxShadow: '0 0 0 1px rgba(0,0,0,0.1)', cursor: 'pointer' }} />
+                    <button key={c} onClick={() => setForm(f => ({ ...f, color: c }))} style={{ width: 26, height: 26, borderRadius: 'var(--r-sm)', background: c, border: form.color === c ? `3px solid ${A.text}` : '2px solid white', boxShadow: '0 0 0 1px rgba(0,0,0,0.1)', cursor: 'pointer' }} />
                   ))}
                 </div>
               </div>
               <div className="flex gap-2 pt-1">
-                <button onClick={addBank} className="flex-1 px-4 py-2" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 10, fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>Ajouter la banque</button>
-                <button onClick={() => setShowAdd(false)} className="px-4 py-2" style={{ background: 'white', color: A.muted, border: `1px solid ${A.border}`, borderRadius: 10, fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>Annuler</button>
+                <button onClick={addBank} className="flex-1 px-4 py-2" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>Ajouter la banque</button>
+                <button onClick={() => setShowAdd(false)} className="px-4 py-2" style={{ background: 'white', color: A.muted, border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>Annuler</button>
               </div>
             </div>
           </div>
@@ -1863,19 +1863,19 @@ function PartnersView() {
       {confirmDel && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 61, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div onClick={() => setConfirmDel(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(28,8,16,0.45)' }} />
-          <div className="p-5" style={{ position: 'relative', width: 'min(380px, 100%)', background: 'white', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.24)' }}>
+          <div className="p-5" style={{ position: 'relative', width: 'min(380px, 100%)', background: 'white', borderRadius: 'var(--r-lg)', boxShadow: '0 24px 64px rgba(0,0,0,0.24)' }}>
             <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.0625rem', color: A.text, marginBottom: 6 }}>Retirer {confirmDel.name} ?</h3>
             <p style={{ fontSize: '0.8125rem', color: A.muted, marginBottom: 14 }}>Cette banque ne sera plus proposée aux dossiers. Les orientations existantes ne sont pas supprimées.</p>
             <div className="flex gap-2">
-              <button onClick={removeBank} className="flex-1 px-4 py-2" style={{ background: A.red, color: 'white', border: 'none', borderRadius: 10, fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>Retirer</button>
-              <button onClick={() => setConfirmDel(null)} className="px-4 py-2" style={{ background: 'white', color: A.muted, border: `1px solid ${A.border}`, borderRadius: 10, fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>Annuler</button>
+              <button onClick={removeBank} className="flex-1 px-4 py-2" style={{ background: A.red, color: 'white', border: 'none', borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>Retirer</button>
+              <button onClick={() => setConfirmDel(null)} className="px-4 py-2" style={{ background: 'white', color: A.muted, border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>Annuler</button>
             </div>
           </div>
         </div>
       )}
 
       {toast && (
-        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: A.text, color: 'white', padding: '10px 18px', borderRadius: 10, fontSize: '0.8125rem', fontWeight: 600, zIndex: 70, boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>{toast}</div>
+        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: A.text, color: 'white', padding: '10px 18px', borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 600, zIndex: 70, boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>{toast}</div>
       )}
     </div>
   );

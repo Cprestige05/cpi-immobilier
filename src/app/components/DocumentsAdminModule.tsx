@@ -156,7 +156,7 @@ export default function DocumentsAdminModule({ agentName = 'Agent CPI' }: Props)
   const sortedClients = [...allClientSummaries].sort((a, b) => a.ref.localeCompare(b.ref))
     .filter(c => !q || c.name.toLowerCase().includes(q) || c.ref.toLowerCase().includes(q));
 
-  const card: React.CSSProperties = { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' };
+  const card: React.CSSProperties = { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', overflow: 'hidden' };
 
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '16px', fontFamily: 'var(--font-sans)' }}>
@@ -166,7 +166,7 @@ export default function DocumentsAdminModule({ agentName = 'Agent CPI' }: Props)
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 800, color: 'var(--foreground)', margin: '0 0 4px' }}>Documents admin</h2>
           <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', margin: 0 }}>Créez, publiez et faites signer des documents pour les dossiers clients.</p>
         </div>
-        <button onClick={() => setShowForm(v => !v)} style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '10px 16px', borderRadius: 10, background: 'var(--primary)', color: 'var(--primary-foreground)', border: 'none', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
+        <button onClick={() => setShowForm(v => !v)} style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '10px 16px', borderRadius: 'var(--r-sm)', background: 'var(--primary)', color: 'var(--primary-foreground)', border: 'none', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
           <Plus size={14} /> Nouveau document
         </button>
       </div>
@@ -179,7 +179,7 @@ export default function DocumentsAdminModule({ agentName = 'Agent CPI' }: Props)
           { l: 'Brouillons', v: kBrouillons, c: 'var(--muted-foreground)' },
           { l: 'Signés', v: kSignes, c: 'var(--success)' },
         ].map(s => (
-          <div key={s.l} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px' }}>
+          <div key={s.l} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: '14px 16px' }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 800, color: s.c }}>{s.v}</div>
             <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: 2 }}>{s.l}</div>
           </div>
@@ -187,14 +187,14 @@ export default function DocumentsAdminModule({ agentName = 'Agent CPI' }: Props)
       </div>
 
       {/* (N4) Modèles rapides */}
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: 14 }}>
+      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
           <LayoutTemplate size={15} style={{ color: 'var(--primary)' }} />
           <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--foreground)' }}>Créer depuis un modèle</span>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {TEMPLATES.map(t => (
-            <button key={t.label} onClick={() => applyTemplate(t)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 99, border: '1px solid var(--border)', background: 'var(--secondary)', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>
+            <button key={t.label} onClick={() => applyTemplate(t)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 'var(--r-full)', border: '1px solid var(--border)', background: 'var(--secondary)', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>
               <FileText size={12} /> {t.label}
             </button>
           ))}
@@ -203,7 +203,7 @@ export default function DocumentsAdminModule({ agentName = 'Agent CPI' }: Props)
 
       {/* Create form */}
       {showForm && (
-        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: '20px' }}>
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: '20px' }}>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: '16px' }}>Nouveau document</div>
 
           {/* Fichier (optionnel — un modèle génère un document sans fichier) */}
@@ -213,21 +213,21 @@ export default function DocumentsAdminModule({ agentName = 'Agent CPI' }: Props)
               <div onDragOver={e => { e.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)}
                 onDrop={e => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) startUpload(f.name, f.size / 1048576); }}
                 onClick={() => fileInputRef.current?.click()}
-                style={{ border: `2px dashed ${dragging ? 'var(--primary)' : 'var(--border)'}`, borderRadius: 10, padding: '18px 16px', textAlign: 'center', cursor: 'pointer', background: dragging ? 'var(--secondary)' : 'var(--input-background)' }}>
+                style={{ border: `2px dashed ${dragging ? 'var(--primary)' : 'var(--border)'}`, borderRadius: 'var(--r-sm)', padding: '18px 16px', textAlign: 'center', cursor: 'pointer', background: dragging ? 'var(--secondary)' : 'var(--input-background)' }}>
                 <Upload size={22} style={{ color: 'var(--primary)', margin: '0 auto 4px', display: 'block' }} />
                 <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--foreground)' }}>Glissez un fichier, ou cliquez (facultatif)</div>
                 <input ref={fileInputRef} type="file" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) startUpload(f.name, f.size / 1048576); }} />
               </div>
             ) : (
-              <div style={{ background: 'var(--input-background)', borderRadius: 10, padding: '12px 14px' }}>
+              <div style={{ background: 'var(--input-background)', borderRadius: 'var(--r-sm)', padding: '12px 14px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                   <FileText size={17} style={{ color: 'var(--primary)', flexShrink: 0 }} />
                   <span style={{ flex: 1, fontSize: '0.8125rem', fontWeight: 600, color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file} · {taille}</span>
                   {uploadDone && <CheckCircle2 size={16} style={{ color: 'var(--success)' }} />}
                   <button onClick={() => { setFile(null); setUploadDone(false); setProgress(0); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '0.75rem', color: 'var(--muted-foreground)', fontWeight: 600 }}>Retirer</button>
                 </div>
-                <div style={{ height: 6, background: 'var(--border)', borderRadius: 99, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${progress}%`, background: uploadDone ? 'var(--success)' : 'var(--primary)', borderRadius: 99, transition: 'width 0.2s' }} />
+                <div style={{ height: 6, background: 'var(--border)', borderRadius: 'var(--r-full)', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${progress}%`, background: uploadDone ? 'var(--success)' : 'var(--primary)', borderRadius: 'var(--r-full)', transition: 'width 0.2s' }} />
                 </div>
               </div>
             )}
@@ -262,7 +262,7 @@ export default function DocumentsAdminModule({ agentName = 'Agent CPI' }: Props)
                 {allClientSummaries.map(c => {
                   const on = form.destinataires.includes(c.id);
                   return (
-                    <button key={c.id} onClick={() => toggleRecipient(c.id)} style={{ padding: '5px 12px', borderRadius: 99, border: `1px solid ${on ? 'var(--primary)' : 'var(--border)'}`, background: on ? 'var(--primary)' : 'var(--card)', color: on ? 'var(--primary-foreground)' : 'var(--muted-foreground)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>{c.name}</button>
+                    <button key={c.id} onClick={() => toggleRecipient(c.id)} style={{ padding: '5px 12px', borderRadius: 'var(--r-full)', border: `1px solid ${on ? 'var(--primary)' : 'var(--border)'}`, background: on ? 'var(--primary)' : 'var(--card)', color: on ? 'var(--primary-foreground)' : 'var(--muted-foreground)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>{c.name}</button>
                   );
                 })}
               </div>
@@ -300,12 +300,12 @@ export default function DocumentsAdminModule({ agentName = 'Agent CPI' }: Props)
               {queue.map(({ clientId, clientName, ref, doc }) => {
                 const cfg = CPI_STATUS_CFG[doc.status];
                 return (
-                  <div key={clientId + doc.id} style={{ background: 'var(--background)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                  <div key={clientId + doc.id} style={{ background: 'var(--background)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                     <div style={{ flex: 1, minWidth: 180 }}>
                       <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--foreground)' }}>{doc.nom}</div>
                       <div style={{ fontSize: '0.6875rem', color: 'var(--muted-foreground)', marginTop: 1 }}>{clientName} · {ref} · {CATEGORIE_LABELS[doc.categorie]}</div>
                     </div>
-                    <span style={{ padding: '3px 9px', borderRadius: 99, background: cfg.bg, color: cfg.color, fontSize: '0.625rem', fontWeight: 700 }}>{cfg.label}</span>
+                    <span style={{ padding: '3px 9px', borderRadius: 'var(--r-full)', background: cfg.bg, color: cfg.color, fontSize: '0.625rem', fontWeight: 700 }}>{cfg.label}</span>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       <button onClick={() => setPreview({ clientId, clientName, ref, doc })} style={btnSm('var(--primary)', 'var(--secondary)')}><Eye size={12} /> Aperçu</button>
                       {doc.status === 'brouillon' && <button onClick={() => doPublish(doc, clientId)} style={btnSm('var(--success)', 'rgba(26,107,68,0.10)')}><Send size={12} /> Publier</button>}
@@ -323,18 +323,18 @@ export default function DocumentsAdminModule({ agentName = 'Agent CPI' }: Props)
       )}
 
       {/* Filtres statut + catégorie + recherche */}
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--background)' }}>
+      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', background: 'var(--background)' }}>
           <Search size={16} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Rechercher un client (nom, n° de dossier)…" style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: '0.875rem', color: 'var(--foreground)' }} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {FILTERS.map(f => (
-              <button key={f} onClick={() => setFilterStatut(f)} style={{ padding: '5px 12px', borderRadius: 99, border: `1px solid ${filterStatut === f ? 'var(--primary)' : 'var(--border)'}`, background: filterStatut === f ? 'var(--primary)' : 'var(--card)', color: filterStatut === f ? 'var(--primary-foreground)' : 'var(--muted-foreground)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>{FILTER_LABELS[f]}</button>
+              <button key={f} onClick={() => setFilterStatut(f)} style={{ padding: '5px 12px', borderRadius: 'var(--r-full)', border: `1px solid ${filterStatut === f ? 'var(--primary)' : 'var(--border)'}`, background: filterStatut === f ? 'var(--primary)' : 'var(--card)', color: filterStatut === f ? 'var(--primary-foreground)' : 'var(--muted-foreground)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>{FILTER_LABELS[f]}</button>
             ))}
           </div>
-          <select value={filterCat} onChange={e => setFilterCat(e.target.value as any)} style={{ ...inputStyle, width: 'auto', borderRadius: 8 }}>
+          <select value={filterCat} onChange={e => setFilterCat(e.target.value as any)} style={{ ...inputStyle, width: 'auto', borderRadius: 'var(--r-sm)' }}>
             <option value="toutes">Toutes catégories</option>
             {CPI_CATEGORIES.map(c => <option key={c} value={c}>{CATEGORIE_LABELS[c]}</option>)}
           </select>
@@ -355,19 +355,19 @@ export default function DocumentsAdminModule({ agentName = 'Agent CPI' }: Props)
         return (
           <div key={client.id} style={card}>
             <button onClick={() => setExpanded(isOpen ? null : client.id)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', flexWrap: 'wrap' }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: 10, background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9375rem', color: 'var(--primary)' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: 'var(--r-sm)', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9375rem', color: 'var(--primary)' }}>
                 {client.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
               </div>
               <div style={{ flex: 1, minWidth: 150 }}>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 700, color: 'var(--foreground)' }}>{client.name}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 3 }}>
-                  <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--primary)', background: 'var(--secondary)', padding: '2px 8px', borderRadius: 6, whiteSpace: 'nowrap' }}>Dossier {client.ref}</span>
+                  <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--primary)', background: 'var(--secondary)', padding: '2px 8px', borderRadius: 'var(--r-xs)', whiteSpace: 'nowrap' }}>Dossier {client.ref}</span>
                   <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>{client.projectNom}</span>
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                {toSign > 0 && <span style={{ fontSize: '0.625rem', fontWeight: 700, color: '#C0392B', background: 'rgba(192,57,43,0.08)', padding: '3px 8px', borderRadius: 99 }}>{toSign} à signer</span>}
-                <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--muted-foreground)', background: 'var(--muted)', padding: '2px 8px', borderRadius: 99 }}>{docs.length} doc{docs.length > 1 ? 's' : ''}</span>
+                {toSign > 0 && <span style={{ fontSize: '0.625rem', fontWeight: 700, color: '#C0392B', background: 'rgba(192,57,43,0.08)', padding: '3px 8px', borderRadius: 'var(--r-full)' }}>{toSign} à signer</span>}
+                <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--muted-foreground)', background: 'var(--muted)', padding: '2px 8px', borderRadius: 'var(--r-full)' }}>{docs.length} doc{docs.length > 1 ? 's' : ''}</span>
                 {isOpen ? <ChevronUp size={16} style={{ color: 'var(--muted-foreground)' }} /> : <ChevronDown size={16} style={{ color: 'var(--muted-foreground)' }} />}
               </div>
             </button>
@@ -380,19 +380,19 @@ export default function DocumentsAdminModule({ agentName = 'Agent CPI' }: Props)
                   const cfg = CPI_STATUS_CFG[doc.status];
                   const dateDisplay = doc.datePublication || doc.dateCreation || '—';
                   return (
-                    <div key={doc.id} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px' }}>
+                    <div key={doc.id} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '12px 14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                        <div style={{ width: 36, height: 36, borderRadius: 8, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <div style={{ width: 36, height: 36, borderRadius: 'var(--r-sm)', background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                           <FileText size={16} style={{ color: cfg.color }} />
                         </div>
                         <div style={{ flex: 1, minWidth: 150 }}>
                           <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--foreground)' }}>{doc.nom}</div>
                           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginTop: 2 }}>
-                            <span style={{ fontSize: '0.625rem', fontWeight: 700, color: 'var(--primary)', background: 'var(--secondary)', padding: '1px 6px', borderRadius: 4 }}>{CATEGORIE_LABELS[doc.categorie]}</span>
+                            <span style={{ fontSize: '0.625rem', fontWeight: 700, color: 'var(--primary)', background: 'var(--secondary)', padding: '1px 6px', borderRadius: 'var(--r-xs)' }}>{CATEGORIE_LABELS[doc.categorie]}</span>
                             <span style={{ fontSize: '0.6875rem', color: 'var(--muted-foreground)' }}>{doc.version} · {dateDisplay}{!doc.visibleClient ? ' · non visible' : ''}</span>
                           </div>
                         </div>
-                        <span style={{ padding: '4px 10px', borderRadius: 99, background: cfg.bg, color: cfg.color, fontSize: '0.6875rem', fontWeight: 700, whiteSpace: 'nowrap' }}>{cfg.label}</span>
+                        <span style={{ padding: '4px 10px', borderRadius: 'var(--r-full)', background: cfg.bg, color: cfg.color, fontSize: '0.6875rem', fontWeight: 700, whiteSpace: 'nowrap' }}>{cfg.label}</span>
                       </div>
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
                         <button onClick={() => setPreview({ clientId: client.id, clientName: client.name, ref: client.ref, doc })} style={btnSm('var(--primary)', 'var(--secondary)')}><Eye size={12} /> Aperçu</button>
@@ -418,15 +418,15 @@ export default function DocumentsAdminModule({ agentName = 'Agent CPI' }: Props)
         return (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
             <div onClick={() => setPreview(null)} style={{ position: 'absolute', inset: 0 }} />
-            <div style={{ position: 'relative', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto', padding: 24 }}>
+            <div style={{ position: 'relative', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-lg)', width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto', padding: 24 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
                 <div>
                   <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.0625rem', color: 'var(--foreground)' }}>{preview.doc.nom}</div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>{preview.clientName} · {preview.ref}</div>
                 </div>
-                <button onClick={() => setPreview(null)} style={{ background: 'var(--secondary)', border: 'none', borderRadius: 8, padding: 6, cursor: 'pointer' }}><X size={16} style={{ color: 'var(--muted-foreground)' }} /></button>
+                <button onClick={() => setPreview(null)} style={{ background: 'var(--secondary)', border: 'none', borderRadius: 'var(--r-sm)', padding: 6, cursor: 'pointer' }}><X size={16} style={{ color: 'var(--muted-foreground)' }} /></button>
               </div>
-              <div style={{ background: 'var(--background)', border: '1px dashed var(--border)', borderRadius: 12, padding: '28px 20px', textAlign: 'center', marginBottom: 14 }}>
+              <div style={{ background: 'var(--background)', border: '1px dashed var(--border)', borderRadius: 'var(--r-md)', padding: '28px 20px', textAlign: 'center', marginBottom: 14 }}>
                 <FileText size={30} style={{ color: cfg.color, margin: '0 auto 8px', display: 'block' }} />
                 <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--foreground)' }}>{CATEGORIE_LABELS[preview.doc.categorie]} · {preview.doc.version}</div>
                 <div style={{ fontSize: '0.6875rem', color: 'var(--muted-foreground)', marginTop: 8, fontStyle: 'italic' }}>Aperçu du fichier réel disponible avec le stockage documentaire (backend).</div>
@@ -473,17 +473,17 @@ export default function DocumentsAdminModule({ agentName = 'Agent CPI' }: Props)
 
       {/* Toast */}
       {toast && (
-        <div style={{ position: 'fixed', bottom: '24px', right: '24px', background: 'var(--foreground)', color: 'var(--background)', padding: '12px 18px', borderRadius: 10, fontSize: '0.875rem', fontWeight: 600, zIndex: 300, maxWidth: '360px' }}>{toast}</div>
+        <div style={{ position: 'fixed', bottom: '24px', right: '24px', background: 'var(--foreground)', color: 'var(--background)', padding: '12px 18px', borderRadius: 'var(--r-sm)', fontSize: '0.875rem', fontWeight: 600, zIndex: 300, maxWidth: '360px' }}>{toast}</div>
       )}
     </div>
   );
 }
 
 function btnSm(color: string, bg: string): React.CSSProperties {
-  return { display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 10px', background: bg, color, border: 'none', borderRadius: 7, fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' };
+  return { display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 10px', background: bg, color, border: 'none', borderRadius: 'var(--r-sm)', fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' };
 }
-const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '8px 10px', background: 'var(--input-background)', border: '1px solid var(--border)', borderRadius: 8, outline: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--foreground)' };
+const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '8px 10px', background: 'var(--input-background)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', outline: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--foreground)' };
 const labelStyle: React.CSSProperties = { display: 'block', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.05em' };
-const btnPrimary: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 16px', borderRadius: 8, background: 'var(--primary)', color: 'var(--primary-foreground)', border: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer' };
-const btnOutline: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 14px', borderRadius: 8, background: 'transparent', color: 'var(--foreground)', border: '1px solid var(--border)', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' };
-const btnGhost: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 14px', borderRadius: 8, background: 'var(--secondary)', color: 'var(--primary)', border: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' };
+const btnPrimary: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 16px', borderRadius: 'var(--r-sm)', background: 'var(--primary)', color: 'var(--primary-foreground)', border: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer' };
+const btnOutline: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 14px', borderRadius: 'var(--r-sm)', background: 'transparent', color: 'var(--foreground)', border: '1px solid var(--border)', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' };
+const btnGhost: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 14px', borderRadius: 'var(--r-sm)', background: 'var(--secondary)', color: 'var(--primary)', border: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' };

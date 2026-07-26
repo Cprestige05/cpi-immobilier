@@ -187,7 +187,7 @@ export default function NotificationsPage() {
               <span style={{
                 fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 800,
                 background: 'var(--destructive)', color: '#fff',
-                padding: '2px 8px', borderRadius: '99px',
+                padding: '2px 8px', borderRadius: 'var(--r-full)',
               }}>
                 {unreadCount} non lues
               </span>
@@ -202,7 +202,7 @@ export default function NotificationsPage() {
             onClick={markAllRead}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '6px',
-              padding: '8px 14px', borderRadius: '9px', cursor: 'pointer',
+              padding: '8px 14px', borderRadius: 'var(--r-sm)', cursor: 'pointer',
               border: '1px solid var(--border)', background: 'var(--card)',
               fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600,
               color: 'var(--foreground)', transition: 'all 0.12s',
@@ -220,7 +220,7 @@ export default function NotificationsPage() {
       <div style={{
         display: 'flex', gap: '6px', overflowX: 'auto',
         background: 'var(--card)', border: '1px solid var(--border)',
-        borderRadius: '12px', padding: '5px',
+        borderRadius: 'var(--r-md)', padding: '5px',
       }}>
         {CATEGORIES.map(cat => {
           const active = activeCategory === cat.id;
@@ -231,11 +231,11 @@ export default function NotificationsPage() {
               onClick={() => setActiveCategory(cat.id)}
               style={{
                 flex: '1 0 auto', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                padding: '8px 10px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                padding: '8px 10px', borderRadius: 'var(--r-sm)', border: 'none', cursor: 'pointer',
                 background: active ? 'var(--primary)' : 'transparent',
                 color: active ? '#fff' : 'var(--muted-foreground)',
                 fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: active ? 700 : 500,
-                transition: 'all 0.15s',
+                transition: 'all var(--dur-1) var(--ease-out)',
               }}
             >
               {cat.label}
@@ -243,7 +243,7 @@ export default function NotificationsPage() {
                 <span style={{
                   fontFamily: 'var(--font-sans)', fontSize: '0.625rem', fontWeight: 800,
                   background: active ? 'rgba(255,255,255,0.25)' : 'var(--destructive)',
-                  color: '#fff', padding: '1px 6px', borderRadius: '99px',
+                  color: '#fff', padding: '1px 6px', borderRadius: 'var(--r-full)',
                 }}>
                   {count}
                 </span>
@@ -258,7 +258,7 @@ export default function NotificationsPage() {
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px',
           padding: '48px 24px', background: 'var(--card)', border: '1px solid var(--border)',
-          borderRadius: '14px', textAlign: 'center',
+          borderRadius: 'var(--r-md)', textAlign: 'center',
         }}>
           <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Bell size={22} style={{ color: 'var(--muted-foreground)' }} />
@@ -294,7 +294,7 @@ export default function NotificationsPage() {
                         background: notif.lu ? 'var(--card)' : `var(--card)`,
                         border: `1px solid ${notif.lu ? 'var(--border)' : cfg.border}`,
                         borderLeft: `3px solid ${notif.lu ? 'var(--border)' : cfg.color}`,
-                        borderRadius: '12px', cursor: 'pointer',
+                        borderRadius: 'var(--r-md)', cursor: 'pointer',
                         transition: 'box-shadow 0.15s, transform 0.1s',
                         position: 'relative',
                       }}
@@ -319,7 +319,7 @@ export default function NotificationsPage() {
 
                       {/* Icon */}
                       <div style={{
-                        width: '38px', height: '38px', borderRadius: '10px', flexShrink: 0,
+                        width: '38px', height: '38px', borderRadius: 'var(--r-sm)', flexShrink: 0,
                         background: cfg.bg, border: `1px solid ${cfg.border}`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         marginTop: '1px',
@@ -342,7 +342,7 @@ export default function NotificationsPage() {
                               fontFamily: 'var(--font-sans)', fontSize: '0.5625rem', fontWeight: 700,
                               textTransform: 'uppercase', letterSpacing: '0.05em',
                               color: cfg.color, background: cfg.bg,
-                              padding: '2px 6px', borderRadius: '4px',
+                              padding: '2px 6px', borderRadius: 'var(--r-xs)',
                             }}>
                               {cfg.label}
                             </span>
@@ -361,7 +361,7 @@ export default function NotificationsPage() {
                             onClick={e => { e.stopPropagation(); markRead(notif.id); navigate(notif.actionPage!); }}
                             style={{
                               display: 'inline-flex', alignItems: 'center', gap: '5px',
-                              padding: '5px 12px', borderRadius: '7px', border: 'none', cursor: 'pointer',
+                              padding: '5px 12px', borderRadius: 'var(--r-sm)', border: 'none', cursor: 'pointer',
                               background: cfg.bg, color: cfg.color,
                               fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700,
                               transition: 'opacity 0.12s',
@@ -385,7 +385,7 @@ export default function NotificationsPage() {
       {/* ── Security notice ────────────────────────────────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'flex-start', gap: '10px',
-        padding: '13px 16px', borderRadius: '11px',
+        padding: '13px 16px', borderRadius: 'var(--r-md)',
         background: 'rgba(26,58,110,0.05)', border: '1px solid rgba(26,58,110,0.1)',
       }}>
         <LogIn size={14} style={{ color: 'var(--primary)', flexShrink: 0, marginTop: '1px' }} />

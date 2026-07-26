@@ -173,7 +173,7 @@ export default function HistoriqueModule() {
     else grouped.push({ date: e.date, entries: [e] });
   }
 
-  const selectStyle: React.CSSProperties = { padding: '6px 10px', border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', borderRadius: 8 };
+  const selectStyle: React.CSSProperties = { padding: '6px 10px', border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', borderRadius: 'var(--r-sm)' };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -183,7 +183,7 @@ export default function HistoriqueModule() {
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, color: 'var(--foreground)', margin: '0 0 4px' }}>Journal d'audit — toutes les activités</h2>
           <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--muted-foreground)', margin: 0 }}>Traçabilité complète de la plateforme : clients, agents CPI et administrateurs. Aucune action ne peut être supprimée.</p>
         </div>
-        <button onClick={exportCSV} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer', borderRadius: 8, flexShrink: 0 }}>
+        <button onClick={exportCSV} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer', borderRadius: 'var(--r-sm)', flexShrink: 0 }}>
           <Download size={14} /> Exporter (CSV)
         </button>
       </div>
@@ -196,7 +196,7 @@ export default function HistoriqueModule() {
           { l: 'Agents CPI', v: countByRole('Agent CPI'), c: 'var(--primary)' },
           { l: 'Administrateurs', v: countByRole('Administrateur'), c: '#B45309' },
         ].map(s => (
-          <div key={s.l} style={{ background: 'var(--card)', border: '1px solid var(--border)', padding: '13px 16px', borderRadius: 12 }}>
+          <div key={s.l} style={{ background: 'var(--card)', border: '1px solid var(--border)', padding: '13px 16px', borderRadius: 'var(--r-md)' }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 800, color: s.c }}>{s.v}</div>
             <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: 2 }}>{s.l}</div>
           </div>
@@ -205,7 +205,7 @@ export default function HistoriqueModule() {
 
       {/* Recherche + filtres rôle / dossier / période */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--card)', flex: 1, minWidth: 200 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', background: 'var(--card)', flex: 1, minWidth: 200 }}>
           <Search size={15} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Rechercher (action, utilisateur, dossier)…" style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: '0.875rem', color: 'var(--foreground)' }} />
         </div>
@@ -219,7 +219,7 @@ export default function HistoriqueModule() {
         </select>
         <div style={{ display: 'flex', gap: 4 }}>
           {PERIODES.map(p => (
-            <button key={p.key} onClick={() => setPeriode(p.key)} style={{ padding: '6px 10px', border: '1px solid var(--border)', background: periode === p.key ? 'var(--primary)' : 'transparent', color: periode === p.key ? 'var(--primary-foreground)' : 'var(--muted-foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: periode === p.key ? 700 : 500, cursor: 'pointer', borderRadius: 8 }}>{p.label}</button>
+            <button key={p.key} onClick={() => setPeriode(p.key)} style={{ padding: '6px 10px', border: '1px solid var(--border)', background: periode === p.key ? 'var(--primary)' : 'transparent', color: periode === p.key ? 'var(--primary-foreground)' : 'var(--muted-foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: periode === p.key ? 700 : 500, cursor: 'pointer', borderRadius: 'var(--r-sm)' }}>{p.label}</button>
           ))}
         </div>
       </div>
@@ -228,7 +228,7 @@ export default function HistoriqueModule() {
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
         <Filter size={14} style={{ color: 'var(--muted-foreground)' }} />
         {ALL_TYPES.map(t => (
-          <button key={t} onClick={() => setFilterType(t)} style={{ padding: '5px 12px', border: '1px solid var(--border)', background: filterType === t ? 'var(--primary)' : 'transparent', color: filterType === t ? 'var(--primary-foreground)' : 'var(--muted-foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: filterType === t ? 700 : 500, cursor: 'pointer', borderRadius: 8 }}>
+          <button key={t} onClick={() => setFilterType(t)} style={{ padding: '5px 12px', border: '1px solid var(--border)', background: filterType === t ? 'var(--primary)' : 'transparent', color: filterType === t ? 'var(--primary-foreground)' : 'var(--muted-foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: filterType === t ? 700 : 500, cursor: 'pointer', borderRadius: 'var(--r-sm)' }}>
             {TYPE_LABELS[t]}
           </button>
         ))}
@@ -249,7 +249,7 @@ export default function HistoriqueModule() {
               return (
                 <div key={e.id} style={{ display: 'flex', gap: '14px', padding: '13px 18px', borderBottom: i < group.entries.length - 1 ? '1px solid var(--border)' : 'none', alignItems: 'flex-start' }}>
                   {/* Icon */}
-                  <div style={{ width: '32px', height: '32px', background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '1px', borderRadius: 8 }}>
+                  <div style={{ width: '32px', height: '32px', background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '1px', borderRadius: 'var(--r-sm)' }}>
                     <Icon size={14} style={{ color: cfg.color }} />
                   </div>
 
