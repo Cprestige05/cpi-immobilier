@@ -48,8 +48,8 @@ function ProductCard({
 }) {
   return (
     <div style={{
-      flex: 1,
-      minWidth: 0,
+      flex: '1 1 280px',
+      minWidth: 260,
       border: '1px solid var(--border)',
       borderRadius: 'var(--r-md)',
       overflow: 'hidden',
