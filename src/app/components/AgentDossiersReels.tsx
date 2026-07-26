@@ -19,7 +19,7 @@ type DocStatus = SharedDoc['status'];
 
 const PIECE_CFG: Record<DocStatus, { label: string; color: string; bg: string; icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }> }> = {
   'en-attente':  { label: 'À déposer',        color: 'var(--muted-foreground)', bg: 'var(--muted)',          icon: Clock },
-  depose:        { label: 'Déposé — à vérifier', color: 'var(--chart-4)',       bg: 'rgba(46,110,196,0.08)', icon: Upload },
+  depose:        { label: 'Déposé — à vérifier', color: 'var(--chart-4)',       bg: 'rgba(176,80,112,0.08)', icon: Upload },
   verification:  { label: 'En vérification',  color: 'var(--accent)',           bg: 'rgba(200,146,26,0.10)', icon: Clock },
   accepte:       { label: 'Validé',           color: 'var(--success)',          bg: 'rgba(26,107,68,0.10)',  icon: CheckCircle2 },
   refuse:        { label: 'Refusé',           color: 'var(--destructive)',      bg: 'rgba(192,57,43,0.08)',  icon: XCircle },
@@ -82,8 +82,8 @@ function CommentModal({ title, cta, onConfirm, onClose }: { title: string; cta: 
   const [txt, setTxt] = useState('');
   return (
     <div onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(11,25,41,0.5)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', padding: 16 }}>
-      <div style={{ background: 'var(--card)', borderRadius: 'var(--r-md)', width: '100%', maxWidth: 440, padding: 24, boxShadow: '0 24px 64px rgba(11,25,41,0.28)' }}>
+      style={{ position: 'fixed', inset: 0, background: 'rgba(28,8,16,0.5)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', padding: 16 }}>
+      <div style={{ background: 'var(--card)', borderRadius: 'var(--r-md)', width: '100%', maxWidth: 440, padding: 24, boxShadow: '0 24px 64px rgba(28,8,16,0.28)' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: 12 }}>{title}</div>
         <textarea value={txt} onChange={e => setTxt(e.target.value)} rows={4} placeholder="Précisez le motif pour le client…"
           style={{ width: '100%', padding: '10px 12px', borderRadius: 'var(--r-sm)', border: '1.5px solid var(--border)', background: 'var(--input-background)', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--foreground)', resize: 'vertical', boxSizing: 'border-box' }} />
@@ -353,8 +353,8 @@ function UploadDocModal({ onClose, onPublish }: { onClose: () => void; onPublish
 
   return (
     <div onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(11,25,41,0.5)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', padding: 16 }}>
-      <div style={{ background: 'var(--card)', borderRadius: 'var(--r-md)', width: '100%', maxWidth: 480, maxHeight: '92vh', overflowY: 'auto', padding: 24, boxShadow: '0 24px 64px rgba(11,25,41,0.28)' }}>
+      style={{ position: 'fixed', inset: 0, background: 'rgba(28,8,16,0.5)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', padding: 16 }}>
+      <div style={{ background: 'var(--card)', borderRadius: 'var(--r-md)', width: '100%', maxWidth: 480, maxHeight: '92vh', overflowY: 'auto', padding: 24, boxShadow: '0 24px 64px rgba(28,8,16,0.28)' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: 4 }}>Téléverser un document</div>
         <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', marginBottom: 16 }}>Le document sera transmis au client, qui pourra le télécharger et le signer si nécessaire.</div>
 
@@ -475,7 +475,7 @@ export default function AgentDossiersReels({ agentName, mode = 'actifs' }: { age
         {/* KPIs */}
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <KPI label="Dossiers actifs"   value={nbActifs}    color="var(--primary)"     bg="var(--secondary)" />
-          <KPI label="Pièces à vérifier" value={nbAVerifier} color="var(--chart-4)"     bg="rgba(46,110,196,0.10)" />
+          <KPI label="Pièces à vérifier" value={nbAVerifier} color="var(--chart-4)"     bg="rgba(176,80,112,0.10)" />
           <KPI label="À faire avancer"   value={nbAAvancer}  color="var(--accent)"      bg="rgba(200,146,26,0.12)" />
           <KPI label="Docs à signer"     value={nbASigner}   color="var(--destructive)" bg="rgba(192,57,43,0.08)" />
           <KPI label="Dossiers finalisés" value={nbFinalises} color="var(--success)"    bg="rgba(26,107,68,0.12)" />

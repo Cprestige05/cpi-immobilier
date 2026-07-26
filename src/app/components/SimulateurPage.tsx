@@ -71,14 +71,14 @@ const CSS = `
     -webkit-appearance: none;
     width: 20px; height: 20px; border-radius: 50%;
     background: var(--primary); border: 3px solid #fff;
-    box-shadow: 0 2px 8px rgba(26,58,110,0.35);
+    box-shadow: 0 2px 8px rgba(123,26,46,0.35);
     cursor: pointer; transition: transform 0.12s;
   }
   .sim-range::-webkit-slider-thumb:hover { transform: scale(1.18); }
   .sim-range::-moz-range-thumb {
     width: 20px; height: 20px; border-radius: 50%;
     background: var(--primary); border: 3px solid #fff;
-    box-shadow: 0 2px 8px rgba(26,58,110,0.35); cursor: pointer;
+    box-shadow: 0 2px 8px rgba(123,26,46,0.35); cursor: pointer;
   }
   .sim-grid { display: grid; grid-template-columns: 360px 1fr; gap: 20px; align-items: start; }
   .sim-grid > * { min-width: 0; }
@@ -424,7 +424,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
               </div>
 
               {/* Info box */}
-              <div style={{ display: 'flex', gap: '8px', padding: '11px 13px', background: 'rgba(26,58,110,0.06)', borderRadius: 'var(--r-sm)', border: '1px solid rgba(26,58,110,0.1)' }}>
+              <div style={{ display: 'flex', gap: '8px', padding: '11px 13px', background: 'rgba(123,26,46,0.06)', borderRadius: 'var(--r-sm)', border: '1px solid rgba(123,26,46,0.1)' }}>
                 <Info size={14} style={{ color: 'var(--primary)', flexShrink: 0, marginTop: '1px' }} />
                 <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', lineHeight: 1.55 }}>
                   Le paiement calculé est basé sur un taux d'amortissement constant. La dernière échéance peut légèrement différer par arrondi.
@@ -650,7 +650,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
                               className="sim-tr"
                               style={{
                                 background: isYearEnd
-                                  ? 'rgba(26,58,110,0.045)'
+                                  ? 'rgba(123,26,46,0.045)'
                                   : i % 2 === 0 ? 'var(--card)' : 'var(--background)',
                                 borderBottom: isYearEnd
                                   ? '2px solid var(--border)'

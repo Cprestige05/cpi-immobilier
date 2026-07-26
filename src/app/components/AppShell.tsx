@@ -137,7 +137,7 @@ function SupportPage() {
       href: 'mailto:support@cpi.sn',
       color: 'var(--primary)',
       bg: 'var(--secondary)',
-      border: 'rgba(26,58,110,0.15)',
+      border: 'rgba(123,26,46,0.15)',
     },
   ];
 

@@ -37,7 +37,7 @@ interface DemandeState {
 // ── Doc status config (statuts réels, gérés par l'Agent CPI dans "Mon dossier") ──
 const DOC_STATUS_CFG: Record<SharedDoc['status'], { label: string; color: string; bg: string }> = {
   'en-attente':  { label: 'À déposer',              color: 'var(--muted-foreground)', bg: 'var(--muted)'           },
-  depose:        { label: 'Déposé — analyse en cours', color: 'var(--chart-4)',        bg: 'rgba(46,110,196,0.08)' },
+  depose:        { label: 'Déposé — analyse en cours', color: 'var(--chart-4)',        bg: 'rgba(176,80,112,0.08)' },
   verification:  { label: 'En vérification',        color: 'var(--accent)',           bg: 'rgba(200,146,26,0.09)' },
   accepte:       { label: 'Accepté',                color: 'var(--success)',          bg: 'rgba(26,107,68,0.1)'   },
   refuse:        { label: 'Refusé',                 color: 'var(--destructive)',       bg: 'rgba(192,57,43,0.08)' },

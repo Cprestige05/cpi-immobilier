@@ -43,7 +43,7 @@ const TONE: Record<string, string> = {
   danger: 'var(--destructive)',
 };
 const TONE_BG: Record<string, string> = {
-  success: 'rgba(26,107,68,0.1)', primary: 'rgba(26,58,110,0.08)',
+  success: 'rgba(26,107,68,0.1)', primary: 'rgba(123,26,46,0.08)',
   accent: 'rgba(200,146,26,0.1)', muted: 'var(--muted)',
   danger: 'rgba(192,57,43,0.1)',
 };
@@ -126,7 +126,7 @@ export default function ClientDashboardHome({ user }: Props) {
             background: 'linear-gradient(135deg, var(--primary) 0%, var(--chart-4) 100%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.0625rem',
-            color: 'white', boxShadow: '0 4px 14px rgba(26,58,110,0.25)',
+            color: 'white', boxShadow: '0 4px 14px rgba(123,26,46,0.25)',
           }}>
             {user.name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()}
           </div>
@@ -295,7 +295,7 @@ export default function ClientDashboardHome({ user }: Props) {
           <>
             <KPICard icon={<Banknote size={19} />} label="Montant financé"
               value={fmt(animFinance)} sub="Financement accordé"
-              accentColor="var(--primary)" accentBg="rgba(26,58,110,0.08)" delay={0}
+              accentColor="var(--primary)" accentBg="rgba(123,26,46,0.08)" delay={0}
               onClick={() => navigate('ma-demande')} />
             <KPICard icon={<Calendar size={19} />} label="Échéance mensuelle"
               value={fmt(animEcheance)} sub="Prélèvement automatique"
@@ -307,7 +307,7 @@ export default function ClientDashboardHome({ user }: Props) {
               trend="up" trendLabel={`+${fmtN(animPaye)}`} delay={160} />
             <KPICard icon={<CreditCard size={19} />} label="Montant remboursé"
               value={fmt(animMontPaye)} sub="Depuis le début du prêt"
-              accentColor="var(--primary)" accentBg="rgba(26,58,110,0.08)" delay={240} />
+              accentColor="var(--primary)" accentBg="rgba(123,26,46,0.08)" delay={240} />
             <KPICard icon={<Clock size={19} />} label="Mois restants"
               value={`${fmtN(animRestants)} mois`} sub={`Fin : ${endDate}`}
               accentColor="var(--muted-foreground)" accentBg="var(--muted)" delay={320} />
@@ -320,7 +320,7 @@ export default function ClientDashboardHome({ user }: Props) {
           <>
             <KPICard icon={<CircleDot size={19} />} label="Étape actuelle"
               value={steps[activeStep].label} sub={steps[activeStep].sub}
-              accentColor="var(--primary)" accentBg="rgba(26,58,110,0.08)" delay={0}
+              accentColor="var(--primary)" accentBg="rgba(123,26,46,0.08)" delay={0}
               onClick={() => navigate('mon-dossier')} />
             <KPICard icon={<CheckCircle2 size={19} />} label="Pièces validées"
               value={`${validDocs} / ${totalDocs}`}
