@@ -3,7 +3,7 @@ import {
   FileText, Calendar, Clock, CheckCircle2, AlertCircle, XCircle,
   Building2, Edit3, Save, X, MessageSquare,
   Printer, Send, MapPin, Banknote, Timer, User2,
-  Hash, LayoutGrid, ArrowRight, FolderOpen, Bell, ImageIcon, FileUp,
+  Hash, LayoutGrid, ArrowRight, FolderOpen, Bell, ImageIcon, FileUp, Loader2,
 } from 'lucide-react';
 import type { AuthUser } from '../App';
 import type { HistoActionType } from '../data/demoStore';
@@ -79,7 +79,7 @@ const NATURE_LABELS: Record<string, string> = {
 // ── Design tokens ──────────────────────────────────────────────────
 const CARD_RADIUS = 20;
 const CARD_SHADOW = '0 1px 4px rgba(0,0,0,0.05), 0 8px 32px rgba(0,0,0,0.04)';
-const CARD_BORDER = '1px solid rgba(26,58,110,0.08)';
+const CARD_BORDER = '1px solid rgba(123,26,46,0.08)';
 const SECTION_PAD = '26px 28px';
 const BODY_PAD    = '0 28px 28px';
 
@@ -111,7 +111,7 @@ function SectionCard({ title, icon, iconBg, children, accent }: {
 }) {
   return (
     <div style={{ background: 'var(--card)', border: CARD_BORDER, borderRadius: CARD_RADIUS, overflow: 'hidden', boxShadow: CARD_SHADOW }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: SECTION_PAD, borderBottom: '1px solid rgba(26,58,110,0.06)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: SECTION_PAD, borderBottom: '1px solid rgba(123,26,46,0.06)' }}>
         <div style={{ width: 38, height: 38, borderRadius: 'var(--r-md)', flexShrink: 0, background: iconBg ?? 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: accent ?? 'var(--primary)' }}>
           {icon}
         </div>
@@ -124,13 +124,21 @@ function SectionCard({ title, icon, iconBg, children, accent }: {
   );
 }
 
-function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
+function FieldGroup({ label, required, hint, error, valid, children }: {
+  label: string; required?: boolean; hint?: string; error?: string; valid?: boolean; children: React.ReactNode;
+}) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
       <label style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 600, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-        {label}
+        {label}{required && <span style={{ color: 'var(--destructive)', marginLeft: 3 }}>*</span>}
       </label>
       {children}
+      {(error || hint) && (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'var(--font-sans)', fontSize: '0.75rem', lineHeight: 1.4, color: error ? 'var(--destructive)' : 'var(--muted-foreground)' }}>
+          {error ? <AlertCircle size={11} style={{ flexShrink: 0 }} /> : valid ? <CheckCircle2 size={11} style={{ flexShrink: 0, color: 'var(--success)' }} /> : null}
+          {error || hint}
+        </span>
+      )}
     </div>
   );
 }
@@ -140,20 +148,37 @@ const INPUT_BASE: React.CSSProperties = {
   border: '1.5px solid var(--border)', borderRadius: 'var(--r-sm)',
   padding: '11px 14px', outline: 'none',
   width: '100%', boxSizing: 'border-box',
-  transition: 'border-color 0.18s, box-shadow 0.18s',
+  transition: 'border-color var(--dur-1) var(--ease-out), box-shadow var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out)',
 };
 
-function FInput({ value, onChange, placeholder, type = 'text', disabled }: {
+function FInput({ value, onChange, placeholder, type = 'text', disabled, error, valid, icon }: {
   value: string; onChange?: (v: string) => void; placeholder?: string; type?: string; disabled?: boolean;
+  error?: boolean; valid?: boolean; icon?: React.ReactNode;
 }) {
+  const [focused, setFocused] = useState(false);
+  const [hover, setHover] = useState(false);
+  const borderColor = disabled ? 'var(--border)'
+    : error ? 'var(--destructive)'
+    : focused ? 'var(--primary)'
+    : valid ? 'var(--success)'
+    : hover ? 'var(--muted-foreground)' : 'var(--border)';
+  const boxShadow = !focused ? 'none' : error ? '0 0 0 3px rgba(192,57,43,0.14)' : 'var(--ring-focus)';
+  const showCheck = valid && !error && !disabled;
   return (
-    <input
-      type={type} value={value} placeholder={placeholder} disabled={disabled}
-      onChange={e => onChange?.(e.target.value)}
-      style={{ ...INPUT_BASE, background: disabled ? 'var(--muted)' : '#ffffff', color: disabled ? 'var(--muted-foreground)' : 'var(--foreground)' }}
-      onFocus={e => { if (!disabled) { e.target.style.borderColor = 'var(--primary)'; e.target.style.boxShadow = '0 0 0 3px rgba(26,58,110,0.1)'; } }}
-      onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
-    />
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+      {icon && (
+        <span style={{ position: 'absolute', left: 13, display: 'flex', pointerEvents: 'none', color: focused ? 'var(--primary)' : 'var(--muted-foreground)', transition: 'color var(--dur-1) var(--ease-out)' }}>{icon}</span>
+      )}
+      <input
+        type={type} value={value} placeholder={placeholder} disabled={disabled}
+        aria-invalid={error || undefined}
+        onChange={e => onChange?.(e.target.value)}
+        onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+        onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+        style={{ ...INPUT_BASE, borderColor, boxShadow, paddingLeft: icon ? 38 : 14, paddingRight: showCheck ? 38 : 14, background: disabled ? 'var(--muted)' : '#ffffff', color: disabled ? 'var(--muted-foreground)' : 'var(--foreground)' }}
+      />
+      {showCheck && <CheckCircle2 size={15} style={{ position: 'absolute', right: 12, color: 'var(--success)', pointerEvents: 'none' }} />}
+    </div>
   );
 }
 
@@ -161,11 +186,16 @@ function FSelect({ value, onChange, options, disabled }: {
   value: string; onChange?: (v: string) => void;
   options: { value: string; label: string }[]; disabled?: boolean;
 }) {
+  const [focused, setFocused] = useState(false);
+  const [hover, setHover] = useState(false);
+  const borderColor = disabled ? 'var(--border)' : focused ? 'var(--primary)' : hover ? 'var(--muted-foreground)' : 'var(--border)';
   return (
     <select
       value={value} disabled={disabled}
       onChange={e => onChange?.(e.target.value)}
-      style={{ ...INPUT_BASE, background: disabled ? 'var(--muted)' : '#ffffff', color: disabled ? 'var(--muted-foreground)' : 'var(--foreground)', cursor: disabled ? 'default' : 'pointer', appearance: 'auto' }}
+      onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+      onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+      style={{ ...INPUT_BASE, borderColor, boxShadow: focused ? 'var(--ring-focus)' : 'none', background: disabled ? 'var(--muted)' : '#ffffff', color: disabled ? 'var(--muted-foreground)' : 'var(--foreground)', cursor: disabled ? 'default' : 'pointer', appearance: 'auto' }}
     >
       {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
@@ -184,7 +214,7 @@ function ToastStack({ toasts }: { toasts: ToastItem[] }) {
           ? { bg: 'rgba(26,107,68,0.96)', icon: <CheckCircle2 size={15} /> }
           : t.type === 'error'
           ? { bg: 'rgba(192,57,43,0.96)', icon: <XCircle size={15} /> }
-          : { bg: 'rgba(26,58,110,0.96)', icon: <AlertCircle size={15} /> };
+          : { bg: 'rgba(123,26,46,0.96)', icon: <AlertCircle size={15} /> };
         return (
           <div key={t.id} style={{
             display: 'flex', alignItems: 'center', gap: 10,
@@ -272,6 +302,8 @@ export default function MaDemandePage({ user: _user }: Props) {
   const [demande, setDemande] = useState<DemandeState>(() => loadDemandeState(client, isNewClient));
   const [isEditing, setIsEditing] = useState(!demande.submitted);
   const [depotDocId, setDepotDocId] = useState<string | null>(null);
+  const [attempted, setAttempted] = useState(false);
+  const [sending, setSending] = useState(false);
   const lastClientId = useRef(client.id);
 
   const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -302,11 +334,21 @@ export default function MaDemandePage({ user: _user }: Props) {
   const canSubmit = form.montant.trim() !== '' && form.commune.trim() !== '' && form.adresseProjet.trim() !== '';
 
   const handleSubmitDemande = () => {
-    if (!canSubmit) return;
-    const submittedAt = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
-    setDemande(d => ({ ...d, submitted: true, submittedAt }));
-    setIsEditing(false);
-    addToast('success', 'Demande envoyée — votre conseiller CPI va l\'étudier.');
+    if (!canSubmit) {
+      setAttempted(true);
+      addToast('error', 'Complétez les champs requis avant d\'envoyer.');
+      return;
+    }
+    if (sending) return;
+    setSending(true);
+    // Court état d'envoi (ressenti premium) avant confirmation.
+    setTimeout(() => {
+      const submittedAt = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+      setDemande(d => ({ ...d, submitted: true, submittedAt }));
+      setIsEditing(false);
+      setSending(false);
+      addToast('success', 'Demande envoyée — votre conseiller CPI va l\'étudier.');
+    }, 850);
   };
 
   const handleDepot = (docId: string, fileName: string) => {
@@ -377,7 +419,7 @@ export default function MaDemandePage({ user: _user }: Props) {
                   <button onClick={() => { setIsEditing(false); setDemande(d => ({ ...d, form: loadDemandeState(client, isNewClient).form })); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 'var(--r-sm)', border: '1.5px solid var(--border)', background: 'transparent', color: 'var(--muted-foreground)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600 }}>
                     <X size={14} /> Annuler
                   </button>
-                  <button onClick={() => { setIsEditing(false); addToast('success', 'Modifications enregistrées'); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 20px', borderRadius: 'var(--r-full)', border: 'none', background: 'var(--primary)', color: 'var(--primary-foreground)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700, boxShadow: '0 2px 8px rgba(26,58,110,0.25)' }}>
+                  <button onClick={() => { setIsEditing(false); addToast('success', 'Modifications enregistrées'); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 20px', borderRadius: 'var(--r-full)', border: 'none', background: 'var(--primary)', color: 'var(--primary-foreground)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700, boxShadow: '0 2px 8px rgba(123,26,46,0.25)' }}>
                     <Save size={14} /> Enregistrer
                   </button>
                 </>
@@ -391,7 +433,7 @@ export default function MaDemandePage({ user: _user }: Props) {
         </div>
 
         {!demande.submitted && (
-          <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', background: 'rgba(26,58,110,0.05)', border: '1px solid rgba(26,58,110,0.12)', borderRadius: 'var(--r-md)' }}>
+          <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', background: 'rgba(123,26,46,0.05)', border: '1px solid rgba(123,26,46,0.12)', borderRadius: 'var(--r-md)' }}>
             <AlertCircle size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>
               Remplissez les informations de votre projet ci-dessous, puis envoyez votre demande pour qu'elle soit étudiée par votre conseiller.
@@ -431,7 +473,7 @@ export default function MaDemandePage({ user: _user }: Props) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         {/* 1 — Projet immobilier */}
-        <SectionCard title="Projet immobilier" icon={<Building2 size={18} />} iconBg="rgba(26,58,110,0.08)" accent="var(--primary)">
+        <SectionCard title="Projet immobilier" icon={<Building2 size={18} />} iconBg="rgba(123,26,46,0.08)" accent="var(--primary)">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 22, paddingTop: 4 }}>
             <div style={GRID2}>
               <FieldGroup label="Type de demande">
@@ -446,16 +488,22 @@ export default function MaDemandePage({ user: _user }: Props) {
               </FieldGroup>
             </div>
             <div style={GRID2}>
-              <FieldGroup label="Montant demandé (FCFA)">
-                <FInput value={form.montant} onChange={set('montant')} placeholder="Ex. 25 000 000" disabled={!isEditing} />
+              <FieldGroup label="Montant demandé (FCFA)" required
+                hint={isEditing ? 'Montant du financement souhaité, en FCFA.' : undefined}
+                error={attempted && !form.montant.trim() ? 'Ce champ est requis.' : undefined}
+                valid={isEditing && !!form.montant.trim()}>
+                <FInput value={form.montant} onChange={set('montant')} placeholder="Ex. 25 000 000" disabled={!isEditing}
+                  icon={<Banknote size={15} />} error={attempted && !form.montant.trim()} valid={isEditing && !!form.montant.trim()} />
               </FieldGroup>
               <FieldGroup label="Durée souhaitée">
                 <FSelect value={form.duree} onChange={set('duree')} disabled={!isEditing}
                   options={[5,7,10,12,15,20,25].map(n => ({ value: String(n), label: `${n} ans` }))}
                 />
               </FieldGroup>
-              <FieldGroup label="Apport personnel (FCFA)">
-                <FInput value={form.apport} onChange={set('apport')} placeholder="0 si aucun" disabled={!isEditing} />
+              <FieldGroup label="Apport personnel (FCFA)"
+                hint={isEditing ? 'Laissez 0 si vous n\'avez pas d\'apport.' : undefined}>
+                <FInput value={form.apport} onChange={set('apport')} placeholder="0 si aucun" disabled={!isEditing}
+                  icon={<Banknote size={15} />} />
               </FieldGroup>
             </div>
             <div style={{ background: 'var(--secondary)', borderRadius: 'var(--r-md)', padding: '18px 20px' }}>
@@ -469,11 +517,17 @@ export default function MaDemandePage({ user: _user }: Props) {
                     options={['Dakar','Thiès','Saint-Louis','Kaolack','Ziguinchor','Diourbel','Fatick','Kaffrine','Kédougou','Kolda','Louga','Matam','Sédhiou','Tambacounda'].map(r => ({ value: r, label: r }))}
                   />
                 </FieldGroup>
-                <FieldGroup label="Commune / Ville">
-                  <FInput value={form.commune} onChange={set('commune')} placeholder="Votre commune" disabled={!isEditing} />
+                <FieldGroup label="Commune / Ville" required
+                  error={attempted && !form.commune.trim() ? 'Ce champ est requis.' : undefined}
+                  valid={isEditing && !!form.commune.trim()}>
+                  <FInput value={form.commune} onChange={set('commune')} placeholder="Votre commune" disabled={!isEditing}
+                    icon={<MapPin size={15} />} error={attempted && !form.commune.trim()} valid={isEditing && !!form.commune.trim()} />
                 </FieldGroup>
-                <FieldGroup label="Adresse ou localisation">
-                  <FInput value={form.adresseProjet} onChange={set('adresseProjet')} placeholder="Ex. Lot 47…" disabled={!isEditing} />
+                <FieldGroup label="Adresse ou localisation" required
+                  error={attempted && !form.adresseProjet.trim() ? 'Ce champ est requis.' : undefined}
+                  valid={isEditing && !!form.adresseProjet.trim()}>
+                  <FInput value={form.adresseProjet} onChange={set('adresseProjet')} placeholder="Ex. Lot 47…" disabled={!isEditing}
+                    icon={<MapPin size={15} />} error={attempted && !form.adresseProjet.trim()} valid={isEditing && !!form.adresseProjet.trim()} />
                 </FieldGroup>
               </div>
             </div>
@@ -499,9 +553,11 @@ export default function MaDemandePage({ user: _user }: Props) {
                 </span>
               </div>
             </div>
-            <button onClick={handleSubmitDemande} disabled={!canSubmit}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '13px 28px', borderRadius: 'var(--r-full)', border: 'none', background: canSubmit ? 'var(--primary)' : 'var(--muted)', color: canSubmit ? 'var(--primary-foreground)' : 'var(--muted-foreground)', cursor: canSubmit ? 'pointer' : 'not-allowed', fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', fontWeight: 700, boxShadow: canSubmit ? '0 4px 14px rgba(26,58,110,0.28)' : 'none', whiteSpace: 'nowrap' }}>
-              <Send size={16} /> Envoyer ma demande
+            <button onClick={handleSubmitDemande} disabled={sending} aria-busy={sending || undefined}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '13px 28px', borderRadius: 'var(--r-full)', border: 'none', background: canSubmit ? 'var(--primary)' : 'var(--muted)', color: canSubmit ? 'var(--primary-foreground)' : 'var(--muted-foreground)', cursor: sending ? 'wait' : canSubmit ? 'pointer' : 'not-allowed', fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', fontWeight: 700, boxShadow: canSubmit && !sending ? 'var(--shadow-hover)' : 'none', opacity: sending ? 0.92 : 1, whiteSpace: 'nowrap', transition: 'background var(--dur-1) var(--ease-out), box-shadow var(--dur-2) var(--ease-out)' }}>
+              {sending
+                ? <><Loader2 size={16} style={{ animation: 'spin 0.8s linear infinite' }} /> Envoi en cours…</>
+                : <><Send size={16} /> Envoyer ma demande</>}
             </button>
           </div>
         )}
@@ -551,8 +607,8 @@ export default function MaDemandePage({ user: _user }: Props) {
 
           {/* Résumé */}
           <div style={{ background: 'var(--card)', border: CARD_BORDER, borderRadius: CARD_RADIUS, overflow: 'hidden', boxShadow: CARD_SHADOW }}>
-            <div style={{ padding: SECTION_PAD, borderBottom: '1px solid rgba(26,58,110,0.06)', display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 'var(--r-md)', background: 'rgba(26,58,110,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+            <div style={{ padding: SECTION_PAD, borderBottom: '1px solid rgba(123,26,46,0.06)', display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 'var(--r-md)', background: 'rgba(123,26,46,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
                 <LayoutGrid size={17} />
               </div>
               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>Résumé de la demande</h3>
@@ -582,7 +638,7 @@ export default function MaDemandePage({ user: _user }: Props) {
                 { label: 'Agence',           value: 'CPI Immobilier — Dakar',                                icon: <MapPin size={13} /> },
                 { label: 'Conseiller',       value: client.conseiller === 'Non assigné' ? '— (à assigner)' : client.conseiller, icon: <User2 size={13} /> },
               ].map((row, i, arr) => (
-                <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: i < arr.length - 1 ? '1px solid rgba(26,58,110,0.06)' : 'none', gap: 12 }}>
+                <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: i < arr.length - 1 ? '1px solid rgba(123,26,46,0.06)' : 'none', gap: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7, color: 'var(--muted-foreground)' }}>
                     {row.icon}
                     <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>{row.label}</span>
@@ -601,7 +657,7 @@ export default function MaDemandePage({ user: _user }: Props) {
 
           {/* Historique (réel — actions de votre conseiller CPI) */}
           <div style={{ background: 'var(--card)', border: CARD_BORDER, borderRadius: CARD_RADIUS, overflow: 'hidden', boxShadow: CARD_SHADOW }}>
-            <div style={{ padding: SECTION_PAD, borderBottom: '1px solid rgba(26,58,110,0.06)', display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ padding: SECTION_PAD, borderBottom: '1px solid rgba(123,26,46,0.06)', display: 'flex', alignItems: 'center', gap: 14 }}>
               <div style={{ width: 38, height: 38, borderRadius: 'var(--r-md)', background: 'rgba(200,146,26,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)' }}>
                 <Clock size={17} />
               </div>
@@ -642,7 +698,7 @@ export default function MaDemandePage({ user: _user }: Props) {
 
         {/* 4 — Actions disponibles */}
         <div style={{ background: 'var(--card)', border: CARD_BORDER, borderRadius: CARD_RADIUS, overflow: 'hidden', boxShadow: CARD_SHADOW }}>
-          <div style={{ padding: '20px 28px', borderBottom: '1px solid rgba(26,58,110,0.07)', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ padding: '20px 28px', borderBottom: '1px solid rgba(123,26,46,0.07)', display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 36, height: 36, borderRadius: 'var(--r-sm)', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Send size={15} style={{ color: 'var(--primary)' }} />
             </div>
@@ -650,7 +706,7 @@ export default function MaDemandePage({ user: _user }: Props) {
           </div>
 
           <div style={{ padding: '8px 0' }}>
-            <button onClick={() => navigate('mon-dossier')} style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%', padding: '13px 28px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(26,58,110,0.06)', cursor: 'pointer', textAlign: 'left' }}>
+            <button onClick={() => navigate('mon-dossier')} style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%', padding: '13px 28px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(123,26,46,0.06)', cursor: 'pointer', textAlign: 'left' }}>
               <div style={{ width: 38, height: 38, borderRadius: 'var(--r-sm)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(200,146,26,0.12)', border: '1px solid rgba(200,146,26,0.2)' }}>
                 <FolderOpen size={16} style={{ color: 'var(--accent)' }} />
               </div>
@@ -663,7 +719,7 @@ export default function MaDemandePage({ user: _user }: Props) {
 
             <button
               onClick={() => { addToast('info', 'Génération du PDF en cours…'); setTimeout(() => addToast('success', 'Récapitulatif téléchargé avec succès'), 1600); }}
-              style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%', padding: '13px 28px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(26,58,110,0.06)', cursor: 'pointer', textAlign: 'left' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%', padding: '13px 28px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(123,26,46,0.06)', cursor: 'pointer', textAlign: 'left' }}
             >
               <div style={{ width: 38, height: 38, borderRadius: 'var(--r-sm)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--secondary)' }}>
                 <Printer size={16} style={{ color: 'var(--primary)' }} />
