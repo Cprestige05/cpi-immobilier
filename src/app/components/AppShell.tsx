@@ -388,6 +388,8 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: 'var(--background)', fontFamily: 'var(--font-sans)' }}>
+      {/* Lien d'évitement clavier (accessibilité) */}
+      <a href="#cpi-main" className="cpi-skip">Aller au contenu</a>
       {/* Desktop sidebar */}
       <div className="hidden lg:flex flex-col w-64 flex-shrink-0">
         <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--sidebar)' }}>
@@ -513,7 +515,7 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
         </header>
 
         {/* Content — animation d'entrée rejouée à chaque changement de page */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-5 lg:p-7">
+        <main id="cpi-main" tabIndex={-1} className="flex-1 overflow-y-auto overflow-x-hidden p-5 lg:p-7" style={{ outline: 'none' }}>
           <div key={activeNav} className="cpi-page-enter">
             {renderDashboard()}
           </div>

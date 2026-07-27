@@ -896,7 +896,7 @@ export function EmptyState({
 }) {
   const { icon: Icon, title, sub } = EMPTY_CFG[type];
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px', gap: 12, textAlign: 'center' }}>
+    <div className="cpi-scale-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px', gap: 12, textAlign: 'center' }}>
       <div style={{ width: 52, height: 52, borderRadius: DS.radius.lg, background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 4 }}>
         <Icon size={22} style={{ color: 'var(--muted-foreground)' }} />
       </div>

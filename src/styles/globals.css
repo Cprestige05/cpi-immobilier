@@ -328,6 +328,22 @@ a, button, [role="button"], input, select, textarea, summary, label {
 @keyframes cpi-slide-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 .cpi-slide-up { animation: cpi-slide-up var(--dur-3) var(--ease-out) both; }
 
+/* ═══ Accessibilité & responsive ════════════════════════════════════════ */
+
+/* Lien d'évitement clavier (apparaît au focus, invisible sinon) */
+.cpi-skip {
+  position: fixed; top: -120px; left: 12px; z-index: var(--z-toast);
+  background: var(--primary); color: var(--primary-foreground);
+  padding: 10px 18px; border-radius: var(--r-sm);
+  font-family: var(--font-sans); font-size: 0.875rem; font-weight: 700;
+  text-decoration: none; box-shadow: var(--elev-lg);
+  transition: top var(--dur-2) var(--ease-out);
+}
+.cpi-skip:focus { top: 12px; outline: none; box-shadow: var(--elev-lg), var(--ring-focus); }
+
+/* Images fluides — jamais de débordement horizontal */
+img { max-width: 100%; height: auto; }
+
 /* Respect du mouvement réduit */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
