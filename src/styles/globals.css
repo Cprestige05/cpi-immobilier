@@ -344,6 +344,13 @@ a, button, [role="button"], input, select, textarea, summary, label {
 /* Images fluides — jamais de débordement horizontal */
 img { max-width: 100%; height: auto; }
 
+/* Tiroirs latéraux : entrée en glissé depuis la droite */
+@keyframes cpi-slide-in-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+.cpi-drawer-enter { animation: cpi-slide-in-right var(--dur-3) var(--ease-out) both; }
+/* Voile de fond des overlays : fondu doux */
+@keyframes cpi-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+.cpi-backdrop-enter { animation: cpi-backdrop-in var(--dur-2) var(--ease-out) both; }
+
 /* Respect du mouvement réduit */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

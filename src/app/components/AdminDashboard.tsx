@@ -1230,8 +1230,8 @@ function DemandesView({ agentName }: { agentName: string }) {
       {/* Drawer latéral de gestion */}
       {selected && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 60 }}>
-          <div onClick={() => { setSelectedId(null); setCommentFor(null); }} style={{ position: 'absolute', inset: 0, background: 'rgba(28,8,16,0.45)' }} />
-          <div className="p-5" style={{ position: 'absolute', top: 0, right: 0, height: '100%', width: 'min(460px, 100%)', background: 'white', overflowY: 'auto', boxShadow: '-8px 0 32px rgba(0,0,0,0.18)' }}>
+          <div onClick={() => { setSelectedId(null); setCommentFor(null); }} className="cpi-backdrop-enter" style={{ position: 'absolute', inset: 0, background: 'rgba(28,8,16,0.45)' }} />
+          <div className="p-5 cpi-drawer-enter" style={{ position: 'absolute', top: 0, right: 0, height: '100%', width: 'min(460px, 100%)', background: 'white', overflowY: 'auto', boxShadow: '-8px 0 32px rgba(0,0,0,0.18)' }}>
             {/* Header */}
             <div className="flex items-start justify-between mb-4">
               <div>
