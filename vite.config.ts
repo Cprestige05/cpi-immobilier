@@ -16,7 +16,12 @@ function figmaAssetResolver() {
   }
 }
 
+// Base « / » par défaut (Hostinger / hébergement racine).
+// Le workflow GitHub Pages définit DEPLOY_TARGET=gh-pages → sous-chemin du dépôt.
+const base = process.env.DEPLOY_TARGET === 'gh-pages' ? '/cpi-immobilier/' : '/'
+
 export default defineConfig({
+  base,
   plugins: [
     figmaAssetResolver(),
     // The React and Tailwind plugins are both required for Make, even if
