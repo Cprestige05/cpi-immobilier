@@ -512,9 +512,11 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
           </div>
         </header>
 
-        {/* Content */}
+        {/* Content — animation d'entrée rejouée à chaque changement de page */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-5 lg:p-7">
-          {renderDashboard()}
+          <div key={activeNav} className="cpi-page-enter">
+            {renderDashboard()}
+          </div>
         </main>
       </div>
 
