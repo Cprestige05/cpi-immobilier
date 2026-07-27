@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import {
   Banknote, Calendar, CheckCircle2, CreditCard, Clock,
   AlertTriangle, FileUp, ClipboardList, FolderOpen,
@@ -58,8 +57,6 @@ export default function ClientDashboardHome({ user }: Props) {
   const firstName = user.name.split(' ')[0];
   const today = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   const todayCap = today.charAt(0).toUpperCase() + today.slice(1);
-  const [heroVisible, setHeroVisible] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setHeroVisible(true), 60); return () => clearTimeout(t); }, []);
 
   const { montantFinance, echeanceMensuelle, moisPayes, montantPaye, moisRestants, dureeTotal } = client.finance;
 
@@ -117,8 +114,6 @@ export default function ClientDashboardHome({ user }: Props) {
         padding: '24px 0 20px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         gap: 16, flexWrap: 'wrap',
-        opacity: heroVisible ? 1 : 0, transform: heroVisible ? 'translateY(0)' : 'translateY(-8px)',
-        transition: 'opacity 0.4s ease, transform 0.4s ease',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{
@@ -160,9 +155,6 @@ export default function ClientDashboardHome({ user }: Props) {
         position: 'relative',
         background: 'var(--primary)',
         boxShadow: DS.shadow.xl,
-        opacity: heroVisible ? 1 : 0,
-        transform: heroVisible ? 'translateY(0)' : 'translateY(16px)',
-        transition: 'opacity 0.5s ease 0.1s, transform 0.5s ease 0.1s',
       }}>
         <div style={{ position: 'absolute', top: -60, right: -60, width: 240, height: 240, borderRadius: '50%', background: 'rgba(200,146,26,0.08)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: -40, right: 120, width: 160, height: 160, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', pointerEvents: 'none' }} />
