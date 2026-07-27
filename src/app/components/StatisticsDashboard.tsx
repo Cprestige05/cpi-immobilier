@@ -316,7 +316,7 @@ export default function StatisticsDashboard({ user }: Props) {
       </div>
 
       {/* KPI cards — portefeuille réel */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 cpi-stagger">
         <KpiCard label="Dossiers suivis" value={String(rTotal)} sub="Portefeuille actuel" icon={FileText} color={C.bordeaux} />
         <KpiCard label="Dossiers finalisés" value={String(rFinalises)} sub={`${rTaux}% du portefeuille`} icon={CheckCircle2} color={C.green} />
         <KpiCard label="En cours" value={String(rEnCours)} sub="Dossiers à traiter" icon={Clock} color={C.gold} />

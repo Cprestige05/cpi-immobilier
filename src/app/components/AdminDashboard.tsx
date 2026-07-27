@@ -383,7 +383,7 @@ export default function AdminDashboard({ user, activeNav }: Props) {
           </div>
 
           {/* KPIs réels */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 cpi-stagger">
             {[
               { label: 'Dossiers suivis',      value: String(rTotal),        sub: 'Portefeuille total',                    icon: FileText,   color: A.bordeaux },
               { label: 'En cours',             value: String(rEnCours),      sub: 'Dossiers non finalisés',                icon: Clock,      color: A.gold },

@@ -585,7 +585,7 @@ function PreviewModal({ doc, onClose }: { doc: SignDocTarget; onClose: () => voi
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       style={{ position: 'fixed', inset: 0, background: 'rgba(28,8,16,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', padding: '16px' }}>
-      <div style={{ background: 'var(--card)', borderRadius: 'var(--r-md)', width: '100%', maxWidth: '560px', maxHeight: '92vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 64px rgba(28,8,16,0.28)' }}>
+      <div className="cpi-scale-in" style={{ background: 'var(--card)', borderRadius: 'var(--r-md)', width: '100%', maxWidth: '560px', maxHeight: '92vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 64px rgba(28,8,16,0.28)' }}>
         <div style={{ padding: '16px 22px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
             <Eye size={18} style={{ color: 'var(--primary)', flexShrink: 0 }} />
@@ -631,7 +631,7 @@ function SignatureModal({ doc, onClose }: { doc: SignDocTarget; onClose: () => v
       onClick={e => { if (e.target === e.currentTarget && phase !== 'processing') onClose(); }}
       style={{ position: 'fixed', inset: 0, background: 'rgba(28,8,16,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', padding: '16px' }}>
       <style>{`@keyframes cpiSpin { to { transform: rotate(360deg); } }`}</style>
-      <div style={{ background: 'var(--card)', borderRadius: 'var(--r-md)', width: '100%', maxWidth: '500px', maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(28,8,16,0.28)' }}>
+      <div className="cpi-scale-in" style={{ background: 'var(--card)', borderRadius: 'var(--r-md)', width: '100%', maxWidth: '500px', maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(28,8,16,0.28)' }}>
 
         {phase === 'done' ? (
           <div style={{ padding: '36px 28px', textAlign: 'center' }}>
