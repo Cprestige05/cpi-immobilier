@@ -218,7 +218,7 @@ function DossierJourneyBanner() {
   return (
     <div style={{
       background: 'var(--primary)', borderRadius: 'var(--r-lg)', overflow: 'hidden',
-      position: 'relative', marginBottom: '16px', boxShadow: '0 8px 32px rgba(123,26,46,0.18)',
+      position: 'relative', marginBottom: '16px', boxShadow: '0 8px 32px rgba(99,2,16,0.18)',
     }}>
       <style>{`
         .dj-rail-mobile { display: none; }
@@ -686,7 +686,7 @@ function SignatureModal({ doc, onClose }: { doc: SignDocTarget; onClose: () => v
               </div>
 
               {/* Engagement légal */}
-              <div style={{ display: 'flex', gap: '10px', padding: '12px 14px', background: 'rgba(123,26,46,0.04)', border: '1px solid rgba(123,26,46,0.12)', borderRadius: 'var(--r-sm)' }}>
+              <div style={{ display: 'flex', gap: '10px', padding: '12px 14px', background: 'rgba(99,2,16,0.04)', border: '1px solid rgba(99,2,16,0.12)', borderRadius: 'var(--r-sm)' }}>
                 <ShieldCheck size={16} style={{ color: 'var(--primary)', flexShrink: 0, marginTop: '1px' }} />
                 <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', margin: 0, lineHeight: 1.6 }}>
                   Votre signature électronique a la même valeur juridique qu'une signature manuscrite. Elle est horodatée et associée à votre dossier de façon sécurisée.

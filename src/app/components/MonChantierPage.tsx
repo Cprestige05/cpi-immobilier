@@ -129,7 +129,7 @@ function TrancheCard({ t }: { t: Tranche }) {
       border: `1px solid ${t.etat === 'en-cours' ? 'var(--primary)' : 'var(--border)'}`,
       borderRadius: 'var(--r-md)', overflow: 'hidden',
       background: 'var(--card)',
-      boxShadow: t.etat === 'en-cours' ? '0 4px 20px rgba(123,26,46,0.1)' : 'none',
+      boxShadow: t.etat === 'en-cours' ? '0 4px 20px rgba(99,2,16,0.1)' : 'none',
       transition: 'box-shadow 0.2s',
     }}>
       <div
@@ -342,7 +342,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
     return clientEvents.length > 0 ? clientEvents.map(e => ({
       id: e.id, titre: e.titre, type: e.type, date: e.date,
       statut: e.statut,
-      color: e.type === 'inspection' ? 'var(--primary)' : e.type === 'rdv-client' ? '#7B1A2E' : e.type === 'livraison-materiaux' ? 'var(--accent)' : 'var(--success)',
+      color: e.type === 'inspection' ? 'var(--primary)' : e.type === 'rdv-client' ? '#630210' : e.type === 'livraison-materiaux' ? 'var(--accent)' : 'var(--success)',
     })) : CALENDAR_EVENTS;
   }, [events]);
 
@@ -372,7 +372,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
         backgroundImage: `url(${HERO_PHOTO})`, backgroundSize: 'cover', backgroundPosition: 'center',
         minHeight: '280px',
       }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(110deg, rgba(28,8,16,0.96) 0%, rgba(56,8,15,0.88) 45%, rgba(123,26,46,0.6) 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(110deg, rgba(28,8,16,0.96) 0%, rgba(56,8,15,0.88) 45%, rgba(99,2,16,0.6) 100%)' }} />
 
         {/* Decorative arc */}
         <div style={{ position: 'absolute', top: '-80px', right: '-80px', width: '320px', height: '320px', borderRadius: '50%', background: 'rgba(200,146,26,0.06)', pointerEvents: 'none' }} />
@@ -484,7 +484,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '10px' }}>
         {[
           { icon: TrendingUp,   label: 'Progression',          value: `${heroProgress}%`,        color: 'var(--primary)',   bg: 'var(--secondary)'              },
-          { icon: Camera,       label: 'Photos publiées',       value: `${photoCount}`,            color: '#7B1A2E',         bg: 'rgba(123,26,46,0.08)'          },
+          { icon: Camera,       label: 'Photos publiées',       value: `${photoCount}`,            color: '#630210',         bg: 'rgba(99,2,16,0.08)'          },
           { icon: CheckCircle2, label: 'Étapes terminées',      value: `${tranchesDone}`,          color: 'var(--success)',  bg: 'rgba(26,107,68,0.08)'          },
           { icon: Clock,        label: 'Étapes restantes',      value: `${4 - tranchesDone}`,      color: 'var(--accent)',   bg: 'rgba(200,146,26,0.08)'         },
           { icon: Banknote,     label: 'Décaissements réalisés',value: `${totalDec}`,              color: 'var(--success)',  bg: 'rgba(26,107,68,0.08)'          },
@@ -531,7 +531,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     background: done ? 'var(--success)' : active ? 'var(--primary)' : 'var(--card)',
                     border: `2px solid ${done ? 'var(--success)' : active ? 'var(--primary)' : 'var(--border)'}`,
-                    boxShadow: active ? '0 0 0 4px rgba(123,26,46,0.12)' : 'none',
+                    boxShadow: active ? '0 0 0 4px rgba(99,2,16,0.12)' : 'none',
                     transition: 'all 0.2s',
                   }}>
                     {done
@@ -551,7 +551,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
                     {active && (
                       <div style={{ marginTop: '4px' }}>
                         <span style={{
-                          background: 'rgba(123,26,46,0.1)', color: 'var(--primary)',
+                          background: 'rgba(99,2,16,0.1)', color: 'var(--primary)',
                           fontFamily: 'var(--font-sans)', fontSize: '0.625rem', fontWeight: 700,
                           padding: '2px 6px', borderRadius: 'var(--r-full)',
                         }}>{phase.pct}%</span>
@@ -708,7 +708,7 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
                 </div>
                 {group.entries.map((entry, ei) => {
                   const Icon = entry.icon;
-                  const typeColor = (entry as { type?: string }).type === 'photo' ? '#7B1A2E' : (entry as { type?: string }).type === 'finance' ? 'var(--success)' : (entry as { type?: string }).type === 'validation' ? 'var(--success)' : 'var(--primary)';
+                  const typeColor = (entry as { type?: string }).type === 'photo' ? '#630210' : (entry as { type?: string }).type === 'finance' ? 'var(--success)' : (entry as { type?: string }).type === 'validation' ? 'var(--success)' : 'var(--primary)';
                   return (
                     <div key={ei} style={{
                       display: 'flex', alignItems: 'flex-start', gap: '12px',

@@ -35,7 +35,7 @@ import HistoriqueModule from './HistoriqueModule';
 
 interface Props { user: AuthUser; activeNav?: string }
 
-const A = { bordeaux: '#7B1A2E', gold: '#C8921A', green: '#1A6B44', text: '#1C0810', muted: '#6B4A52', border: 'rgba(123,26,46,0.1)', red: '#C0392B' };
+const A = { bordeaux: '#630210', gold: '#C8921A', green: '#1A6B44', text: '#1C0810', muted: '#6B4A52', border: 'rgba(99,2,16,0.1)', red: '#C0392B' };
 
 const MONTHS_FR = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
 // Abréviations distinctes (juin ≠ juillet).
@@ -485,10 +485,10 @@ export default function AdminDashboard({ user, activeNav }: Props) {
                 {hasEvolution ? (
                   <ResponsiveContainer width="100%" height={220}>
                     <BarChart data={evolutionData} barGap={3} barSize={12}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(123,26,46,0.06)" vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(99,2,16,0.06)" vertical={false} />
                       <XAxis dataKey="label" tick={{ fontSize: 11, fill: A.muted }} axisLine={false} tickLine={false} />
                       <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: A.muted }} axisLine={false} tickLine={false} />
-                      <Tooltip contentStyle={{ border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: 12, background: 'white' }} cursor={{ fill: 'rgba(123,26,46,0.04)' }} />
+                      <Tooltip contentStyle={{ border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: 12, background: 'white' }} cursor={{ fill: 'rgba(99,2,16,0.04)' }} />
                       <Legend wrapperStyle={{ fontSize: '0.75rem', paddingTop: 8 }} />
                       <Bar dataKey="Inscriptions" fill={A.gold} radius={[3, 3, 0, 0]} />
                       <Bar dataKey="Activité" fill={A.bordeaux} radius={[3, 3, 0, 0]} />
@@ -550,7 +550,7 @@ export default function AdminDashboard({ user, activeNav }: Props) {
                     const cfg = ACT_ICON[a.type] ?? ACT_ICON.document;
                     const El = cfg.El;
                     return (
-                      <div key={a.id + i} className="flex items-start gap-3 py-2" style={{ borderBottom: i < recentActivity.length - 1 ? `1px solid rgba(123,26,46,0.05)` : 'none' }}>
+                      <div key={a.id + i} className="flex items-start gap-3 py-2" style={{ borderBottom: i < recentActivity.length - 1 ? `1px solid rgba(99,2,16,0.05)` : 'none' }}>
                         <El className="w-3.5 h-3.5 mt-0.5" style={{ color: cfg.color, flexShrink: 0 }} />
                         <div className="flex-1 min-w-0">
                           <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: A.text }}>{a.action}</div>
@@ -629,7 +629,7 @@ export default function AdminDashboard({ user, activeNav }: Props) {
                           <span style={{ fontSize: '0.75rem', color: A.text, fontWeight: 500 }}>{step.label}</span>
                           <span style={{ fontSize: '0.75rem', fontWeight: 700, color: A.text }}>{step.value}</span>
                         </div>
-                        <div className="h-6 flex items-center" style={{ background: 'rgba(123,26,46,0.06)', borderRadius: 'var(--r-xs)' }}>
+                        <div className="h-6 flex items-center" style={{ background: 'rgba(99,2,16,0.06)', borderRadius: 'var(--r-xs)' }}>
                           <div className="h-full flex items-center justify-end pr-2" style={{ width: `${width}%`, background: isEnd ? A.green : A.bordeaux, borderRadius: 'var(--r-xs)', minWidth: 24 }}>
                             <span style={{ fontSize: '0.625rem', fontWeight: 700, color: 'white' }}>{width}%</span>
                           </div>
@@ -727,7 +727,7 @@ export default function AdminDashboard({ user, activeNav }: Props) {
                       <span style={{ fontSize: '0.75rem', fontWeight: 600, color: A.text }}>{m.label}</span>
                       <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 800, color: m.pct === null ? A.muted : m.color, flexShrink: 0 }}>{m.pct === null ? '—' : `${m.pct}%`}</span>
                     </div>
-                    <div className="h-1.5" style={{ background: 'rgba(123,26,46,0.06)', borderRadius: 'var(--r-full)', overflow: 'hidden' }}>
+                    <div className="h-1.5" style={{ background: 'rgba(99,2,16,0.06)', borderRadius: 'var(--r-full)', overflow: 'hidden' }}>
                       <div className="h-full" style={{ width: `${m.pct ?? 0}%`, background: m.color, borderRadius: 'var(--r-full)', transition: 'width .3s' }} />
                     </div>
                     <div style={{ fontSize: '0.625rem', color: A.muted, marginTop: 3 }}>{m.hint}</div>
@@ -906,7 +906,7 @@ function SystemeView() {
         <div className="flex items-center gap-2 mb-4"><Server className="w-4 h-4" style={{ color: A.bordeaux }} /><h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: A.text }}>Informations plateforme</h3></div>
         <div className="space-y-1">
           {infoRows.map((row, i, arr) => (
-            <div key={row.k} className="flex items-center justify-between gap-3 py-2.5" style={{ borderBottom: i < arr.length - 1 ? '1px solid rgba(123,26,46,0.06)' : 'none' }}>
+            <div key={row.k} className="flex items-center justify-between gap-3 py-2.5" style={{ borderBottom: i < arr.length - 1 ? '1px solid rgba(99,2,16,0.06)' : 'none' }}>
               <span style={{ fontSize: '0.8125rem', color: A.muted, flexShrink: 0 }}>{row.k}</span>
               <span className="flex items-center gap-1.5" style={{ fontSize: '0.8125rem', fontWeight: 600, color: row.ok === false ? A.red : A.text, textAlign: 'right', wordBreak: 'break-all' }}>
                 {row.ok !== undefined && <span style={{ width: 7, height: 7, borderRadius: 'var(--r-full)', background: row.ok ? A.green : A.red, flexShrink: 0 }} />}

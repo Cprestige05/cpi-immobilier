@@ -10,10 +10,10 @@ interface LandingPageProps {
   onRegister: () => void;
 }
 
-const CPI_PRIMARY = '#7B1A2E';
-const CPI_DARK = '#38080F';
+const CPI_PRIMARY = '#630210';
+const CPI_DARK = '#3A010A';
 const CPI_LIGHT = '#F5ECEE';
-const CPI_BORDER = 'rgba(123,26,46,0.12)';
+const CPI_BORDER = 'rgba(99,2,16,0.12)';
 const CPI_MUTED = '#6B4A52';
 const GOLD = '#C8921A';
 const GOLD_LIGHT = '#F0B840';
@@ -162,7 +162,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
       </nav>
 
       {/* Hero */}
-      <section className="pt-16 relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${CPI_DARK} 0%, ${CPI_PRIMARY} 60%, #A03050 100%)` }}>
+      <section className="pt-16 relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${CPI_DARK} 0%, ${CPI_PRIMARY} 60%, #8E1526 100%)` }}>
         <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.6) 40px, rgba(255,255,255,0.6) 41px), repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(255,255,255,0.6) 40px, rgba(255,255,255,0.6) 41px)' }} />
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-20 lg:py-28 relative">
           <div className="grid lg:grid-cols-2 gap-16 items-center">

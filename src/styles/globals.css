@@ -10,37 +10,37 @@
   --card-foreground: #1C0810;
   --popover: #ffffff;
   --popover-foreground: #1C0810;
-  --primary: #7B1A2E;
+  --primary: #630210;
   --primary-foreground: #ffffff;
-  --primary-hover: #671528;
+  --primary-hover: #7E0417;
   --secondary: #F5ECEE;
-  --secondary-foreground: #7B1A2E;
+  --secondary-foreground: #630210;
   --muted: #EDE4E6;
   --muted-foreground: #6B4A52;
   --accent: #C8921A;
   --accent-foreground: #ffffff;
   --destructive: #B91C1C;
   --destructive-foreground: #ffffff;
-  --border: rgba(123, 26, 46, 0.12);
+  --border: rgba(99, 2, 16, 0.12);
   --input: transparent;
   --input-background: #F5ECEE;
   --switch-background: #C4A0AA;
   --font-weight-medium: 600;
   --font-weight-normal: 400;
-  --ring: #7B1A2E;
+  --ring: #630210;
   --success: #1A6B44;
   --success-foreground: #ffffff;
-  --chart-1: #7B1A2E;
+  --chart-1: #630210;
   --chart-2: #C8921A;
   --chart-3: #1A6B44;
   --chart-4: #B05070;
   --chart-5: #8B5CF6;
   --radius: 0.25rem;
-  --sidebar: #38080F;
+  --sidebar: #3A010A;
   --sidebar-foreground: #DFC0C8;
   --sidebar-primary: #ffffff;
-  --sidebar-primary-foreground: #38080F;
-  --sidebar-accent: #5C1224;
+  --sidebar-primary-foreground: #3A010A;
+  --sidebar-accent: #4A0110;
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: rgba(255,255,255,0.08);
   --sidebar-ring: #B05070;
@@ -218,8 +218,8 @@ html {
   --elev-md: 0 4px 12px rgba(28,8,16,0.06), 0 2px 6px rgba(28,8,16,0.04);
   --elev-lg: 0 8px 24px rgba(28,8,16,0.08), 0 4px 12px rgba(28,8,16,0.05);
   --elev-xl: 0 16px 48px rgba(28,8,16,0.10), 0 8px 24px rgba(28,8,16,0.06);
-  --shadow-hover: 0 6px 22px rgba(123,26,46,0.10);
-  --ring-focus: 0 0 0 3px rgba(123,26,46,0.30);
+  --shadow-hover: 0 6px 22px rgba(99,2,16,0.10);
+  --ring-focus: 0 0 0 3px rgba(99,2,16,0.30);
 
   /* Échelle typographique */
   --fs-display: clamp(2rem, 4vw, 2.75rem);
@@ -257,7 +257,7 @@ body { text-rendering: optimizeLegibility; }
 h1, h2, h3, h4, .font-display { letter-spacing: -0.02em; }
 
 /* Sélection à la marque */
-::selection { background: rgba(123,26,46,0.14); color: var(--foreground); }
+::selection { background: rgba(99,2,16,0.14); color: var(--foreground); }
 
 /* Focus visible accessible (clavier uniquement) — anneau bordeaux */
 :where(a, button, input, select, textarea, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
@@ -276,10 +276,10 @@ a, button, [role="button"], input, select, textarea, summary, label {
 }
 
 /* Scrollbars fines et discrètes */
-* { scrollbar-width: thin; scrollbar-color: rgba(123,26,46,0.20) transparent; }
+* { scrollbar-width: thin; scrollbar-color: rgba(99,2,16,0.20) transparent; }
 *::-webkit-scrollbar { width: 10px; height: 10px; }
-*::-webkit-scrollbar-thumb { background: rgba(123,26,46,0.16); border-radius: 9999px; border: 2px solid transparent; background-clip: padding-box; }
-*::-webkit-scrollbar-thumb:hover { background: rgba(123,26,46,0.30); background-clip: padding-box; }
+*::-webkit-scrollbar-thumb { background: rgba(99,2,16,0.16); border-radius: 9999px; border: 2px solid transparent; background-clip: padding-box; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(99,2,16,0.30); background-clip: padding-box; }
 *::-webkit-scrollbar-track { background: transparent; }
 
 /* Entrée de contenu élégante */

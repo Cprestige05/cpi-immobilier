@@ -59,7 +59,7 @@ const TYPE_CONFIG: Record<NotifType, {
   },
   'debit-paiement': {
     icon: CreditCard, color: 'var(--primary)',
-    bg: 'rgba(123,26,46,0.07)', border: 'rgba(123,26,46,0.14)',
+    bg: 'rgba(99,2,16,0.07)', border: 'rgba(99,2,16,0.14)',
     label: 'Débit',
   },
   'alerte-retard': {
@@ -84,7 +84,7 @@ const TYPE_CONFIG: Record<NotifType, {
   },
   'dossier-update': {
     icon: Banknote, color: 'var(--primary)',
-    bg: 'rgba(123,26,46,0.07)', border: 'rgba(123,26,46,0.14)',
+    bg: 'rgba(99,2,16,0.07)', border: 'rgba(99,2,16,0.14)',
     label: 'Dossier',
   },
   'securite-appareil': {
@@ -104,7 +104,7 @@ const TYPE_CONFIG: Record<NotifType, {
   },
   'info': {
     icon: Info, color: 'var(--primary)',
-    bg: 'rgba(123,26,46,0.07)', border: 'rgba(123,26,46,0.14)',
+    bg: 'rgba(99,2,16,0.07)', border: 'rgba(99,2,16,0.14)',
     label: 'Info',
   },
 };
@@ -386,7 +386,7 @@ export default function NotificationsPage() {
       <div style={{
         display: 'flex', alignItems: 'flex-start', gap: '10px',
         padding: '13px 16px', borderRadius: 'var(--r-md)',
-        background: 'rgba(123,26,46,0.05)', border: '1px solid rgba(123,26,46,0.1)',
+        background: 'rgba(99,2,16,0.05)', border: '1px solid rgba(99,2,16,0.1)',
       }}>
         <LogIn size={14} style={{ color: 'var(--primary)', flexShrink: 0, marginTop: '1px' }} />
         <div>

@@ -137,7 +137,7 @@ function SupportPage() {
       href: 'mailto:support@cpi.sn',
       color: 'var(--primary)',
       bg: 'var(--secondary)',
-      border: 'rgba(123,26,46,0.15)',
+      border: 'rgba(99,2,16,0.15)',
     },
   ];
 
@@ -146,7 +146,7 @@ function SupportPage() {
 
       {/* Header */}
       <div style={{
-        background: 'linear-gradient(120deg, var(--primary) 0%, #A03050 100%)',
+        background: 'linear-gradient(120deg, var(--primary) 0%, #8E1526 100%)',
         borderRadius: 'var(--r-md)', padding: '24px 28px',
         display: 'flex', alignItems: 'center', gap: '16px',
       }}>

@@ -95,7 +95,7 @@ function Field({ label, type = 'text', placeholder, value, onChange, error, vali
   const [hover, setHover] = useState(false);
   const isPwd = type === 'password';
   const borderColor = error ? 'var(--destructive)' : focused ? 'var(--primary)' : valid ? 'var(--success)' : hover ? 'var(--muted-foreground)' : 'var(--border)';
-  const boxShadow = !focused ? 'none' : error ? '0 0 0 3px rgba(192,57,43,0.14)' : '0 0 0 3px rgba(123,26,46,0.12)';
+  const boxShadow = !focused ? 'none' : error ? '0 0 0 3px rgba(192,57,43,0.14)' : '0 0 0 3px rgba(99,2,16,0.12)';
   const showCheck = valid && !error && !isPwd;
   const rightPad = isPwd ? 42 : showCheck ? 38 : 14;
   return (
@@ -146,7 +146,7 @@ function SelectField({ label, value, onChange, options, placeholder, error, vali
   const [focused, setFocused] = useState(false);
   const [hover, setHover] = useState(false);
   const borderColor = error ? 'var(--destructive)' : focused ? 'var(--primary)' : valid ? 'var(--success)' : hover ? 'var(--muted-foreground)' : 'var(--border)';
-  const boxShadow = !focused ? 'none' : error ? '0 0 0 3px rgba(192,57,43,0.14)' : '0 0 0 3px rgba(123,26,46,0.12)';
+  const boxShadow = !focused ? 'none' : error ? '0 0 0 3px rgba(192,57,43,0.14)' : '0 0 0 3px rgba(99,2,16,0.12)';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
       <label style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 'var(--font-weight-medium)' as any, color: 'var(--foreground)' }}>
@@ -378,7 +378,7 @@ function WelcomeScreen({ onNavigate, onLogin, onProfileSelect }: {
           animationDelay: '160ms',
         }} className="trust-strip cpi-animate-in">
           {([
-            { icon: Zap,        label: 'Processus simple',         sub: 'Des étapes claires à chaque stade',       color: '#7B1A2E', bg: 'var(--secondary)' },
+            { icon: Zap,        label: 'Processus simple',         sub: 'Des étapes claires à chaque stade',       color: '#630210', bg: 'var(--secondary)' },
             { icon: Shield,     label: 'Données sécurisées',       sub: 'Chiffrement SSL — confidentialité totale', color: '#1E4D8C', bg: 'rgba(30,77,140,0.08)' },
             { icon: Headphones, label: 'Support dédié',            sub: "Une équipe disponible à chaque étape",    color: 'var(--success)', bg: 'rgba(26,107,68,0.08)' },
             { icon: Handshake,  label: 'Partenaires officiels',    sub: 'CPI · Banques partenaires',    color: 'var(--accent)', bg: 'rgba(200,146,26,0.10)' },
@@ -389,7 +389,7 @@ function WelcomeScreen({ onNavigate, onLogin, onProfileSelect }: {
                 flex: 1,
                 display: 'flex', alignItems: 'center', gap: '13px',
                 padding: '18px 22px',
-                borderLeft: i > 0 ? '1px solid rgba(123,26,46,0.07)' : 'none',
+                borderLeft: i > 0 ? '1px solid rgba(99,2,16,0.07)' : 'none',
               }}>
                 <div style={{
                   width: '40px', height: '40px', flexShrink: 0,
@@ -428,7 +428,7 @@ function WelcomeScreen({ onNavigate, onLogin, onProfileSelect }: {
         @media (max-width: 600px) {
           .profile-grid { grid-template-columns: 1fr !important; }
           .trust-strip { flex-direction: column !important; border-radius: 12px !important; }
-          .trust-strip > div { border-left: none !important; border-top: 1px solid rgba(123,26,46,0.07) !important; padding: 14px 16px !important; }
+          .trust-strip > div { border-left: none !important; border-top: 1px solid rgba(99,2,16,0.07) !important; padding: 14px 16px !important; }
           .trust-strip > div:first-child { border-top: none !important; }
         }
         @media (min-width: 601px) and (max-width: 860px) {

@@ -20,7 +20,7 @@ interface Props { user: AuthUser }
 
 // ─── Palette ───────────────────────────────────────────────────────────────
 const C = {
-  bordeaux: '#7B1A2E',
+  bordeaux: '#630210',
   bordeauxLight: '#F5ECEE',
   bordeauxMid: '#B05070',
   gold: '#C8921A',
@@ -30,7 +30,7 @@ const C = {
   purple: '#6D28D9',
   purpleLight: 'rgba(109,40,217,0.1)',
   muted: '#6B4A52',
-  border: 'rgba(123,26,46,0.1)',
+  border: 'rgba(99,2,16,0.1)',
   bg: '#FAF7F7',
   text: '#1C0810',
 };
@@ -357,10 +357,10 @@ export default function StatisticsDashboard({ user }: Props) {
                   {hasData ? (
                     <ResponsiveContainer width="100%" height={240}>
                       <BarChart data={byStepData} barSize={26}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(123,26,46,0.06)" vertical={false} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(99,2,16,0.06)" vertical={false} />
                         <XAxis dataKey="etape" tick={{ fontSize: 10, fill: C.muted }} axisLine={false} tickLine={false} interval={0} angle={-12} textAnchor="end" height={50} />
                         <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: C.muted }} axisLine={false} tickLine={false} />
-                        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(123,26,46,0.04)' }} />
+                        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(99,2,16,0.04)' }} />
                         <Bar dataKey="dossiers" name="Dossiers" fill={C.bordeaux} radius={[2, 2, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
@@ -416,7 +416,7 @@ export default function StatisticsDashboard({ user }: Props) {
                               <span style={{ fontSize: '0.75rem', color: C.muted }}>({pct}%)</span>
                             </div>
                           </div>
-                          <div className="h-1.5" style={{ background: 'rgba(123,26,46,0.08)' }}>
+                          <div className="h-1.5" style={{ background: 'rgba(99,2,16,0.08)' }}>
                             <div className="h-full transition-all" style={{ width: `${pct}%`, background: s.color }} />
                           </div>
                         </div>
@@ -433,7 +433,7 @@ export default function StatisticsDashboard({ user }: Props) {
                     <BarChart data={BY_BIEN} layout="vertical" barSize={14}>
                       <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: C.muted }} axisLine={false} tickLine={false} />
                       <YAxis type="category" dataKey="type" tick={{ fontSize: 11, fill: C.muted }} axisLine={false} tickLine={false} width={110} />
-                      <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(123,26,46,0.04)' }} />
+                      <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(99,2,16,0.04)' }} />
                       <Bar dataKey="count" name="Dossiers" fill={C.bordeaux} radius={[0, 2, 2, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
@@ -539,7 +539,7 @@ export default function StatisticsDashboard({ user }: Props) {
                               <span style={{ fontSize: '0.875rem', fontWeight: 800, color: C.text, fontFamily: 'var(--font-display)' }}>{step.value}</span>
                             </div>
                           </div>
-                          <div className="relative h-8 flex items-center" style={{ background: 'rgba(123,26,46,0.06)' }}>
+                          <div className="relative h-8 flex items-center" style={{ background: 'rgba(99,2,16,0.06)' }}>
                             <div className="h-full flex items-center justify-end pr-3 transition-all"
                               style={{ width: `${width}%`, background: step.fill, minWidth: '2rem' }}>
                               <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'white' }}>{convRate}%</span>
@@ -549,7 +549,7 @@ export default function StatisticsDashboard({ user }: Props) {
                       );
                     })}
                   </div>
-                  <div className="mt-4 p-4" style={{ background: C.bordeauxLight, border: `1px solid rgba(123,26,46,0.15)` }}>
+                  <div className="mt-4 p-4" style={{ background: C.bordeauxLight, border: `1px solid rgba(99,2,16,0.15)` }}>
                     <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: C.bordeaux }}>Taux de conversion global</div>
                     <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem', fontWeight: 800, color: C.bordeaux }}>{conversionGlobal}%</div>
                     <div style={{ fontSize: '0.75rem', color: C.muted }}>Des dossiers du portefeuille atteignent la signature</div>
@@ -569,7 +569,7 @@ export default function StatisticsDashboard({ user }: Props) {
           {activeTab === 'audience' && isAdmin && (
             <div className="space-y-6">
               {/* Bandeau explicatif */}
-              <div className="p-4 flex items-start gap-3" style={{ background: C.bordeauxLight, border: `1px solid rgba(123,26,46,0.15)`, borderRadius: 'var(--r-sm)' }}>
+              <div className="p-4 flex items-start gap-3" style={{ background: C.bordeauxLight, border: `1px solid rgba(99,2,16,0.15)`, borderRadius: 'var(--r-sm)' }}>
                 <Activity className="w-4 h-4 flex-shrink-0" style={{ color: C.bordeaux, marginTop: 2 }} />
                 <div>
                   <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: C.bordeaux }}>Mesure d'audience — à connecter</div>

@@ -32,7 +32,7 @@ const BANKS_KEY = 'cpi_banks_registry_v1';
 const ASSIGN_KEY = 'cpi_bank_assign_v1';
 
 // Palette proposée pour les nouvelles banques.
-export const BANK_COLORS = ['#1E4D8C', '#1A6B44', '#7B1A2E', '#C8921A', '#6D28D9', '#0E7490'];
+export const BANK_COLORS = ['#1E4D8C', '#1A6B44', '#630210', '#C8921A', '#6D28D9', '#0E7490'];
 
 // ─── Banques ──────────────────────────────────────────────────────────────────
 

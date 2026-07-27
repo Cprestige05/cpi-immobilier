@@ -435,7 +435,7 @@ export default function ChantierModule({ agentName = 'Agent CPI' }: Props) {
                     <button
                       onClick={() => {
                         if (!isCh1) return;
-                        addMedia({ type: 'photo', titre: `Photo chantier ${new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}`, description: '', phase: 2, auteur: agentName, url: '', bg: 'linear-gradient(135deg,#7B1A2E,#B05070)', visibleClient: true }, agentName);
+                        addMedia({ type: 'photo', titre: `Photo chantier ${new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}`, description: '', phase: 2, auteur: agentName, url: '', bg: 'linear-gradient(135deg,#630210,#B05070)', visibleClient: true }, agentName);
                         showToast('Photo de démonstration ajoutée.');
                       }}
                       style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 12px', background: 'var(--secondary)', color: 'var(--primary)', border: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>

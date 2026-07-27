@@ -71,14 +71,14 @@ const CSS = `
     -webkit-appearance: none;
     width: 20px; height: 20px; border-radius: 50%;
     background: var(--primary); border: 3px solid #fff;
-    box-shadow: 0 2px 8px rgba(123,26,46,0.35);
+    box-shadow: 0 2px 8px rgba(99,2,16,0.35);
     cursor: pointer; transition: transform 0.12s;
   }
   .sim-range::-webkit-slider-thumb:hover { transform: scale(1.18); }
   .sim-range::-moz-range-thumb {
     width: 20px; height: 20px; border-radius: 50%;
     background: var(--primary); border: 3px solid #fff;
-    box-shadow: 0 2px 8px rgba(123,26,46,0.35); cursor: pointer;
+    box-shadow: 0 2px 8px rgba(99,2,16,0.35); cursor: pointer;
   }
   .sim-grid { display: grid; grid-template-columns: 360px 1fr; gap: 20px; align-items: start; }
   .sim-grid > * { min-width: 0; }
@@ -211,7 +211,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
 
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <div className="sim-no-print" style={{
-          background: 'linear-gradient(120deg, var(--primary) 0%, #A03050 100%)',
+          background: 'linear-gradient(120deg, var(--primary) 0%, #8E1526 100%)',
           borderRadius: 'var(--r-lg)', padding: '26px 32px', marginBottom: '22px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap',
         }}>
@@ -424,7 +424,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
               </div>
 
               {/* Info box */}
-              <div style={{ display: 'flex', gap: '8px', padding: '11px 13px', background: 'rgba(123,26,46,0.06)', borderRadius: 'var(--r-sm)', border: '1px solid rgba(123,26,46,0.1)' }}>
+              <div style={{ display: 'flex', gap: '8px', padding: '11px 13px', background: 'rgba(99,2,16,0.06)', borderRadius: 'var(--r-sm)', border: '1px solid rgba(99,2,16,0.1)' }}>
                 <Info size={14} style={{ color: 'var(--primary)', flexShrink: 0, marginTop: '1px' }} />
                 <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', lineHeight: 1.55 }}>
                   Le paiement calculé est basé sur un taux d'amortissement constant. La dernière échéance peut légèrement différer par arrondi.
@@ -438,7 +438,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
 
             {/* Big mensualité */}
             <div style={{
-              background: 'linear-gradient(135deg, var(--primary) 0%, #5C1224 55%, #38080F 100%)',
+              background: 'linear-gradient(135deg, var(--primary) 0%, #4A0110 55%, #3A010A 100%)',
               borderRadius: 'var(--r-md)', padding: '26px 28px',
               display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'center', justifyContent: 'space-between',
             }}>
@@ -650,7 +650,7 @@ export default function SimulateurPage({ user: _user }: { user: AuthUser }) {
                               className="sim-tr"
                               style={{
                                 background: isYearEnd
-                                  ? 'rgba(123,26,46,0.045)'
+                                  ? 'rgba(99,2,16,0.045)'
                                   : i % 2 === 0 ? 'var(--card)' : 'var(--background)',
                                 borderBottom: isYearEnd
                                   ? '2px solid var(--border)'
