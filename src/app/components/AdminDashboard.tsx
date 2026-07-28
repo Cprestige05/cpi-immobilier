@@ -20,6 +20,7 @@ import {
   type StaffAccount,
 } from '../data/clientRegistry';
 import { logActivity } from '../data/activityLog';
+import { seedDemoData, clearDemoData, countDemoData } from '../data/demoSeed';
 import {
   loadBanks, registerBank, deleteBank, isBankActive, BANK_COLORS,
   loadAssignments, assignBankToClient, setBankStatus, removeAssignment,
@@ -851,6 +852,19 @@ function SystemeView() {
     showToast('Base réinitialisée — rechargement…');
   };
 
+  // ── Données de démo / test ─────────────────────────────────────────────────────
+  const demoCount = countDemoData();
+  const doSeedDemo = () => {
+    const n = seedDemoData();
+    showToast(`${n} dossiers de démo chargés — rechargement…`);
+    setTimeout(() => window.location.reload(), 700);
+  };
+  const doClearDemo = () => {
+    const n = clearDemoData();
+    showToast(`${n} dossiers de démo supprimés — rechargement…`);
+    setTimeout(() => window.location.reload(), 700);
+  };
+
   const exportJSON = () => {
     const data: Record<string, string> = {};
     cpiKeys.forEach(k => { const v = localStorage.getItem(k); if (v !== null) data[k] = v; });
@@ -901,6 +915,27 @@ function SystemeView() {
 
   return (
     <div className="space-y-6">
+      {/* 0. Données de démo / test */}
+      <div className={cardCls} style={{ ...cs, borderColor: 'rgba(200,146,26,0.35)', background: 'rgba(200,146,26,0.04)' }}>
+        <div className="flex items-center gap-2 mb-1"><Users className="w-4 h-4" style={{ color: A.gold }} /><h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: A.text }}>Données de démo (test)</h3></div>
+        <p style={{ fontSize: '0.8125rem', color: A.muted, marginBottom: 14, lineHeight: 1.55 }}>
+          Charge <strong>30 dossiers fictifs</strong> répartis sur tout le parcours (pièces à vérifier, en analyse banque, en construction, contrat à signer) pour tester la plateforme. Ils sont marqués « démo » et <strong>supprimables à tout moment</strong> sans toucher aux vrais comptes.
+        </p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <button onClick={doSeedDemo} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 'var(--r-sm)', border: 'none', background: A.bordeaux, color: '#fff', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>
+            <Plus className="w-4 h-4" /> Charger 30 dossiers de démo
+          </button>
+          {demoCount > 0 && (
+            <button onClick={doClearDemo} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 'var(--r-sm)', border: `1px solid ${A.border}`, background: 'white', color: A.red, fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>
+              <Trash2 className="w-4 h-4" /> Supprimer les données de démo
+            </button>
+          )}
+          <span style={{ fontSize: '0.8125rem', color: A.muted }}>
+            {demoCount > 0 ? `${demoCount} dossier${demoCount > 1 ? 's' : ''} de démo présent${demoCount > 1 ? 's' : ''}` : 'Aucune donnée de démo'}
+          </span>
+        </div>
+      </div>
+
       {/* 1. Informations plateforme */}
       <div className={cardCls} style={cs}>
         <div className="flex items-center gap-2 mb-4"><Server className="w-4 h-4" style={{ color: A.bordeaux }} /><h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: A.text }}>Informations plateforme</h3></div>
