@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   FileText, Calendar, Clock, CheckCircle2, AlertCircle, XCircle,
   Building2, Edit3, Save, X, MessageSquare,
@@ -7,9 +8,15 @@ import {
 } from 'lucide-react';
 import type { AuthUser } from '../App';
 import type { HistoActionType } from '../data/demoStore';
+import { frDate } from '../data/demoStore';
 import { useClientData } from '../data/useClientData';
 import { useDocState, type SharedDoc } from '../data/docStateContext';
 import { useNavigate } from '../contexts/NavigationContext';
+import { clientApi, type DemandeData, type DemandeInput } from '../api/endpoints';
+import { apiErrorMessage } from '../api/client';
+import { usePermission } from '../auth/PermissionContext';
+import { JOURNEY_QUERY_KEY } from '../data/dossierJourney';
+import { MY_PROFILE_QUERY_KEY } from '../data/clientRegistry';
 
 interface Props { user: AuthUser }
 
@@ -28,11 +35,6 @@ interface DemandeForm {
   description: string;
 }
 
-interface DemandeState {
-  submitted: boolean;
-  submittedAt?: string;
-  form: DemandeForm;
-}
 
 // ── Doc status config (statuts réels, gérés par l'Agent CPI dans "Mon dossier") ──
 const DOC_STATUS_CFG: Record<SharedDoc['status'], { label: string; color: string; bg: string }> = {
@@ -83,11 +85,11 @@ const CARD_BORDER = '1px solid rgba(99,2,16,0.08)';
 const SECTION_PAD = '26px 28px';
 const BODY_PAD    = '0 28px 28px';
 
-// ── Persisted per-client draft ─────────────────────────────────────
-const STORAGE_KEY = (clientId: string) => `cpi_demande_v1_${clientId}`;
+// ── Demande persistée côté API (/client/ma-demande) ────────────────
+const MA_DEMANDE_QUERY_KEY = ['client', 'ma-demande'] as const;
 
-function defaultFormFor(_client: ReturnType<typeof useClientData>, _isNewClient: boolean): DemandeForm {
-  // Aucune valeur pré-remplie fictive : chaque client saisit sa propre demande.
+/** Brouillon vide : aucune valeur pré-remplie fictive. */
+function emptyForm(): DemandeForm {
   return {
     typeProjet: 'financement', natureProjet: 'acquisition',
     montant: '', duree: '15', apport: '',
@@ -95,13 +97,47 @@ function defaultFormFor(_client: ReturnType<typeof useClientData>, _isNewClient:
   };
 }
 
-function loadDemandeState(client: ReturnType<typeof useClientData>, isNewClient: boolean): DemandeState {
-  try {
-    const s = localStorage.getItem(STORAGE_KEY(client.id));
-    if (s) return JSON.parse(s) as DemandeState;
-  } catch {}
-  return { submitted: !isNewClient, form: defaultFormFor(client, isNewClient) };
+/** DemandeData (API) → champs du formulaire. */
+function toForm(d: DemandeData): DemandeForm {
+  return {
+    typeProjet: d.typeProjet,
+    natureProjet: d.natureProjet,
+    montant: d.montant !== null ? String(d.montant) : '',
+    duree: d.duree,
+    apport: String(d.apport ?? 0),
+    region: d.region,
+    commune: d.commune ?? '',
+    adresseProjet: d.adresseProjet ?? '',
+    description: d.description ?? '',
+  };
 }
+
+/** « 25 000 000 » → 25000000. Renvoie null si la saisie n'est pas un nombre. */
+function parseMontant(value: string): number | null {
+  const cleaned = value.replace(/[\s ]/g, '').replace(',', '.');
+  if (cleaned === '') return null;
+  const n = Number(cleaned);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
+
+/** Champs du formulaire → corps attendu par l'API (snake_case). */
+function toPayload(form: DemandeForm): DemandeInput {
+  return {
+    type_projet: form.typeProjet,
+    nature_projet: form.natureProjet,
+    montant: parseMontant(form.montant),
+    duree: form.duree,
+    apport: parseMontant(form.apport) ?? 0,
+    region: form.region,
+    commune: form.commune.trim() || null,
+    adresse_projet: form.adresseProjet.trim() || null,
+    description: form.description.trim() || null,
+  };
+}
+
+// ── Contraintes de dépôt (miroir de la validation serveur) ─────────
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+const ACCEPTED_EXT = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];
 
 // ── Primitives ─────────────────────────────────────────────────────
 
@@ -234,57 +270,71 @@ function ToastStack({ toasts }: { toasts: ToastItem[] }) {
 }
 
 // ── Zone de dépôt inline (une pièce) ───────────────────────────────
-function InlineDepot({ label, onDeposit }: { label: string; onDeposit: (fileName: string) => void }) {
+function InlineDepot({ label, onDeposit }: { label: string; onDeposit: (file: File) => void }) {
   const [dragging, setDragging] = useState(false);
-  const [file, setFile] = useState<string | null>(null);
-  const [progress, setProgress] = useState(0);
-  const [done, setDone] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [refus, setRefus] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const startUpload = (name: string) => {
-    setFile(name); setProgress(0); setDone(false);
-    let p = 0;
-    const iv = setInterval(() => {
-      p += Math.random() * 22 + 10;
-      if (p >= 100) { p = 100; clearInterval(iv); setDone(true); }
-      setProgress(Math.round(p));
-    }, 140);
+  // Contrôle local aligné sur la validation serveur (10 Mo, pdf/jpg/png/webp).
+  const pick = (f: File) => {
+    const ext = f.name.split('.').pop()?.toLowerCase() ?? '';
+    if (!ACCEPTED_EXT.includes(ext)) {
+      setRefus('Format non accepté — utilisez un PDF, JPG, PNG ou WEBP.');
+      setFile(null);
+      return;
+    }
+    if (f.size > MAX_UPLOAD_BYTES) {
+      setRefus('Fichier trop volumineux — 10 Mo maximum.');
+      setFile(null);
+      return;
+    }
+    setRefus(null);
+    setFile(f);
   };
 
-  const reset = () => { setFile(null); setProgress(0); setDone(false); };
+  const reset = () => { setFile(null); setRefus(null); };
 
   if (!file) {
     return (
-      <div
-        onDragOver={e => { e.preventDefault(); setDragging(true); }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={e => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) startUpload(f.name); }}
-        onClick={() => inputRef.current?.click()}
-        style={{ border: `2px dashed ${dragging ? 'var(--primary)' : 'var(--border)'}`, borderRadius: 'var(--r-md)', padding: '18px 16px', textAlign: 'center', cursor: 'pointer', background: dragging ? 'var(--secondary)' : 'var(--muted)', transition: 'all var(--dur-1) var(--ease-out)' }}
-      >
-        <FileUp size={22} style={{ color: 'var(--primary)', margin: '0 auto 6px', display: 'block' }} />
-        <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--foreground)' }}>Glissez votre fichier ici, ou cliquez pour parcourir</div>
-        <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: 2 }}>PDF, JPG ou PNG · 10 Mo maximum</div>
-        <input ref={inputRef} type="file" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) startUpload(f.name); }} />
+      <div>
+        <div
+          onDragOver={e => { e.preventDefault(); setDragging(true); }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={e => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) pick(f); }}
+          onClick={() => inputRef.current?.click()}
+          style={{ border: `2px dashed ${dragging ? 'var(--primary)' : 'var(--border)'}`, borderRadius: 'var(--r-md)', padding: '18px 16px', textAlign: 'center', cursor: 'pointer', background: dragging ? 'var(--secondary)' : 'var(--muted)', transition: 'all var(--dur-1) var(--ease-out)' }}
+        >
+          <FileUp size={22} style={{ color: 'var(--primary)', margin: '0 auto 6px', display: 'block' }} />
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--foreground)' }}>Glissez votre fichier ici, ou cliquez pour parcourir</div>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: 2 }}>PDF, JPG, PNG ou WEBP · 10 Mo maximum</div>
+          <input ref={inputRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) pick(f); }} />
+        </div>
+        {refus && (
+          <div role="alert" style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--destructive)' }}>
+            <AlertCircle size={12} style={{ flexShrink: 0 }} /> {refus}
+          </div>
+        )}
       </div>
     );
   }
+
+  const sizeLabel = file.size >= 1048576
+    ? `${(file.size / 1048576).toFixed(1).replace('.', ',')} Mo`
+    : `${Math.round(file.size / 1024)} Ko`;
 
   return (
     <div style={{ background: 'var(--muted)', borderRadius: 'var(--r-md)', padding: '14px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
         <FileText size={18} style={{ color: 'var(--primary)', flexShrink: 0 }} />
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--foreground)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file}</span>
-        {done && <CheckCircle2 size={16} style={{ color: 'var(--success)', flexShrink: 0 }} />}
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--foreground)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</span>
+        <CheckCircle2 size={16} style={{ color: 'var(--success)', flexShrink: 0 }} />
       </div>
-      <div style={{ height: 6, background: 'var(--border)', borderRadius: 'var(--r-full)', overflow: 'hidden' }}>
-        <div style={{ height: '100%', borderRadius: 'var(--r-full)', background: done ? 'var(--success)' : 'var(--primary)', width: `${progress}%`, transition: 'width 0.2s ease, background 0.3s' }} />
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 12 }}>
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>{done ? 'Chargement terminé' : `${progress}%`}</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>{sizeLabel} · prêt à être envoyé</span>
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={reset} style={{ padding: '7px 14px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'transparent', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted-foreground)', cursor: 'pointer' }}>Annuler</button>
-          <button disabled={!done} onClick={() => onDeposit(file)} style={{ padding: '7px 16px', borderRadius: 'var(--radius)', border: 'none', background: done ? 'var(--primary)' : 'var(--muted-foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, color: '#fff', cursor: done ? 'pointer' : 'not-allowed', opacity: done ? 1 : 0.5 }}>Valider le dépôt</button>
+          <button onClick={() => onDeposit(file)} style={{ padding: '7px 16px', borderRadius: 'var(--radius)', border: 'none', background: 'var(--primary)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, color: '#fff', cursor: 'pointer' }}>Valider le dépôt</button>
         </div>
       </div>
       <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', color: 'var(--muted-foreground)', marginTop: 8 }}>Pièce : {label}</div>
@@ -295,15 +345,24 @@ function InlineDepot({ label, onDeposit }: { label: string; onDeposit: (fileName
 // ── Main ───────────────────────────────────────────────────────────
 export default function MaDemandePage({ user: _user }: Props) {
   const client = useClientData();
-  const { requisDocs, history, depositDoc } = useDocState();
+  const { requisDocs, history, depositDoc, loading: docsLoading, error: docsError, retry: retryDocs } = useDocState();
   const { navigate } = useNavigate();
-  const isNewClient = client.conseiller === 'Non assigné';
+  const { role } = usePermission();
+  const queryClient = useQueryClient();
 
-  const [demande, setDemande] = useState<DemandeState>(() => loadDemandeState(client, isNewClient));
-  const [isEditing, setIsEditing] = useState(!demande.submitted);
+  const demandeQuery = useQuery({
+    queryKey: MA_DEMANDE_QUERY_KEY,
+    queryFn: () => clientApi.maDemande(),
+    enabled: role === 'client',
+  });
+  const remote = demandeQuery.data ?? null;
+  const submitted   = remote?.submitted ?? false;
+  const submittedAt = frDate(remote?.submittedAt);
+
+  const [form, setForm] = useState<DemandeForm | null>(null);
+  const [isEditing, setIsEditing] = useState(true);
   const [depotDocId, setDepotDocId] = useState<string | null>(null);
   const [attempted, setAttempted] = useState(false);
-  const [sending, setSending] = useState(false);
   const lastClientId = useRef(client.id);
 
   const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -313,23 +372,78 @@ export default function MaDemandePage({ user: _user }: Props) {
     setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 4000);
   }, []);
 
-  // Recharger l'état si l'agent change de client sélectionné
+  // Première hydratation du formulaire depuis l'API (et à chaque changement de
+  // dossier sélectionné : on repart de la demande réellement enregistrée).
   useEffect(() => {
     if (lastClientId.current !== client.id) {
       lastClientId.current = client.id;
-      const fresh = loadDemandeState(client, isNewClient);
-      setDemande(fresh);
-      setIsEditing(!fresh.submitted);
+      setForm(null);
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client.id]);
+    if (!demandeQuery.isSuccess || form !== null) return;
+    setForm(remote ? toForm(remote) : emptyForm());
+    setIsEditing(!(remote?.submitted ?? false));
+  }, [client.id, demandeQuery.isSuccess, remote, form]);
 
-  useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY(client.id), JSON.stringify(demande)); } catch {}
-  }, [demande, client.id]);
+  // ── Écriture ──────────────────────────────────────────────────────
+  const refreshDossier = () => {
+    void queryClient.invalidateQueries({ queryKey: MA_DEMANDE_QUERY_KEY });
+    void queryClient.invalidateQueries({ queryKey: JOURNEY_QUERY_KEY });
+    void queryClient.invalidateQueries({ queryKey: MY_PROFILE_QUERY_KEY });
+  };
 
-  const set = (k: keyof DemandeForm) => (v: string) => setDemande(d => ({ ...d, form: { ...d.form, [k]: v } }));
-  const form = demande.form;
+  const saveMutation = useMutation({
+    mutationFn: (payload: DemandeInput) => clientApi.saveMaDemande(payload),
+    onSuccess: () => {
+      refreshDossier();
+      setIsEditing(false);
+      addToast('success', 'Modifications enregistrées');
+    },
+    onError: e => addToast('error', apiErrorMessage(e, "L'enregistrement de votre demande a échoué.")),
+  });
+
+  const submitMutation = useMutation({
+    mutationFn: async (payload: DemandeInput) => {
+      await clientApi.saveMaDemande(payload);
+      return clientApi.submitMaDemande();
+    },
+    onSuccess: () => {
+      refreshDossier();
+      setIsEditing(false);
+      addToast('success', 'Demande envoyée — votre conseiller CPI va l\'étudier.');
+    },
+    onError: e => addToast('error', apiErrorMessage(e, "L'envoi de votre demande a échoué.")),
+  });
+
+  const sending = submitMutation.isPending || saveMutation.isPending;
+
+  // ── Erreur / chargement ───────────────────────────────────────────
+  if (demandeQuery.isError) {
+    return (
+      <div role="alert" style={{ padding: '48px 0', display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center', textAlign: 'center', fontFamily: 'var(--font-sans)' }}>
+        <AlertCircle size={22} style={{ color: 'var(--destructive)' }} />
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--foreground)' }}>Demande indisponible</div>
+        <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', margin: 0, maxWidth: 420, lineHeight: 1.6 }}>
+          {apiErrorMessage(demandeQuery.error, 'Impossible de charger votre demande de financement.')}
+        </p>
+        <button onClick={() => { void demandeQuery.refetch(); }} style={{ padding: '10px 22px', borderRadius: 'var(--r-full)', border: 'none', background: 'var(--primary)', color: 'var(--primary-foreground)', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer' }}>
+          Réessayer
+        </button>
+      </div>
+    );
+  }
+
+  if (demandeQuery.isPending || form === null) {
+    return (
+      <div style={{ padding: '48px 0', display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center', fontFamily: 'var(--font-sans)' }}>
+        <div className="cpi-skeleton" style={{ width: 240, height: 16, borderRadius: 'var(--r-full)' }} />
+        <div className="cpi-skeleton" style={{ width: 180, height: 16, borderRadius: 'var(--r-full)' }} />
+        <span role="status" aria-live="polite" style={{ fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>Chargement de votre demande…</span>
+      </div>
+    );
+  }
+
+  const set = (k: keyof DemandeForm) => (v: string) => setForm(f => (f ? { ...f, [k]: v } : f));
 
   const canSubmit = form.montant.trim() !== '' && form.commune.trim() !== '' && form.adresseProjet.trim() !== '';
 
@@ -340,19 +454,11 @@ export default function MaDemandePage({ user: _user }: Props) {
       return;
     }
     if (sending) return;
-    setSending(true);
-    // Court état d'envoi (ressenti premium) avant confirmation.
-    setTimeout(() => {
-      const submittedAt = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
-      setDemande(d => ({ ...d, submitted: true, submittedAt }));
-      setIsEditing(false);
-      setSending(false);
-      addToast('success', 'Demande envoyée — votre conseiller CPI va l\'étudier.');
-    }, 850);
+    submitMutation.mutate(toPayload(form));
   };
 
-  const handleDepot = (docId: string, fileName: string) => {
-    depositDoc(docId, fileName);
+  const handleDepot = (docId: string, file: File) => {
+    depositDoc(docId, file);
     setDepotDocId(null);
     addToast('success', 'Document déposé — votre conseiller CPI va l\'analyser.');
   };
@@ -361,7 +467,7 @@ export default function MaDemandePage({ user: _user }: Props) {
   const totalDocs   = requisDocs.length;
   const hasDocIssue = requisDocs.some(d => d.status === 'refuse' || d.status === 'a-remplacer');
 
-  const statut: DemandStatut = !demande.submitted
+  const statut: DemandStatut = !submitted
     ? 'brouillon'
     : hasDocIssue
     ? 'incomplete'
@@ -370,12 +476,12 @@ export default function MaDemandePage({ user: _user }: Props) {
     : 'en-cours';
   const sc = STATUT_CONFIG[statut];
 
-  const progressPct = !demande.submitted
+  const progressPct = !submitted
     ? 10
     : Math.round(20 + (totalDocs > 0 ? (validDocs / totalDocs) * 80 : 0));
 
   const DEMO_REF  = client.ref;
-  const DEMO_DATE = demande.submittedAt ?? client.dateOuverture;
+  const DEMO_DATE = submittedAt ?? client.dateOuverture;
 
   const recentHistory = history.slice(0, 6);
 
@@ -403,7 +509,7 @@ export default function MaDemandePage({ user: _user }: Props) {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>
-                <Hash size={12} /> {demande.submitted ? DEMO_REF : '—'}
+                <Hash size={12} /> {submitted ? DEMO_REF : '—'}
               </span>
               <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--border)', display: 'inline-block' }} />
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>
@@ -412,15 +518,15 @@ export default function MaDemandePage({ user: _user }: Props) {
             </div>
           </div>
 
-          {demande.submitted && (
+          {submitted && (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {isEditing ? (
                 <>
-                  <button onClick={() => { setIsEditing(false); setDemande(d => ({ ...d, form: loadDemandeState(client, isNewClient).form })); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 'var(--r-sm)', border: '1.5px solid var(--border)', background: 'transparent', color: 'var(--muted-foreground)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600 }}>
+                  <button onClick={() => { setIsEditing(false); setForm(remote ? toForm(remote) : emptyForm()); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 'var(--r-sm)', border: '1.5px solid var(--border)', background: 'transparent', color: 'var(--muted-foreground)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600 }}>
                     <X size={14} /> Annuler
                   </button>
-                  <button onClick={() => { setIsEditing(false); addToast('success', 'Modifications enregistrées'); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 20px', borderRadius: 'var(--r-full)', border: 'none', background: 'var(--primary)', color: 'var(--primary-foreground)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700, boxShadow: '0 2px 8px rgba(99,2,16,0.25)' }}>
-                    <Save size={14} /> Enregistrer
+                  <button onClick={() => saveMutation.mutate(toPayload(form))} disabled={sending} aria-busy={sending || undefined} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 20px', borderRadius: 'var(--r-full)', border: 'none', background: 'var(--primary)', color: 'var(--primary-foreground)', cursor: sending ? 'wait' : 'pointer', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700, boxShadow: '0 2px 8px rgba(99,2,16,0.25)', opacity: sending ? 0.92 : 1 }}>
+                    {sending ? <Loader2 size={14} style={{ animation: 'spin 0.8s linear infinite' }} /> : <Save size={14} />} Enregistrer
                   </button>
                 </>
               ) : (
@@ -432,7 +538,7 @@ export default function MaDemandePage({ user: _user }: Props) {
           )}
         </div>
 
-        {!demande.submitted && (
+        {!submitted && (
           <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', background: 'rgba(99,2,16,0.05)', border: '1px solid rgba(99,2,16,0.12)', borderRadius: 'var(--r-md)' }}>
             <AlertCircle size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>
@@ -454,7 +560,7 @@ export default function MaDemandePage({ user: _user }: Props) {
           <div style={{ height: 10, background: 'var(--muted)', borderRadius: 'var(--r-full)', overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${progressPct}%`, background: 'linear-gradient(90deg, var(--primary) 0%, var(--chart-4) 100%)', borderRadius: 'var(--r-full)', transition: 'width 1.2s cubic-bezier(0.22,1,0.36,1)' }} />
           </div>
-          {demande.submitted && totalDocs > 0 && (
+          {submitted && totalDocs > 0 && (
             <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
               <span style={{ padding: '3px 11px', borderRadius: 'var(--r-full)', background: 'rgba(26,107,68,0.1)', color: 'var(--success)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 600 }}>
                 {validDocs}/{totalDocs} document{totalDocs > 1 ? 's' : ''} validé{validDocs > 1 ? 's' : ''}
@@ -540,7 +646,7 @@ export default function MaDemandePage({ user: _user }: Props) {
         </SectionCard>
 
         {/* Bandeau d'envoi — bouton principal, après le formulaire */}
-        {!demande.submitted && (
+        {!submitted && (
           <div style={{ background: 'var(--card)', border: CARD_BORDER, borderRadius: CARD_RADIUS, boxShadow: CARD_SHADOW, padding: '22px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 18, flexWrap: 'wrap' }}>
             <div style={{ flex: 1, minWidth: 240 }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--foreground)' }}>Prêt à envoyer votre demande ?</div>
@@ -568,7 +674,19 @@ export default function MaDemandePage({ user: _user }: Props) {
             <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', margin: '0 0 4px', lineHeight: 1.6 }}>
               Déposez ici les pièces nécessaires à l'étude de votre dossier. Votre conseiller CPI les vérifie une à une — vous suivez leur validation dans « Mon dossier ».
             </p>
-            {requisDocs.map(doc => {
+            {docsLoading && (
+              <div role="status" aria-live="polite" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {[0, 1, 2].map(i => <div key={i} className="cpi-skeleton" style={{ height: 62, borderRadius: 'var(--r-md)' }} />)}
+              </div>
+            )}
+            {!docsLoading && docsError && (
+              <div role="alert" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: 'rgba(192,57,43,0.06)', border: '1px solid rgba(192,57,43,0.18)', borderRadius: 'var(--r-md)', flexWrap: 'wrap' }}>
+                <AlertCircle size={14} style={{ color: 'var(--destructive)', flexShrink: 0 }} />
+                <span style={{ flex: 1, minWidth: 180, fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>{docsError}</span>
+                <button onClick={retryDocs} style={{ padding: '6px 14px', borderRadius: 'var(--r-sm)', border: '1px solid var(--destructive)', background: 'transparent', color: 'var(--destructive)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>Réessayer</button>
+              </div>
+            )}
+            {!docsLoading && !docsError && requisDocs.map(doc => {
               const cfg = DOC_STATUS_CFG[doc.status];
               const needsDepot = doc.status === 'en-attente' || doc.status === 'refuse' || doc.status === 'a-remplacer';
               const isOpen = depotDocId === doc.id;
@@ -592,7 +710,7 @@ export default function MaDemandePage({ user: _user }: Props) {
                   {needsDepot && isOpen && (
                     <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--border)' }}>
                       <div style={{ paddingTop: 14 }}>
-                        <InlineDepot label={doc.label} onDeposit={name => handleDepot(doc.id, name)} />
+                        <InlineDepot label={doc.label} onDeposit={file => handleDepot(doc.id, file)} />
                       </div>
                     </div>
                   )}
@@ -631,8 +749,8 @@ export default function MaDemandePage({ user: _user }: Props) {
                 ))}
               </div>
               {[
-                { label: 'Référence',        value: demande.submitted ? DEMO_REF : '—',                    icon: <Hash size={13} /> },
-                { label: demande.submitted ? 'Date de dépôt' : 'Compte créé le', value: DEMO_DATE,           icon: <Calendar size={13} /> },
+                { label: 'Référence',        value: submitted ? DEMO_REF : '—',                    icon: <Hash size={13} /> },
+                { label: submitted ? 'Date de dépôt' : 'Compte créé le', value: DEMO_DATE,           icon: <Calendar size={13} /> },
                 { label: 'Nature du projet', value: NATURE_LABELS[form.natureProjet] ?? form.natureProjet,  icon: <Building2 size={13} /> },
                 { label: 'Apport personnel', value: `${form.apport || '0'} FCFA`,                             icon: <Banknote size={13} /> },
                 { label: 'Agence',           value: 'CPI Immobilier — Dakar',                                icon: <MapPin size={13} /> },
@@ -744,7 +862,7 @@ export default function MaDemandePage({ user: _user }: Props) {
           </div>
 
           {/* ── Bandeau bas — contextuel ── */}
-          {demande.submitted && (
+          {submitted && (
             statut === 'validee' ? (
               <div style={{ margin: '0 20px 20px', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'rgba(26,107,68,0.07)', border: '1px solid rgba(26,107,68,0.18)', borderRadius: 'var(--r-md)' }}>
                 <CheckCircle2 size={15} style={{ color: 'var(--success)', flexShrink: 0 }} />

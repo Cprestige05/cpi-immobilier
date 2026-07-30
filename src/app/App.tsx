@@ -1,20 +1,42 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import AuthPage from './components/AuthPage';
+import OnboardingPage from './components/OnboardingPage';
+import { PermissionProvider } from './auth/PermissionContext';
+import type { Permission, UserRole as ApiUserRole } from './auth/permissions';
+import { auth, type AuthPayload, type UserData } from './api/endpoints';
+import { getToken, setToken, clearToken } from './api/client';
 
 // L'app authentifiée (dashboards, modules, graphiques Recharts) est chargée à la
 // demande : la landing / connexion reste ultra-légère au premier chargement.
 const AppShell = lazy(() => import('./components/AppShell'));
 
+// Rôles « legacy » attendus par AppShell et les dashboards (pont Phase 2 —
+// les phases 3+ brancheront les dashboards directement sur l'API).
 export type UserRole = 'client-fonctionnaire' | 'client-public' | 'agent-cpi' | 'admin';
 
 export interface AuthUser {
   role: UserRole;
   name: string;
+  /** Identifiant de connexion (renvoyé par /auth/me). */
+  email?: string;
   memberNumber?: string;
   clientId?: string;
 }
 
 export type AppPage = 'welcome' | 'login' | 'register' | 'dashboard';
+
+/** Rôle Spatie (API) → rôle legacy attendu par les dashboards. */
+function mapApiRole(role: ApiUserRole, profileType: string | null): UserRole {
+  if (role === 'super-admin') return 'admin';
+  if (role === 'agent-cpi') return 'agent-cpi';
+  return profileType === 'fonctionnaire' ? 'client-fonctionnaire' : 'client-public';
+}
+
+/** Code OAuth présent quand Google redirige vers /auth/google/callback?code=… */
+function googleCallbackCode(): string | null {
+  if (window.location.pathname !== '/auth/google/callback') return null;
+  return new URLSearchParams(window.location.search).get('code');
+}
 
 // Écran de transition pendant le chargement du chunk de l'espace connecté.
 function AppLoader() {
@@ -54,22 +76,100 @@ function AppLoader() {
 export default function App() {
   const [page, setPage] = useState<AppPage>('welcome');
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [apiRole, setApiRole] = useState<ApiUserRole | null>(null);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  // Restauration de session (token présent) ou retour du callback Google.
+  const [booting, setBooting] = useState(() => Boolean(getToken()) || googleCallbackCode() !== null);
 
-  const handleLogin = (user: AuthUser) => {
-    setAuthUser(user);
+  const applyAuth = (payload: AuthPayload) => {
+    const u = payload.user;
+    setApiRole(payload.role);
+    setPermissions(payload.permissions as Permission[]);
+    setNeedsOnboarding(u.needsOnboarding);
+    setAuthUser({
+      role: mapApiRole(payload.role, u.profileType),
+      name: u.name,
+      email: u.email,
+      clientId: payload.role === 'client' ? (u.clientId ?? u.id) : undefined,
+    });
     setPage('dashboard');
   };
 
+  // Au montage : échange du code Google, ou restauration de session via /auth/me.
+  useEffect(() => {
+    const code = googleCallbackCode();
+    if (!code && !getToken()) return;
+    (async () => {
+      try {
+        if (code) {
+          const payload = await auth.googleCallback(code);
+          if (payload.token) setToken(payload.token);
+          window.history.replaceState({}, '', '/');
+          applyAuth(payload);
+        } else {
+          applyAuth(await auth.me());
+        }
+      } catch {
+        clearToken();
+        if (code) {
+          window.history.replaceState({}, '', '/');
+          setPage('login');
+        }
+      } finally {
+        setBooting(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleLogin = (payload: AuthPayload) => {
+    if (payload.token) setToken(payload.token);
+    applyAuth(payload);
+  };
+
+  const handleOnboardingComplete = (user: UserData) => {
+    setNeedsOnboarding(false);
+    setAuthUser(prev => prev ? {
+      ...prev,
+      // Le profil vient d'être renseigné : on recalcule le rôle du dashboard
+      // (fonctionnaire vs public) à partir du profileType choisi.
+      role: apiRole ? mapApiRole(apiRole, user.profileType) : prev.role,
+      name: user.name,
+      email: user.email,
+      clientId: apiRole === 'client' ? (user.clientId ?? user.id) : undefined,
+    } : prev);
+  };
+
   const handleLogout = () => {
+    auth.logout().catch(() => { /* le token local est effacé quoi qu'il arrive */ });
+    clearToken();
     setAuthUser(null);
+    setApiRole(null);
+    setPermissions([]);
+    setNeedsOnboarding(false);
     setPage('welcome');
   };
 
+  if (booting) return <AppLoader />;
+
   if (page === 'dashboard' && authUser) {
+    // Les utilisateurs Google au profil incomplet doivent d'abord le compléter.
+    if (needsOnboarding) {
+      return (
+        <OnboardingPage
+          userName={authUser.name}
+          onComplete={handleOnboardingComplete}
+          onLogout={handleLogout}
+        />
+      );
+    }
     return (
-      <Suspense fallback={<AppLoader />}>
-        <AppShell user={authUser} onLogout={handleLogout} />
-      </Suspense>
+      <PermissionProvider role={apiRole} permissions={permissions}>
+        <Suspense fallback={<AppLoader />}>
+          <AppShell user={authUser} onLogout={handleLogout} />
+        </Suspense>
+      </PermissionProvider>
     );
   }
 

@@ -5,8 +5,9 @@ import {
   Landmark, Briefcase, UserCircle, ArrowRight, CheckCircle,
   Mail, Phone, Building2, AlertCircle, Check,
 } from 'lucide-react';
-import type { AuthUser, UserRole, AppPage } from '../App';
-import { registerClient, generateDossierRef, loadStaff, findClient } from '../data/clientRegistry';
+import type { AppPage } from '../App';
+import { auth, type AuthPayload } from '../api/endpoints';
+import { setToken, apiErrorMessage, apiFieldError } from '../api/client';
 import bgWelcome from '../../imports/BG.jpg';
 import cpiLogo from '../../imports/image.png';
 
@@ -62,16 +63,9 @@ const PROFIL_OPTIONS: {
   },
 ];
 
-// Comptes professionnels réels (personnel CPI). Aucun persona fictif : identités
-// génériques provisoires. La connexion se fait par identifiant professionnel.
-const STAFF_ACCOUNTS: { email: string; role: UserRole; name: string; label: string }[] = [
-  { email: 'agent@cpi.sn', role: 'agent-cpi', name: 'Agent CPI',          label: 'Agent CPI'      },
-  { email: 'admin@cpi.sn', role: 'admin',     name: 'Administrateur CPI', label: 'Administrateur' },
-];
-
 interface Props {
   page: AppPage;
-  onLogin: (user: AuthUser) => void;
+  onLogin: (payload: AuthPayload) => void;
   onNavigate: (p: AppPage) => void;
 }
 
@@ -208,9 +202,8 @@ function PrimaryBtn({ children, onClick, type = 'button', fullWidth = true, disa
 }
 
 // ─── SCREEN 1 — Welcome ───────────────────────────────────────────────────────
-function WelcomeScreen({ onNavigate, onLogin, onProfileSelect }: {
+function WelcomeScreen({ onNavigate, onProfileSelect }: {
   onNavigate: (p: AppPage) => void;
-  onLogin: (u: AuthUser) => void;
   onProfileSelect: (p: ProfilType) => void;
 }) {
   const [hovered, setHovered] = useState<ProfilType | null>(null);
@@ -440,69 +433,63 @@ function WelcomeScreen({ onNavigate, onLogin, onProfileSelect }: {
   );
 }
 
+// ─── Bouton Google ────────────────────────────────────────────────────────────
+function GoogleIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+    </svg>
+  );
+}
+
 // ─── SCREEN 2 — Login ─────────────────────────────────────────────────────────
-function LoginScreen({ onLogin, onNavigate }: { onLogin: (u: AuthUser) => void; onNavigate: (p: AppPage) => void }) {
+function LoginScreen({ onLogin, onNavigate }: { onLogin: (p: AuthPayload) => void; onNavigate: (p: AppPage) => void }) {
   const [mode, setMode] = useState<'client' | 'pro'>('client');
   // Espace client
-  const [nom, setNom] = useState('');
-  const [tel, setTel] = useState('');
   const [email, setEmail] = useState('');
+  const [pwd, setPwd] = useState('');
   // Espace professionnel
   const [proEmail, setProEmail] = useState('');
   const [proPwd, setProPwd] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleClientSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Connexion unifiée : l'API renvoie le rôle (client / agent-cpi / super-admin)
+  // et les permissions résolues ; l'app redirige en conséquence.
+  const doLogin = async (mail: string, password: string, fallback: string) => {
     setError('');
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const payload = await auth.login({ email: mail.trim(), password });
+      if (payload.token) setToken(payload.token);
+      onLogin(payload);
+    } catch (err) {
+      setError(apiErrorMessage(err, fallback));
       setLoading(false);
-      // Reconnexion : si un compte existe (même e-mail ou nom), on le retrouve.
-      const existing = findClient(nom, email);
-      if (existing) {
-        onLogin({ role: 'client-public', name: existing.name, clientId: existing.id });
-        return;
-      }
-      const clientId = `c-${Date.now()}`;
-      registerClient({
-        id: clientId,
-        name: nom || 'Client',
-        ref: generateDossierRef(),
-        statut: 'Dossier en préparation',
-        progression: 0,
-        projectNom: '—',
-        adresse: '—',
-        dateInscription: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }),
-        email: email.trim() || undefined,
-        phone: tel.trim() || undefined,
-      });
-      onLogin({ role: 'client-public', name: nom || 'Client', clientId });
-    }, 700);
+    }
+  };
+
+  const handleClientSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    void doLogin(email, pwd, 'Identifiants incorrects.');
   };
 
   const handleProSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const email = proEmail.trim().toLowerCase();
-    // Comptes intégrés : mot de passe libre ≥ 4 caractères.
-    const builtin = STAFF_ACCOUNTS.find(s => s.email.toLowerCase() === email);
-    // Personnel ajouté par l'admin : mot de passe exact.
-    const custom = loadStaff().find(s => s.email.toLowerCase() === email);
-    let target: { role: UserRole; name: string } | null = null;
-    if (builtin && proPwd.trim().length >= 4) target = { role: builtin.role, name: builtin.name };
-    else if (custom && proPwd === custom.password) target = { role: custom.role, name: custom.name };
-    if (!target) {
-      setError('Identifiants professionnels incorrects.');
-      return;
-    }
+    void doLogin(proEmail, proPwd, 'Identifiants professionnels incorrects.');
+  };
+
+  const handleGoogle = async () => {
     setError('');
-    setLoading(true);
-    const t = target;
-    setTimeout(() => {
-      setLoading(false);
-      onLogin({ role: t.role, name: t.name });
-    }, 700);
+    try {
+      const url = await auth.googleRedirect();
+      window.location.href = url;
+    } catch (err) {
+      setError(apiErrorMessage(err, "La connexion Google n'est pas disponible pour le moment."));
+    }
   };
 
   const PHOTO = 'https://images.unsplash.com/photo-1721978536434-3cd55a457672?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200';
@@ -574,11 +561,10 @@ function LoginScreen({ onLogin, onNavigate }: { onLogin: (u: AuthUser) => void; 
 
           {mode === 'client' ? (
             <form onSubmit={handleClientSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <Field label="Nom" placeholder="Nom complet" value={nom} onChange={setNom} icon={<UserCircle size={15} />} />
-              <Field label="Téléphone" type="tel" placeholder="77 010 00 00" value={tel} onChange={setTel} icon={<Phone size={15} />} />
               <Field label="E-mail" type="email" placeholder="bonjour@email.com" value={email} onChange={setEmail} icon={<Mail size={15} />} />
+              <Field label="Mot de passe" type="password" placeholder="••••••••" value={pwd} onChange={setPwd} icon={<Lock size={15} />} />
               <div style={{ marginTop: '4px' }}>
-                <PrimaryBtn type="submit">
+                <PrimaryBtn type="submit" disabled={loading}>
                   {loading
                     ? <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
@@ -587,6 +573,23 @@ function LoginScreen({ onLogin, onNavigate }: { onLogin: (u: AuthUser) => void; 
                     : 'CONNECTER'}
                 </PrimaryBtn>
               </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>ou</span>
+                <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+              </div>
+              <button type="button" onClick={handleGoogle}
+                style={{
+                  width: '100%', padding: '12px 24px', background: 'var(--card)',
+                  border: '1.5px solid var(--border)', borderRadius: 'var(--r-sm)', cursor: 'pointer',
+                  fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 700, color: 'var(--foreground)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                  transition: 'border-color 0.15s, box-shadow 0.15s',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--muted-foreground)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; }}>
+                <GoogleIcon /> Continuer avec Google
+              </button>
               <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--muted-foreground)', marginTop: '4px', textAlign: 'center' }}>
                 Pas de compte ?{' '}
                 <button type="button" onClick={() => onNavigate('register')}
@@ -600,7 +603,7 @@ function LoginScreen({ onLogin, onNavigate }: { onLogin: (u: AuthUser) => void; 
               <Field label="Identifiant professionnel" type="email" placeholder="agent@cpi.sn" value={proEmail} onChange={setProEmail} icon={<Mail size={15} />} />
               <Field label="Mot de passe" type="password" placeholder="••••••••" value={proPwd} onChange={setProPwd} icon={<Lock size={15} />} />
               <div style={{ marginTop: '4px' }}>
-                <PrimaryBtn type="submit">
+                <PrimaryBtn type="submit" disabled={loading}>
                   {loading
                     ? <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
@@ -632,7 +635,7 @@ function LoginScreen({ onLogin, onNavigate }: { onLogin: (u: AuthUser) => void; 
 
 // ─── SCREEN 3 — Register (2 steps) ───────────────────────────────────────────
 function RegisterScreen({ onLogin, onNavigate, initialProfile }: {
-  onLogin: (u: AuthUser) => void;
+  onLogin: (p: AuthPayload) => void;
   onNavigate: (p: AppPage) => void;
   initialProfile: ProfilType | null;
 }) {
@@ -647,6 +650,7 @@ function RegisterScreen({ onLogin, onNavigate, initialProfile }: {
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [attempted, setAttempted] = useState(false);
+  const [error, setError] = useState('');
 
   const set = (k: keyof typeof form) => (v: string) => setForm(f => ({ ...f, [k]: v }));
 
@@ -662,35 +666,39 @@ function RegisterScreen({ onLogin, onNavigate, initialProfile }: {
   const pwd2Ok  = form.pwd2.length > 0 && form.pwd2 === form.pwd;
   const formValid = nomOk && emailOk && telOk && empOk && revOk && pwdOk && pwd2Ok && accepted;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profil) return;
     if (!formValid) { setAttempted(true); return; }
+    setError('');
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      const role: UserRole = profil === 'fonctionnaire' ? 'client-fonctionnaire' : 'client-public';
-      // Si un compte existe déjà (même e-mail ou nom), on le retrouve.
-      const existing = findClient(form.nom, form.email);
-      if (existing) {
-        onLogin({ role, name: existing.name, clientId: existing.id });
-        return;
-      }
-      const clientId = `c-new-${Date.now()}`;
-      registerClient({
-        id: clientId,
-        name: form.nom || 'Nouveau client',
-        ref: generateDossierRef(),
-        statut: 'Dossier en préparation',
-        progression: 0,
-        projectNom: '—',
-        adresse: form.employeur || '—',
-        dateInscription: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }),
-        email: form.email.trim() || undefined,
-        phone: form.tel.trim() || undefined,
+    try {
+      // Crée le compte côté API : rôle client + fiche dossier générée côté serveur.
+      const payload = await auth.register({
+        name: form.nom.trim(),
+        email: form.email.trim(),
+        password: form.pwd,
+        phone: form.tel.trim(),
       });
-      onLogin({ role, name: form.nom || 'Nouveau client', clientId });
-    }, 900);
+      if (payload.token) setToken(payload.token);
+      try {
+        // Complète immédiatement le profil avec les informations déjà saisies.
+        const user = await auth.completeOnboarding({
+          phone: form.tel.trim(),
+          employer: form.employeur.trim(),
+          profile_type: profil,
+          revenus: form.revenus,
+        });
+        onLogin({ ...payload, user });
+      } catch {
+        onLogin(payload); // le profil pourra être complété plus tard
+      }
+    } catch (err) {
+      setError(apiFieldError(err, 'email')
+        ? 'Cette adresse e-mail est déjà utilisée.'
+        : apiErrorMessage(err, 'Impossible de créer votre compte. Réessayez.'));
+      setLoading(false);
+    }
   };
 
   const REVENUS_OPTIONS = [
@@ -868,6 +876,12 @@ function RegisterScreen({ onLogin, onNavigate, initialProfile }: {
               Quelques informations pour constituer votre dossier.
             </p>
 
+            {error && (
+              <div style={{ maxWidth: '400px', marginBottom: '14px', padding: '10px 12px', background: 'rgba(192,57,43,0.08)', border: '1px solid rgba(192,57,43,0.25)', borderRadius: 'var(--radius)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: '#C0392B' }}>
+                {error}
+              </div>
+            )}
+
             <div style={{ maxWidth: '400px' }}>
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <Field label="Nom complet *" placeholder="Prénom Nom" value={form.nom} onChange={set('nom')}
@@ -976,5 +990,5 @@ export default function AuthPage({ page, onLogin, onNavigate }: Props) {
 
   if (page === 'register') return <RegisterScreen onLogin={onLogin} onNavigate={onNavigate} initialProfile={regProfile} />;
   if (page === 'login')    return <LoginScreen    onLogin={onLogin} onNavigate={onNavigate} />;
-  return                          <WelcomeScreen  onLogin={onLogin} onNavigate={onNavigate} onProfileSelect={handleProfileSelect} />;
+  return                          <WelcomeScreen  onNavigate={onNavigate} onProfileSelect={handleProfileSelect} />;
 }

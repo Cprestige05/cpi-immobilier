@@ -1,10 +1,10 @@
 /**
- * dossierJourney — Source unique de vérité du « Parcours du dossier ».
+ * dossierJourney — « Parcours du dossier ».
  *
- * Le parcours compte 6 étapes, toutes validées par l'Agent CPI. L'étape active
- * est dérivée de l'état réel du client (demande envoyée dans « Ma demande » +
- * statuts des pièces gérés par le CPI dans « Mon dossier »), pour que toutes les
- * vues — « Mon dossier », le tableau de bord client — restent cohérentes.
+ * Le parcours compte 6 étapes, toutes validées par l'Agent CPI. Pour le client
+ * connecté, l'étape active est calculée PAR LE SERVEUR
+ * (`GET /client/mon-dossier-journey`) : le backend est la source unique de
+ * vérité (cf. ClientController::computeJourneyStep).
  *
  * Flux :
  *   1. Inscription       — le client crée son compte (demande pas encore envoyée)
@@ -14,11 +14,15 @@
  *   5. Validation banque — accord de la banque partenaire
  *   6. Signature         — contrats & actes
  *
- * Les étapes 4 à 6 sont pilotées ensuite par les validations de l'Agent CPI.
+ * `computeJourneyStep` reste exporté pour les vues d'agrégation du personnel
+ * CPI (tableaux de bord multi-dossiers) : c'est le portage exact de la règle
+ * serveur, il évite un appel API par dossier affiché.
  */
 
-import { useClientData } from './useClientData';
-import { useDocState } from './docStateContext';
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { clientApi, type DossierJourney as ApiDossierJourney } from '../api/endpoints';
+import { apiErrorMessage } from '../api/client';
+import { usePermission } from '../auth/PermissionContext';
 
 export interface JourneyStep {
   label: string;
@@ -39,14 +43,8 @@ export const TIMELINE_STEPS: JourneyStep[] = [
 export const DOCS_VALIDES_INDEX = 2; // « Documents valides »
 export const SIGNATURE_INDEX = TIMELINE_STEPS.length - 1; // « Signature »
 
-// Lit l'état d'envoi de la demande, écrit par « Ma demande » (même clé localStorage).
-export function readDemandeSubmitted(clientId: string, isNewClient: boolean): boolean {
-  try {
-    const s = localStorage.getItem(`cpi_demande_v1_${clientId}`);
-    if (s) return !!(JSON.parse(s) as { submitted?: boolean }).submitted;
-  } catch { /* ignore */ }
-  return !isNewClient; // les clients de démo (conseiller assigné) ont déjà déposé
-}
+/** Clé de cache du parcours du client connecté. */
+export const JOURNEY_QUERY_KEY = ['client', 'dossier-journey'] as const;
 
 // Index (0-based) de l'étape en cours dans TIMELINE_STEPS.
 //
@@ -81,22 +79,42 @@ export interface DossierJourney {
   total: number;
   /** Les 6 étapes du parcours. */
   steps: JourneyStep[];
+  /** Parcours en cours de chargement depuis l'API. */
+  loading: boolean;
+  /** Message d'erreur si le parcours n'a pas pu être chargé. */
+  error: string | null;
+  /** Relance le chargement du parcours. */
+  retry: () => void;
 }
 
+/** Requête brute du parcours (partagée avec le chargement initial d'AppShell). */
+export function useDossierJourneyQuery(enabled: boolean): UseQueryResult<ApiDossierJourney> {
+  return useQuery({
+    queryKey: JOURNEY_QUERY_KEY,
+    queryFn: () => clientApi.monDossierJourney(),
+    enabled,
+  });
+}
+
+/** Parcours du client connecté — l'étape vient du serveur. */
 export function useDossierJourney(): DossierJourney {
-  const client = useClientData();
-  const { requisDocs, dossierEtape } = useDocState();
-  const isNewClient = client.conseiller === 'Non assigné';
-  const submitted   = readDemandeSubmitted(client.id, isNewClient);
-  // Signal de progression piloté par l'Agent CPI (au-delà des pièces), persistant.
-  const etapeCpi    = dossierEtape ?? DOCS_VALIDES_INDEX;
-  const activeStep  = computeJourneyStep(submitted, requisDocs, etapeCpi);
-  const nextEtape   = activeStep < TIMELINE_STEPS.length - 1
+  const { role } = usePermission();
+  const query = useDossierJourneyQuery(role === 'client');
+
+  const activeStep = query.data?.step ?? 0;
+  const nextEtape  = activeStep < TIMELINE_STEPS.length - 1
     ? TIMELINE_STEPS[activeStep + 1].label
     : 'Dossier finalisé';
+
   return {
-    activeStep, nextEtape, submitted,
+    activeStep,
+    nextEtape,
+    submitted: query.data?.submitted ?? false,
     reachedSignature: activeStep >= SIGNATURE_INDEX,
-    total: TIMELINE_STEPS.length, steps: TIMELINE_STEPS,
+    total: TIMELINE_STEPS.length,
+    steps: TIMELINE_STEPS,
+    loading: role === 'client' && query.isPending,
+    error: query.error ? apiErrorMessage(query.error, 'Impossible de charger le parcours de votre dossier.') : null,
+    retry: () => { void query.refetch(); },
   };
 }

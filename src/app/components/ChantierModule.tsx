@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   HardHat, Camera, MessageSquare, ChevronDown, ChevronUp, CheckCircle2,
-  Clock, AlertCircle, Edit2, Upload, Plus, Calendar, Send,
+  AlertCircle, Edit2, Upload, Plus, Calendar, Send, Loader2,
 } from 'lucide-react';
 import { useChantierState, type ChantierStatut, type CalendarEventType, type PublicationType } from '../data/chantierStateContext';
 
@@ -82,7 +82,11 @@ export default function ChantierModule({ agentName = 'Agent CPI' }: Props) {
     updateProgression, updateEtape, updateStatut, updateLivraison,
     validateTranche: ctxValidateTranche, addTrancheComment: ctxAddTrancheComment,
     addPublication, addMedia, addEvent,
+    loading, error, retry,
   } = useChantierState();
+
+  // Sélecteur de fichier : un média part toujours sur le stockage privé CPI.
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Build live ch1 from context
   const ch1Live: ChantierProject = {
@@ -138,7 +142,8 @@ export default function ChantierModule({ agentName = 'Agent CPI' }: Props) {
     setEditProg(ch.progression);
     setEditEtape(ch.etape);
     setEditStatut(ch.id === CH1_ID ? chantierInfo.statut : 'en-cours');
-    setEditLivraison(ch.dateLivraison);
+    // L'API attend une vraie date : le champ de saisie est un `<input type="date">`.
+    setEditLivraison(chantierInfo.dateLivraisonIso);
   };
 
   const saveEdit = (chId: string) => {
@@ -146,7 +151,7 @@ export default function ChantierModule({ agentName = 'Agent CPI' }: Props) {
       updateProgression(editProg, agentName);
       if (editEtape !== ch1Live.etape) updateEtape(editEtape, agentName);
       if (editStatut !== chantierInfo.statut) updateStatut(editStatut, agentName);
-      if (editLivraison && editLivraison !== chantierInfo.dateLivraison) updateLivraison(editLivraison, agentName);
+      if (editLivraison !== chantierInfo.dateLivraisonIso) updateLivraison(editLivraison, agentName);
     } else {
       setCh2(prev => ({ ...prev, progression: editProg, etape: editEtape, dateLivraison: editLivraison }));
     }
@@ -218,13 +223,57 @@ export default function ChantierModule({ agentName = 'Agent CPI' }: Props) {
     showToast(`Événement planifié${eventForm.visibleClient ? ' — visible dans l\'espace client.' : '.'}`);
   };
 
+  /** Dépôt d'une photo/vidéo : le fichier est requis, le titre vient du nom. */
+  const submitMedia = (file: File) => {
+    const estVideo = file.type.startsWith('video/');
+    addMedia({
+      type: estVideo ? 'video' : 'photo',
+      titre: file.name.replace(/\.[^.]+$/, ''),
+      description: '',
+      phase: 2,
+      auteur: agentName,
+      url: '',
+      bg: 'linear-gradient(135deg,#630210,#B05070)',
+      visibleClient: true,
+    }, agentName, file);
+    showToast('Envoi du média en cours…');
+  };
+
+  const header = (
+    <div style={{ background: 'var(--card)', border: '1px solid var(--border)', padding: '18px 20px' }}>
+      <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, color: 'var(--foreground)', margin: '0 0 4px' }}>Suivi chantier</h2>
+      <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--muted-foreground)', margin: 0 }}>Gérez l'avancement des chantiers. Les mises à jour sont visibles dans l'espace client.</p>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {header}
+        <div role="status" aria-live="polite" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '48px', background: 'var(--card)', border: '1px solid var(--border)', fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
+          <Loader2 size={16} style={{ color: 'var(--primary)', animation: 'spin 0.8s linear infinite' }} /> Chargement du chantier…
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {header}
+        <div role="alert" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '40px 24px', background: 'var(--card)', border: '1px solid var(--border)', textAlign: 'center' }}>
+          <AlertCircle size={20} style={{ color: '#C0392B' }} />
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--muted-foreground)', margin: 0, maxWidth: 420, lineHeight: 1.6 }}>{error}</p>
+          <button onClick={retry} style={btnPrimary}>Réessayer</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Header */}
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', padding: '18px 20px' }}>
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, color: 'var(--foreground)', margin: '0 0 4px' }}>Suivi chantier</h2>
-        <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--muted-foreground)', margin: 0 }}>Gérez l'avancement des chantiers. Les mises à jour sont visibles dans l'espace client.</p>
-      </div>
+      {header}
 
       {chantiers.map(ch => {
         const isOpen = expanded === ch.id;
@@ -298,7 +347,7 @@ export default function ChantierModule({ agentName = 'Agent CPI' }: Props) {
                           </div>
                           <div>
                             <label style={labelStyle}>Livraison estimée</label>
-                            <input value={editLivraison} onChange={e => setEditLivraison(e.target.value)} placeholder="ex : 15 mars 2027" style={inputStyle} />
+                            <input type="date" value={editLivraison} onChange={e => setEditLivraison(e.target.value)} style={inputStyle} />
                           </div>
                         </>
                       )}
@@ -379,11 +428,11 @@ export default function ChantierModule({ agentName = 'Agent CPI' }: Props) {
                         </div>
                         <div>
                           <label style={labelStyle}>Date</label>
-                          <input value={eventForm.date} onChange={e => setEventForm(f => ({ ...f, date: e.target.value }))} placeholder="Ex : 28 juillet 2026" style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' }} />
+                          <input type="date" value={eventForm.date} onChange={e => setEventForm(f => ({ ...f, date: e.target.value }))} style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' }} />
                         </div>
                         <div>
                           <label style={labelStyle}>Heure (optionnelle)</label>
-                          <input value={eventForm.heure} onChange={e => setEventForm(f => ({ ...f, heure: e.target.value }))} placeholder="Ex : 10:00" style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' }} />
+                          <input type="time" value={eventForm.heure} onChange={e => setEventForm(f => ({ ...f, heure: e.target.value }))} style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' }} />
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '20px' }}>
                           <input type="checkbox" id="evVisible" checked={eventForm.visibleClient} onChange={e => setEventForm(f => ({ ...f, visibleClient: e.target.checked }))} />
@@ -432,15 +481,24 @@ export default function ChantierModule({ agentName = 'Agent CPI' }: Props) {
                       Photos & vidéos
                       {isCh1 && <span style={{ marginLeft: '8px', fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: 'var(--muted-foreground)', background: 'var(--muted)', padding: '1px 6px' }}>{ch.photos.length} média{ch.photos.length > 1 ? 's' : ''}</span>}
                     </div>
-                    <button
-                      onClick={() => {
-                        if (!isCh1) return;
-                        addMedia({ type: 'photo', titre: `Photo chantier ${new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}`, description: '', phase: 2, auteur: agentName, url: '', bg: 'linear-gradient(135deg,#630210,#B05070)', visibleClient: true }, agentName);
-                        showToast('Photo de démonstration ajoutée.');
-                      }}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 12px', background: 'var(--secondary)', color: 'var(--primary)', border: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>
-                      <Upload size={13} /> Ajouter
-                    </button>
+                    <>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
+                        style={{ display: 'none' }}
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) submitMedia(file);
+                          e.target.value = '';
+                        }}
+                      />
+                      <button
+                        onClick={() => { if (isCh1) fileInputRef.current?.click(); }}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 12px', background: 'var(--secondary)', color: 'var(--primary)', border: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>
+                        <Upload size={13} /> Ajouter
+                      </button>
+                    </>
                   </div>
                   {ch.photos.length > 0 ? (
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>

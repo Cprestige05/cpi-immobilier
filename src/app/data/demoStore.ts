@@ -70,6 +70,18 @@ export function etatToStatus(etat: TrancheEtat): ModuleTrancheStatus {
   return 'en-attente';
 }
 
+/**
+ * Date ISO renvoyée par l'API → date lisible en français (« 25 juillet 2026 »).
+ * Renvoie `undefined` si la valeur est absente ou illisible ; laisse passer les
+ * chaînes déjà formatées côté serveur (ex. « 25/07/2026 »).
+ */
+export function frDate(iso: string | null | undefined): string | undefined {
+  if (!iso) return undefined;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+}
+
 // ─── Notifications ───────────────────────────────────────────────────────────
 
 export interface NotifEntry {

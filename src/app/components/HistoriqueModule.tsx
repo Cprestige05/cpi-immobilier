@@ -3,7 +3,8 @@ import { CheckCircle2, FileText, Bell, Camera, Banknote, MessageSquare, Upload, 
 import { useDocState } from '../data/docStateContext';
 import { useCpiDocs } from '../data/cpiDocsContext';
 import { useClientContext } from '../contexts/ClientContext';
-import { loadActivityLog } from '../data/activityLog';
+import { toActivityEntries, useHistoriqueQuery } from '../data/activityLog';
+import { usePermission } from '../auth/PermissionContext';
 
 type ActionType = 'validation' | 'document' | 'notification' | 'photo' | 'decaissement' | 'commentaire' | 'depot' | 'refus' | 'compte' | 'banque';
 
@@ -66,15 +67,6 @@ const PERIODES: { key: Periode; label: string; days: number }[] = [
   { key: '30j',  label: '30 jours',    days: 30 },
 ];
 
-// Classe une entrée d'historique chantier (qui n'a pas de champ « type ») par mots-clés.
-function classifyChantier(action: string): ActionType {
-  const a = action.toLowerCase();
-  if (/photo|vidéo/.test(a)) return 'photo';
-  if (/termin|validé|valider|progression/.test(a)) return 'validation';
-  if (/commentaire/.test(a)) return 'commentaire';
-  return 'document';
-}
-
 export default function HistoriqueModule() {
   const [filterType, setFilterType] = useState<ActionType | 'all'>('all');
   const [filterRole, setFilterRole] = useState<string>('all');
@@ -84,43 +76,30 @@ export default function HistoriqueModule() {
   const { allHistoryByClient } = useDocState();
   const { allCpiHistoryByClient } = useCpiDocs();
   const { allClients } = useClientContext();
+  const { role } = usePermission();
+  // /staff/historique répond 403 à un client : l'écran est réservé au personnel.
+  const historiqueQuery = useHistoriqueQuery(role === 'agent-cpi' || role === 'super-admin');
 
   const clientName = (cid: string) => allClients.find(c => c.id === cid)?.name ?? cid;
 
-  // Historique réel agrégé : pièces + documents CPI + chantier + journal d'activité global.
+  // Historique réel agrégé : pièces + documents CPI + journal transverse. Depuis
+  // la Phase 6 les trois viennent du même journal serveur (Spatie Activity Log) ;
+  // la déduplication par identifiant suffit donc à recomposer la liste complète,
+  // y compris les entrées sans dossier (création de banque, compte…).
   const ENTRIES = useMemo<HistoryEntry[]>(() => {
     const docEntries = Object.values(allHistoryByClient).flat() as HistoryEntry[];
     const cpiEntries = Object.values(allCpiHistoryByClient).flat() as HistoryEntry[];
 
-    // Journal d'activité transverse (décaissements, orientations banque, comptes…).
-    const actEntries: HistoryEntry[] = loadActivityLog().map(e => ({
+    const actEntries: HistoryEntry[] = toActivityEntries(historiqueQuery.data).map(e => ({
       id: e.id, date: e.date, heure: e.heure, utilisateur: e.utilisateur,
       role: e.role, action: e.action, type: e.type as ActionType, cible: e.cible,
     }));
 
-    // Historique chantier (stocké hors contexte).
-    const chantierEntries: HistoryEntry[] = [];
-    try {
-      const s = localStorage.getItem('cpi_chantier_all_state_v3');
-      if (s) {
-        const all = JSON.parse(s) as Record<string, { history?: any[] }>;
-        for (const [cid, cs] of Object.entries(all)) {
-          for (const h of (cs.history ?? [])) {
-            chantierEntries.push({
-              id: h.id, date: h.date, heure: h.heure, utilisateur: h.auteur,
-              role: h.role || 'Agent CPI', action: h.action, type: classifyChantier(h.action || ''),
-              cible: clientName(cid),
-            });
-          }
-        }
-      }
-    } catch {}
-
-    const live = [...docEntries, ...cpiEntries, ...actEntries, ...chantierEntries];
+    const live = [...docEntries, ...cpiEntries, ...actEntries];
     const seen = new Set<string>();
     const unique = live.filter(e => (e.id && seen.has(e.id) ? false : (seen.add(e.id), true)));
     return unique.sort((a, b) => sortKey(b.date, b.heure).localeCompare(sortKey(a.date, a.heure)));
-  }, [allHistoryByClient, allCpiHistoryByClient, allClients]);
+  }, [allHistoryByClient, allCpiHistoryByClient, historiqueQuery.data, allClients]);
 
   // Liste des dossiers présents dans le journal (pour le filtre).
   const clientOptions = useMemo(() => {

@@ -1,13 +1,23 @@
 /**
  * bankRegistry — registre des banques partenaires + orientation des dossiers.
  *
- * Source unique, partagée par TOUS les dashboards (localStorage). L'administrateur
- * gère les banques ici (page « Partenaires ») ; chaque nouvelle convention signée
- * ajoute une banque, et les autres espaces (client, agent, décaissements) la voient
- * automatiquement.
+ * La source de vérité est désormais l'API Laravel : `/staff/banks` pour le
+ * personnel (chaque banque embarque ses orientations) et `/client/mes-banques`
+ * pour le client connecté. Plus rien n'est persisté dans le localStorage — les
+ * clés `cpi_banks_registry_v1` et `cpi_bank_assign_v1` ont disparu.
  *
- * Pur TypeScript (pas de React) — lisible au chargement des modules/contextes.
+ * Comme `clientRegistry`, ce module conserve des lecteurs SYNCHRONES adossés à
+ * un cache mémoire alimenté par les hooks TanStack Query exportés plus bas :
+ * les consommateurs non-React historiques (useClientData…) continuent de
+ * compiler et de fonctionner.
  */
+
+import { useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import {
+  clientApi, staffApi,
+  type BankAssignmentData, type BankAssignmentStatus, type BankCreateInput, type BankData,
+} from '../api/endpoints';
 
 export interface Bank {
   id: string;
@@ -20,7 +30,7 @@ export interface Bank {
   color: string;             // couleur d'identité (hex)
 }
 
-export type BankStatus = 'en-attente' | 'accord' | 'refus';
+export type BankStatus = BankAssignmentStatus;
 
 export interface BankAssignment {
   bankId: string;
@@ -28,43 +38,187 @@ export interface BankAssignment {
   status: BankStatus;
 }
 
-const BANKS_KEY = 'cpi_banks_registry_v1';
-const ASSIGN_KEY = 'cpi_bank_assign_v1';
-
 // Palette proposée pour les nouvelles banques.
 export const BANK_COLORS = ['#1E4D8C', '#1A6B44', '#630210', '#C8921A', '#6D28D9', '#0E7490'];
 
-// ─── Banques ──────────────────────────────────────────────────────────────────
+// ─── Clés de cache TanStack Query ─────────────────────────────────────────────
 
+export const BANKS_QUERY_KEY       = ['staff', 'banks'] as const;
+export const MES_BANQUES_QUERY_KEY = ['client', 'mes-banques'] as const;
+
+// ─── Cache mémoire (pont vers les consommateurs synchrones) ───────────────────
+
+let banksCache: Bank[] = [];
+let assignmentsCache: Record<string, BankAssignment[]> = {};
+
+/** Banques partenaires connues (cache mémoire alimenté par l'API). */
 export function loadBanks(): Bank[] {
-  try {
-    const s = localStorage.getItem(BANKS_KEY);
-    if (s) {
-      const parsed = JSON.parse(s);
-      if (Array.isArray(parsed)) return parsed as Bank[];
+  return banksCache;
+}
+
+/** Orientations connues, par identifiant de dossier. */
+export function loadAssignments(): Record<string, BankAssignment[]> {
+  return assignmentsCache;
+}
+
+export function hydrateBanks(list: Bank[]): void {
+  banksCache = list;
+}
+
+export function hydrateAssignments(map: Record<string, BankAssignment[]>): void {
+  assignmentsCache = map;
+}
+
+// ─── Conversions DTO → formes attendues par l'UI ──────────────────────────────
+
+/** BankData (API) → Bank. Les champs vides s'affichent « — » comme auparavant. */
+export function toBank(d: BankData): Bank {
+  return {
+    id: d.id,
+    name: d.name,
+    conventionDate: d.conventionDate ?? '—',
+    validity: d.validity ?? '—',
+    products: d.products ?? [],
+    rate: d.rate ?? '—',
+    contact: d.contact ?? '—',
+    color: d.color,
+  };
+}
+
+export function toBankAssignment(d: BankAssignmentData): BankAssignment {
+  return { bankId: d.bankId, bankName: d.bankName, status: d.status as BankStatus };
+}
+
+/**
+ * Carte { clientId: orientations } reconstituée depuis /staff/banks : l'API ne
+ * expose pas de route « toutes les orientations », chaque banque porte les
+ * siennes.
+ */
+export function toAssignmentMap(banks: BankData[]): Record<string, BankAssignment[]> {
+  const map: Record<string, BankAssignment[]> = {};
+  for (const bank of banks) {
+    for (const assignment of bank.assignments ?? []) {
+      (map[assignment.clientId] ??= []).push(toBankAssignment(assignment));
     }
-  } catch {}
-  return [];
+  }
+  return map;
 }
 
-export function saveBanks(list: Bank[]): void {
-  try { localStorage.setItem(BANKS_KEY, JSON.stringify(list)); } catch {}
+// ─── Lecture ──────────────────────────────────────────────────────────────────
+
+/**
+ * Registre complet + orientations de tous les dossiers (personnel CPI).
+ * `enabled` doit être faux pour un compte client : /staff/* lui est fermé.
+ */
+export function useBanksQuery(enabled: boolean): UseQueryResult<BankData[]> {
+  const query = useQuery({
+    queryKey: BANKS_QUERY_KEY,
+    queryFn: () => staffApi.banks.list(),
+    enabled,
+  });
+
+  useEffect(() => {
+    if (query.data) {
+      hydrateBanks(query.data.map(toBank));
+      hydrateAssignments(toAssignmentMap(query.data));
+    }
+  }, [query.data]);
+
+  return query;
 }
 
-export function registerBank(bank: Bank): Bank[] {
-  const list = loadBanks();
-  const idx = list.findIndex(b => b.id === bank.id);
-  if (idx >= 0) list[idx] = { ...list[idx], ...bank };
-  else list.push(bank);
-  saveBanks(list);
-  return list;
+/** Orientations du client connecté (compte `client` uniquement). */
+export function useMesBanquesQuery(enabled: boolean): UseQueryResult<BankAssignmentData[]> {
+  const query = useQuery({
+    queryKey: MES_BANQUES_QUERY_KEY,
+    queryFn: () => clientApi.mesBanques(),
+    enabled,
+  });
+
+  useEffect(() => {
+    if (query.data) {
+      const clientId = query.data[0]?.clientId;
+      hydrateAssignments(clientId ? { [clientId]: query.data.map(toBankAssignment) } : {});
+    }
+  }, [query.data]);
+
+  return query;
 }
 
-export function deleteBank(id: string): Bank[] {
-  const list = loadBanks().filter(b => b.id !== id);
-  saveBanks(list);
-  return list;
+/**
+ * Alimente le cache mémoire selon le rôle connecté — à monter une seule fois,
+ * au-dessus de l'application (cf. AppShell), pour que `loadBanks()`,
+ * `loadAssignments()` et `resolveClientBank()` répondent partout.
+ */
+export function useBankRegistrySync(isStaff: boolean, isClient: boolean): void {
+  useBanksQuery(isStaff);
+  useMesBanquesQuery(isClient);
 }
+
+// ─── Écriture : registre (administrateur) ─────────────────────────────────────
+
+/** Invalide tout ce qui dépend des banques après une mutation. */
+function useInvalidateBanks() {
+  const qc = useQueryClient();
+  return () => {
+    void qc.invalidateQueries({ queryKey: BANKS_QUERY_KEY });
+    void qc.invalidateQueries({ queryKey: MES_BANQUES_QUERY_KEY });
+  };
+}
+
+export function useCreateBank() {
+  const invalidate = useInvalidateBanks();
+  return useMutation({
+    mutationFn: (input: BankCreateInput) => staffApi.banks.create(input),
+    onSuccess: invalidate,
+  });
+}
+
+export function useUpdateBank() {
+  const invalidate = useInvalidateBanks();
+  return useMutation({
+    mutationFn: (v: { id: string; input: Partial<BankCreateInput> }) => staffApi.banks.update(v.id, v.input),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeleteBank() {
+  const invalidate = useInvalidateBanks();
+  return useMutation({
+    mutationFn: (id: string) => staffApi.banks.delete(id),
+    onSuccess: invalidate,
+  });
+}
+
+// ─── Écriture : orientations (agent CPI et administrateur) ────────────────────
+
+export function useAssignBank() {
+  const invalidate = useInvalidateBanks();
+  return useMutation({
+    mutationFn: (v: { clientId: string; bankId: string }) => staffApi.banks.assign(v.clientId, v.bankId),
+    onSuccess: invalidate,
+  });
+}
+
+export function useSetBankStatus() {
+  const invalidate = useInvalidateBanks();
+  return useMutation({
+    mutationFn: (v: { clientId: string; bankId: string; status: BankStatus }) =>
+      staffApi.banks.setStatus(v.clientId, v.bankId, v.status),
+    onSuccess: invalidate,
+  });
+}
+
+export function useRemoveBankAssignment() {
+  const invalidate = useInvalidateBanks();
+  return useMutation({
+    mutationFn: (v: { clientId: string; bankId: string }) =>
+      staffApi.banks.removeAssignment(v.clientId, v.bankId),
+    onSuccess: invalidate,
+  });
+}
+
+// ─── Dérivations pures ────────────────────────────────────────────────────────
 
 /** Une banque est active si sa date de validité n'est pas dépassée. */
 export function isBankActive(bank: Bank, now: Date): boolean {
@@ -73,52 +227,9 @@ export function isBankActive(bank: Bank, now: Date): boolean {
   return d.getTime() >= now.getTime();
 }
 
-// ─── Assignations (orientation d'un dossier vers des banques) ──────────────────
-
-export function loadAssignments(): Record<string, BankAssignment[]> {
-  try {
-    const s = localStorage.getItem(ASSIGN_KEY);
-    if (s) {
-      const parsed = JSON.parse(s);
-      if (parsed && typeof parsed === 'object') return parsed as Record<string, BankAssignment[]>;
-    }
-  } catch {}
-  return {};
-}
-
-export function saveAssignments(map: Record<string, BankAssignment[]>): void {
-  try { localStorage.setItem(ASSIGN_KEY, JSON.stringify(map)); } catch {}
-}
-
-export function assignBankToClient(clientId: string, bank: Bank): Record<string, BankAssignment[]> {
-  const map = loadAssignments();
-  const list = map[clientId] ?? [];
-  if (!list.some(a => a.bankId === bank.id)) {
-    list.push({ bankId: bank.id, bankName: bank.name, status: 'en-attente' });
-  }
-  map[clientId] = list;
-  saveAssignments(map);
-  return map;
-}
-
-export function setBankStatus(clientId: string, bankId: string, status: BankStatus): Record<string, BankAssignment[]> {
-  const map = loadAssignments();
-  const list = (map[clientId] ?? []).map(a => a.bankId === bankId ? { ...a, status } : a);
-  map[clientId] = list;
-  saveAssignments(map);
-  return map;
-}
-
-export function removeAssignment(clientId: string, bankId: string): Record<string, BankAssignment[]> {
-  const map = loadAssignments();
-  map[clientId] = (map[clientId] ?? []).filter(a => a.bankId !== bankId);
-  saveAssignments(map);
-  return map;
-}
-
 /** Banque retenue pour un client : accord en priorité, sinon la première orientation. */
 export function resolveClientBank(clientId: string): string {
-  const list = loadAssignments()[clientId] ?? [];
+  const list = assignmentsCache[clientId] ?? [];
   const accord = list.find(a => a.status === 'accord');
   if (accord) return accord.bankName;
   return list[0]?.bankName ?? '—';

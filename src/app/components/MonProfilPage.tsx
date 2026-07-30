@@ -11,8 +11,7 @@ import type { AuthUser } from '../App';
 import { useClientData } from '../data/useClientData';
 import { useDocState } from '../data/docStateContext';
 import { useNavigate } from '../contexts/NavigationContext';
-import { loadStaff, BUILTIN_STAFF } from '../data/clientRegistry';
-import { loadActivityLog } from '../data/activityLog';
+import { toActivityEntries, useHistoriqueQuery } from '../data/activityLog';
 
 interface MonProfilPageProps {
   user: AuthUser;
@@ -954,14 +953,15 @@ function deviceLabel(): string {
 
 function StaffProfile({ user, onLogout }: { user: AuthUser; onLogout?: () => void }) {
   const roleLabel = user.role === 'admin' ? 'Administrateur' : 'Agent CPI';
-  const account = loadStaff().find(s => s.name === user.name && s.role === user.role)
-    ?? BUILTIN_STAFF.find(s => s.role === user.role);
-  const email = account?.email ?? '—';
-  const isBuiltin = BUILTIN_STAFF.some(s => s.email === email);
-  const createdAt = account?.createdAt ?? (isBuiltin ? 'Compte système' : '—');
+  // Identité du compte pro : elle vient de /auth/me (pas de /staff/staff/list,
+  // réservé à l'administrateur — un agent CPI y recevrait un 403).
+  const email = user.email ?? '—';
 
   const httpsOk = typeof window !== 'undefined' && window.location.protocol === 'https:';
-  const actionsCount = loadActivityLog().filter(e => e.role === roleLabel).length;
+  // Compteur d'actions du compte, lu dans le journal serveur (écran réservé au
+  // personnel CPI, seul habilité sur /staff/historique).
+  const historiqueQuery = useHistoriqueQuery(true);
+  const actionsCount = toActivityEntries(historiqueQuery.data).filter(e => e.role === roleLabel).length;
 
   const [avatar, setAvatar] = useState<string | null>(() => {
     try { return localStorage.getItem(AVATAR_KEY(email)); } catch { return null; }
@@ -1021,7 +1021,7 @@ function StaffProfile({ user, onLogout }: { user: AuthUser; onLogout?: () => voi
               <Mail size={14} style={{ color: 'rgba(255,255,255,0.55)' }} />
               <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.75)' }}>{email}</span>
               <span style={{ color: 'rgba(255,255,255,0.3)' }}>·</span>
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'rgba(255,255,255,0.55)' }}>{isBuiltin ? 'Compte intégré' : 'Compte créé'}</span>
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'rgba(255,255,255,0.55)' }}>Compte professionnel CPI</span>
             </div>
           </div>
 
@@ -1039,8 +1039,7 @@ function StaffProfile({ user, onLogout }: { user: AuthUser; onLogout?: () => voi
           <FieldRow label="Nom" value={user.name} accent />
           <FieldRow label="E-mail / identifiant" value={email} icon={Mail} copyable />
           <FieldRow label="Rôle" value={roleLabel} accent />
-          <FieldRow label="Type de compte" value={isBuiltin ? 'Compte intégré' : 'Compte créé'} />
-          <FieldRow label="Créé le" value={createdAt} icon={Calendar} />
+          <FieldRow label="Type de compte" value="Compte professionnel CPI" />
           <FieldRow label="Statut" value="Actif" />
         </FieldsGrid>
       </SectionCard>

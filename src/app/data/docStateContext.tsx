@@ -1,7 +1,21 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { ALL_REQUIS_DOCS, ALL_HISTORIQUE, type DocStatus, type HistoEntry, type HistoActionType } from './demoStore';
-import { loadClients } from './clientRegistry';
+import React, { createContext, useContext, useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import type { DocStatus } from './demoStore';
+import { clientApi, staffApi, type RequisDocData } from '../api/endpoints';
+import { apiErrorMessage } from '../api/client';
+import { usePermission } from '../auth/PermissionContext';
+import {
+  CLIENTS_QUERY_KEY, MY_PROFILE_QUERY_KEY,
+  useClientsQuery, useMyProfileQuery,
+} from './clientRegistry';
+import { JOURNEY_QUERY_KEY } from './dossierJourney';
 import { useClientContext } from '../contexts/ClientContext';
+import {
+  HISTORIQUE_QUERY_KEY, groupByClient, isCpiDocEvent, toActivityEntries,
+  useHistoriqueQuery, type ActivityEntry,
+} from './activityLog';
+import { notifDateLabel, notifTimestamp, useMesNotificationsQuery, useSendNotification } from './notifications';
+import type { NotificationData } from '../api/endpoints';
 
 // ─── Shared doc shape (live state) ───────────────────────────────────────────
 
@@ -16,245 +30,340 @@ export interface SharedDoc {
   submittedLabel?: string;
   date?: string;
   taille?: string;
+  /** Lien signé de courte durée vers le fichier déposé (bucket privé). */
+  fileUrl?: string;
 }
 
 // ─── Context interface ────────────────────────────────────────────────────────
 
 interface DocStateCtx {
   requisDocs: SharedDoc[];
-  history: HistoEntry[];
+  /**
+   * Journal du dossier sélectionné. Personnel CPI : les entrées serveur du
+   * dossier (hors documents CPI, exposés par `cpiDocsContext`). Client : sa
+   * boîte de notifications — il n'existe pas de route /client/historique, et
+   * ses notifications sont la trace serveur qui le concerne.
+   */
+  history: ActivityEntry[];
   allDocsByClient: Record<string, SharedDoc[]>;
-  allHistoryByClient: Record<string, HistoEntry[]>;
+  allHistoryByClient: Record<string, ActivityEntry[]>;
   acceptDoc: (docId: string, agentName: string, clientId?: string) => void;
   refuseDoc: (docId: string, agentName: string, comment: string, clientId?: string) => void;
   requestReplacement: (docId: string, agentName: string, comment: string, clientId?: string) => void;
   remettreVerification: (docId: string, agentName: string, clientId?: string) => void;
-  // Dépôt côté client (dans « Ma demande ») : la pièce passe en analyse chez le CPI.
-  depositDoc: (docId: string, fileName?: string, clientId?: string) => void;
+  // Dépôt côté client (dans « Ma demande ») : la pièce part sur le stockage CPI
+  // puis passe en analyse. Le fichier réel est nécessaire (upload multipart).
+  depositDoc: (docId: string, file?: File, clientId?: string) => void;
   // Parcours du dossier piloté par l'Agent CPI (index 0-5 dans TIMELINE_STEPS).
   dossierEtape: number;
   dossierEtapes: Record<string, number>;
   setDossierEtape: (etape: number, agentName: string, clientId?: string) => void;
-  // Notification envoyée par l'agent — trace réelle dans le(s) dossier(s) client(s).
+  /**
+   * Notification envoyée par le personnel CPI vers un dossier (ou « tous »).
+   * Passe par POST /staff/notifications/send : la notification arrive vraiment
+   * dans la boîte du client, et le serveur en journalise l'envoi.
+   */
   pushNotification: (target: string, message: string, canal: string, agentName: string) => void;
+  /** Demande envoyée, par client (calculé côté serveur). */
+  submittedByClient: Record<string, boolean>;
+  /** Chargement des pièces depuis l'API. */
+  loading: boolean;
+  /** Erreur de chargement (null si tout va bien). */
+  error: string | null;
+  /** Relance le chargement après une erreur. */
+  retry: () => void;
 }
 
 const DocStateContext = createContext<DocStateCtx | null>(null);
 
-// ─── Per-client localStorage keys ────────────────────────────────────────────
+// ─── Clé de cache TanStack Query ─────────────────────────────────────────────
 
-// Préfixe v4 : base vide — invalide tout cache de démo antérieur (aucun compte
-// fictif ne doit subsister dans le localStorage des navigateurs).
-const LS_DOCS_KEY    = (id: string) => `cpi_docs_v4_${id}`;
-const LS_HISTORY_KEY = (id: string) => `cpi_history_v4_${id}`;
-const LS_ETAPE_KEY   = (id: string) => `cpi_etape_v4_${id}`;
+export const MES_DOCS_QUERY_KEY = ['client', 'mes-documents'] as const;
 
-// Ids des clients connus — recalculés à chaque appel (le registre grandit en
-// cours de session : un client inscrit doit être rechargé à sa reconnexion).
-const clientIds = (): string[] => [
-  ...Object.keys(ALL_REQUIS_DOCS),
-  ...loadClients().map(c => c.id),
-];
+/** Pièces requises du client connecté (les 3 pièces sont créées par l'API). */
+export function useMesDocumentsQuery(enabled: boolean): UseQueryResult<RequisDocData[]> {
+  return useQuery({
+    queryKey: MES_DOCS_QUERY_KEY,
+    queryFn: () => clientApi.mesDocuments(),
+    enabled,
+  });
+}
 
-// Étape initiale d'un nouveau dossier : le parcours démarre à l'inscription.
-const DOCS_VALIDES_ETAPE = 2;
-const getInitialEtape = (_clientId: string): number => 0;
+// ─── Aucun localStorage ──────────────────────────────────────────────────────
+// La clé `cpi_history_v4_*` a disparu en Phase 6 : le journal du dossier vient
+// de /staff/historique (Spatie Activity Log), écrit par l'API à chaque mutation.
+// Le front ne double plus l'écriture — il se contente de lire.
 
-const loadAllEtapes = (): Record<string, number> => {
-  const result: Record<string, number> = {};
-  for (const clientId of clientIds()) {
-    try {
-      const s = localStorage.getItem(LS_ETAPE_KEY(clientId));
-      if (s !== null) { result[clientId] = Number(JSON.parse(s)); continue; }
-    } catch {}
-    result[clientId] = getInitialEtape(clientId);
-  }
-  return result;
-};
+// ─── Conversion DTO → SharedDoc ──────────────────────────────────────────────
 
-// Modèle générique pour un client sans dossier de démo préconfiguré (nouvel inscrit) —
-// les 3 pièces requises, aucune encore déposée.
-const GENERIC_REQUIS_DOCS = [
-  { id: 'identite',  label: "Pièce d'identité valide", status: 'en-attente' as DocStatus, version: 0 },
-  { id: 'revenus',   label: 'Justificatifs de revenus', status: 'en-attente' as DocStatus, version: 0 },
-  { id: 'bancaires', label: 'Relevés bancaires',        status: 'en-attente' as DocStatus, version: 0 },
-];
+/** `docId` (identite / revenus / bancaires) est l'identifiant utilisé par l'UI. */
+function toSharedDoc(d: RequisDocData): SharedDoc {
+  return {
+    id: d.docId,
+    label: d.label,
+    status: d.status as DocStatus,
+    commentaire: d.commentaire ?? undefined,
+    dateValidation: d.dateValidation ?? undefined,
+    agentName: d.agentName ?? undefined,
+    version: d.version,
+    submittedLabel: d.submittedLabel ?? undefined,
+    date: d.date ?? undefined,
+    taille: d.taille ?? undefined,
+    fileUrl: d.fileUrl ?? undefined,
+  };
+}
 
-const getInitialDocs = (clientId: string): SharedDoc[] => {
-  const source = ALL_REQUIS_DOCS[clientId] ?? GENERIC_REQUIS_DOCS;
-  return source.map(d => ({
-    id: d.id, label: d.label, status: d.status,
-    commentaire: d.commentaire, dateValidation: d.dateValidation,
-    agentName: undefined, version: d.version,
-    submittedLabel: d.submittedLabel, date: d.date, taille: d.taille,
-  }));
-};
+// ─── Conversion notification → entrée de journal ─────────────────────────────
 
-const loadAllDocs = (): Record<string, SharedDoc[]> => {
-  const result: Record<string, SharedDoc[]> = {};
-  for (const clientId of clientIds()) {
-    try {
-      const s = localStorage.getItem(LS_DOCS_KEY(clientId));
-      if (s) { result[clientId] = JSON.parse(s) as SharedDoc[]; continue; }
-    } catch {}
-    result[clientId] = getInitialDocs(clientId);
-  }
-  return result;
-};
+/**
+ * Le client n'a pas accès à /staff/historique. Sa vue « activité récente » est
+ * donc alimentée par sa boîte de notifications, la seule trace serveur qui le
+ * concerne — présentée dans le même format que le journal du personnel pour que
+ * les écrans partagés (Mon dossier, tableau de bord) n'aient qu'une forme à lire.
+ */
+function notificationToEntry(n: NotificationData, clientName: string): ActivityEntry {
+  return {
+    id: `notif-${n.id}`,
+    date: notifDateLabel(n),
+    heure: n.heure,
+    utilisateur: 'CPI',
+    role: 'Agent CPI',
+    action: n.message ? `${n.titre} — ${n.message}` : n.titre,
+    type: 'notification',
+    cible: clientName,
+    clientId: n.clientId ?? undefined,
+    event: 'notification-envoyee',
+    timestamp: notifTimestamp(n),
+  };
+}
 
-const loadAllHistory = (): Record<string, HistoEntry[]> => {
-  const result: Record<string, HistoEntry[]> = {};
-  for (const clientId of clientIds()) {
-    try {
-      const s = localStorage.getItem(LS_HISTORY_KEY(clientId));
-      if (s) { result[clientId] = JSON.parse(s) as HistoEntry[]; continue; }
-    } catch {}
-    result[clientId] = [...(ALL_HISTORIQUE[clientId] ?? [])];
-  }
-  return result;
-};
+// ─── Bandeau d'erreur (aucune action ne échoue en silence) ───────────────────
+
+export function ApiErrorBanner({ message, onClose }: { message: string; onClose: () => void }) {
+  return (
+    <div role="alert" style={{
+      position: 'fixed', top: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 9998,
+      display: 'flex', alignItems: 'center', gap: 12, maxWidth: 560,
+      padding: '11px 16px', borderRadius: 'var(--r-md)',
+      background: 'rgba(192,57,43,0.97)', color: '#fff',
+      fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600,
+      boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
+    }}>
+      <span style={{ flex: 1 }}>{message}</span>
+      <button onClick={onClose} style={{ border: 'none', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 700 }}>
+        Fermer
+      </button>
+    </div>
+  );
+}
 
 // ─── Provider ────────────────────────────────────────────────────────────────
 
 export function DocStateProvider({ children }: { children: React.ReactNode }) {
   const { selectedClientId, allClients } = useClientContext();
+  const { role } = usePermission();
+  const isStaff  = role === 'agent-cpi' || role === 'super-admin';
+  const isClient = role === 'client';
+  const queryClient = useQueryClient();
 
-  const [allDocs,    setAllDocs]    = useState<Record<string, SharedDoc[]>>(loadAllDocs);
-  const [allHistory, setAllHistory] = useState<Record<string, HistoEntry[]>>(loadAllHistory);
-  const [allEtapes,  setAllEtapes]  = useState<Record<string, number>>(loadAllEtapes);
+  // Personnel CPI : la liste des dossiers embarque déjà `requisDocs` — un seul
+  // appel suffit pour alimenter tous les tableaux de bord.
+  const clientsQuery = useClientsQuery(isStaff);
+  // Client : son propre dossier + ses propres pièces.
+  const profileQuery = useMyProfileQuery(isClient);
+  const mesDocsQuery = useMesDocumentsQuery(isClient);
+  // Journal serveur : global pour le personnel, boîte de notifications pour le
+  // client (aucune route /client/historique n'existe).
+  const historiqueQuery = useHistoriqueQuery(isStaff);
+  const notificationsQuery = useMesNotificationsQuery(isClient);
 
-  // Persist per-client state on every change
-  useEffect(() => {
-    for (const [clientId, docs] of Object.entries(allDocs)) {
-      try { localStorage.setItem(LS_DOCS_KEY(clientId), JSON.stringify(docs)); } catch {}
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  // ── Pièces requises, par client ────────────────────────────────────────────
+  const allDocs: Record<string, SharedDoc[]> = useMemo(() => {
+    const result: Record<string, SharedDoc[]> = {};
+    if (isStaff) {
+      for (const c of clientsQuery.data ?? []) {
+        result[c.id] = (c.requisDocs ?? []).map(toSharedDoc);
+      }
+    } else if (isClient && profileQuery.data) {
+      result[profileQuery.data.id] = (mesDocsQuery.data ?? []).map(toSharedDoc);
     }
-  }, [allDocs]);
+    return result;
+  }, [isStaff, isClient, clientsQuery.data, profileQuery.data, mesDocsQuery.data]);
 
-  useEffect(() => {
-    for (const [clientId, hist] of Object.entries(allHistory)) {
-      try { localStorage.setItem(LS_HISTORY_KEY(clientId), JSON.stringify(hist)); } catch {}
+  // ── Étape du dossier + demande envoyée, par client ─────────────────────────
+  const allEtapes: Record<string, number> = useMemo(() => {
+    const result: Record<string, number> = {};
+    if (isStaff) {
+      for (const c of clientsQuery.data ?? []) result[c.id] = c.dossierEtape;
+    } else if (isClient && profileQuery.data) {
+      result[profileQuery.data.id] = profileQuery.data.dossierEtape;
     }
-  }, [allHistory]);
+    return result;
+  }, [isStaff, isClient, clientsQuery.data, profileQuery.data]);
 
-  useEffect(() => {
-    for (const [clientId, etape] of Object.entries(allEtapes)) {
-      try { localStorage.setItem(LS_ETAPE_KEY(clientId), JSON.stringify(etape)); } catch {}
+  const submittedByClient: Record<string, boolean> = useMemo(() => {
+    const result: Record<string, boolean> = {};
+    if (isStaff) {
+      for (const c of clientsQuery.data ?? []) result[c.id] = Boolean(c.demande?.submitted);
+    } else if (isClient && profileQuery.data) {
+      result[profileQuery.data.id] = Boolean(profileQuery.data.demande?.submitted);
     }
-  }, [allEtapes]);
+    return result;
+  }, [isStaff, isClient, clientsQuery.data, profileQuery.data]);
 
-  // Derived values for the currently selected client
-  const requisDocs: SharedDoc[] = allDocs[selectedClientId] ?? getInitialDocs(selectedClientId);
-  const history:    HistoEntry[] = allHistory[selectedClientId] ?? [];
-  const dossierEtape: number     = allEtapes[selectedClientId] ?? getInitialEtape(selectedClientId);
+  // ── Journal du dossier, alimenté par l'API ─────────────────────────────────
+  //
+  // Personnel CPI : /staff/historique, dont on écarte les entrées « documents
+  // CPI » — elles sont servies par cpiDocsContext, comme du temps des deux
+  // journaux locaux, pour que les écrans qui fusionnent les deux ne doublent
+  // rien. Client : sa boîte de notifications, seule trace serveur qui le
+  // concerne (il n'existe pas de route /client/historique).
+  const allHistory: Record<string, ActivityEntry[]> = useMemo(() => {
+    if (isStaff) {
+      const entries = toActivityEntries(historiqueQuery.data)
+        .filter(e => !isCpiDocEvent(e.event));
+      return groupByClient(entries);
+    }
+    if (isClient && profileQuery.data) {
+      return {
+        [profileQuery.data.id]: [...(notificationsQuery.data ?? [])]
+          .sort((a, b) => notifTimestamp(b) - notifTimestamp(a))
+          .map(n => notificationToEntry(n, profileQuery.data.name)),
+      };
+    }
+    return {};
+  }, [isStaff, isClient, historiqueQuery.data, notificationsQuery.data, profileQuery.data]);
+
+  // Valeurs dérivées pour le client sélectionné
+  const requisDocs: SharedDoc[]     = allDocs[selectedClientId] ?? [];
+  const history:    ActivityEntry[] = allHistory[selectedClientId] ?? [];
+  const dossierEtape: number        = allEtapes[selectedClientId] ?? 0;
 
   const nameFor = (clientId: string) => allClients.find(c => c.id === clientId)?.name ?? clientId;
 
-  const nowStamp = () => {
-    const d = new Date();
-    return {
-      date: d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }),
-      heure: d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-    };
+  /**
+   * Rafraîchit les vues qui dépendent des pièces après une mutation.
+   * L'historique en fait partie : le serveur y écrit une entrée à chaque geste.
+   */
+  const invalidateDocs = () => {
+    void queryClient.invalidateQueries({ queryKey: CLIENTS_QUERY_KEY });
+    void queryClient.invalidateQueries({ queryKey: MY_PROFILE_QUERY_KEY });
+    void queryClient.invalidateQueries({ queryKey: MES_DOCS_QUERY_KEY });
+    // L'étape du parcours dépend des pièces : le serveur la recalcule.
+    void queryClient.invalidateQueries({ queryKey: JOURNEY_QUERY_KEY });
+    void queryClient.invalidateQueries({ queryKey: HISTORIQUE_QUERY_KEY });
   };
 
-  const pushHistoryFor = (clientId: string, entry: Omit<HistoEntry, 'id'>) => {
-    setAllHistory(prev => ({
-      ...prev,
-      [clientId]: [{ ...entry, id: 'h-live-' + Date.now() }, ...(prev[clientId] ?? [])],
-    }));
+  // ── Mutations pièces (personnel CPI) ───────────────────────────────────────
+
+  const acceptMutation = useMutation({
+    mutationFn: (v: { clientId: string; docId: string }) => staffApi.docs.accept(v.clientId, v.docId),
+    onSuccess: invalidateDocs,
+    onError: e => setActionError(apiErrorMessage(e, 'Impossible de valider cette pièce.')),
+  });
+
+  const refuseMutation = useMutation({
+    mutationFn: (v: { clientId: string; docId: string; comment: string }) =>
+      staffApi.docs.refuse(v.clientId, v.docId, v.comment),
+    onSuccess: invalidateDocs,
+    onError: e => setActionError(apiErrorMessage(e, 'Impossible de refuser cette pièce.')),
+  });
+
+  const replaceMutation = useMutation({
+    mutationFn: (v: { clientId: string; docId: string; comment: string }) =>
+      staffApi.docs.requestReplacement(v.clientId, v.docId, v.comment),
+    onSuccess: invalidateDocs,
+    onError: e => setActionError(apiErrorMessage(e, 'Impossible de demander le remplacement.')),
+  });
+
+  const verifyMutation = useMutation({
+    mutationFn: (v: { clientId: string; docId: string }) => staffApi.docs.remettreVerification(v.clientId, v.docId),
+    onSuccess: invalidateDocs,
+    onError: e => setActionError(apiErrorMessage(e, 'Impossible de remettre la pièce en vérification.')),
+  });
+
+  const depositMutation = useMutation({
+    mutationFn: (v: { docId: string; file: File }) => clientApi.depositDoc(v.docId, v.file),
+    onSuccess: invalidateDocs,
+    onError: e => setActionError(apiErrorMessage(e, 'Le dépôt du document a échoué.')),
+  });
+
+  const etapeMutation = useMutation({
+    mutationFn: (v: { clientId: string; etape: number }) => staffApi.clients.setDossierEtape(v.clientId, v.etape),
+    onSuccess: invalidateDocs,
+    onError: e => setActionError(apiErrorMessage(e, "Impossible de mettre à jour l'étape du dossier.")),
+  });
+
+  const sendNotificationMutation = useSendNotification();
+
+  // ── Actions exposées (mêmes signatures qu'avant l'API) ─────────────────────
+  //
+  // Plus aucune écriture de journal ici : l'API journalise chaque geste
+  // (`doc-depose`, `validated`, `refused`, `dossier-etape`…) et `invalidateDocs`
+  // rafraîchit l'historique. Écrire des deux côtés produirait des doublons —
+  // et une trace locale mensongère quand le serveur refuse.
+
+  const acceptDoc = (docId: string, _agentName: string, clientId: string = selectedClientId) => {
+    acceptMutation.mutate({ clientId, docId });
   };
 
-  const docLabelFor = (clientId: string, docId: string) =>
-    (allDocs[clientId] ?? getInitialDocs(clientId)).find(d => d.id === docId)?.label ?? docId;
-
-  const updateDocs = (clientId: string, docId: string, patch: Partial<SharedDoc>) => {
-    setAllDocs(prev => ({
-      ...prev,
-      [clientId]: (prev[clientId] ?? getInitialDocs(clientId)).map(d =>
-        d.id !== docId ? d : { ...d, ...patch }
-      ),
-    }));
+  const refuseDoc = (docId: string, _agentName: string, comment: string, clientId: string = selectedClientId) => {
+    refuseMutation.mutate({ clientId, docId, comment });
   };
 
-  const acceptDoc = (docId: string, agentName: string, clientId: string = selectedClientId) => {
-    const { date, heure } = nowStamp();
-    updateDocs(clientId, docId, { status: 'accepte', dateValidation: date, agentName });
-    pushHistoryFor(clientId, {
-      date, heure, utilisateur: agentName, role: 'Agent CPI',
-      action: `${docLabelFor(clientId, docId)} validé${docId === 'identite' ? 'e' : ''}`,
-      type: 'validation' as HistoActionType, cible: nameFor(clientId),
-    });
+  const requestReplacement = (docId: string, _agentName: string, comment: string, clientId: string = selectedClientId) => {
+    replaceMutation.mutate({ clientId, docId, comment });
   };
 
-  const refuseDoc = (docId: string, agentName: string, comment: string, clientId: string = selectedClientId) => {
-    const { date, heure } = nowStamp();
-    updateDocs(clientId, docId, { status: 'refuse', commentaire: comment, agentName });
-    pushHistoryFor(clientId, {
-      date, heure, utilisateur: agentName, role: 'Agent CPI',
-      action: `${docLabelFor(clientId, docId)} refusé${docId === 'identite' ? 'e' : ''}`,
-      type: 'refus' as HistoActionType, cible: nameFor(clientId),
-    });
+  const remettreVerification = (docId: string, _agentName: string, clientId: string = selectedClientId) => {
+    verifyMutation.mutate({ clientId, docId });
   };
 
-  const requestReplacement = (docId: string, agentName: string, comment: string, clientId: string = selectedClientId) => {
-    const { date, heure } = nowStamp();
-    updateDocs(clientId, docId, { status: 'a-remplacer', commentaire: comment, agentName });
-    pushHistoryFor(clientId, {
-      date, heure, utilisateur: agentName, role: 'Agent CPI',
-      action: `Remplacement demandé — ${docLabelFor(clientId, docId)}`,
-      type: 'refus' as HistoActionType, cible: nameFor(clientId),
-    });
+  // Nombre d'étapes du parcours (miroir de dossierJourney.TIMELINE_STEPS).
+  const NB_ETAPES = 6;
+
+  const setDossierEtape = (etape: number, _agentName: string, clientId: string = selectedClientId) => {
+    etapeMutation.mutate({ clientId, etape: Math.max(0, Math.min(NB_ETAPES - 1, etape)) });
   };
 
-  const remettreVerification = (docId: string, agentName: string, clientId: string = selectedClientId) => {
-    const { date, heure } = nowStamp();
-    updateDocs(clientId, docId, { status: 'verification', agentName });
-    pushHistoryFor(clientId, {
-      date, heure, utilisateur: agentName, role: 'Agent CPI',
-      action: `${docLabelFor(clientId, docId)} remis en vérification`,
-      type: 'document' as HistoActionType, cible: nameFor(clientId),
-    });
+  const depositDoc = (docId: string, file?: File, _clientId: string = selectedClientId) => {
+    if (!file) {
+      setActionError('Aucun fichier sélectionné — le dépôt a été annulé.');
+      return;
+    }
+    depositMutation.mutate({ docId, file });
   };
 
-  // Libellés des 6 étapes du parcours (miroir de dossierJourney.TIMELINE_STEPS).
-  const ETAPE_LABELS = ['Inscription', 'Dossier reçu', 'Documents valides', 'Analyser', 'Validation banque', 'Signature'];
-
-  const setDossierEtape = (etape: number, agentName: string, clientId: string = selectedClientId) => {
-    const clamped = Math.max(0, Math.min(ETAPE_LABELS.length - 1, etape));
-    setAllEtapes(prev => ({ ...prev, [clientId]: clamped }));
-    const { date, heure } = nowStamp();
-    pushHistoryFor(clientId, {
-      date, heure, utilisateur: agentName, role: 'Agent CPI',
-      action: `Dossier avancé à l'étape « ${ETAPE_LABELS[clamped]} »`,
-      type: 'validation' as HistoActionType, cible: nameFor(clientId),
-    });
-  };
-
-  const pushNotification = (target: string, message: string, canal: string, agentName: string) => {
+  /**
+   * `canal` (Notification / E-mail / SMS / WhatsApp) devient le titre : l'API
+   * n'a qu'un canal de distribution — la notification applicative —, mais le
+   * choix de l'agent reste visible dans la boîte du destinataire.
+   */
+  const pushNotification = (target: string, message: string, canal: string, _agentName: string) => {
     const ids = target === 'tous' ? allClients.map(c => c.id) : [target];
-    const { date, heure } = nowStamp();
-    ids.forEach(clientId => {
-      pushHistoryFor(clientId, {
-        date, heure, utilisateur: agentName, role: 'Agent CPI',
-        action: `${canal} envoyé : « ${message} »`,
-        type: 'notification' as HistoActionType, cible: nameFor(clientId),
-      });
-    });
+    for (const clientId of ids) {
+      sendNotificationMutation.mutate(
+        { client_id: clientId, titre: canal, message, type: 'info' },
+        { onError: e => setActionError(apiErrorMessage(e, "L'envoi de la notification a échoué.")) },
+      );
+    }
   };
 
-  const depositDoc = (docId: string, fileName?: string, clientId: string = selectedClientId) => {
-    const { date, heure } = nowStamp();
-    const current = (allDocs[clientId] ?? getInitialDocs(clientId)).find(d => d.id === docId);
-    updateDocs(clientId, docId, {
-      status: 'depose', date, agentName: undefined, commentaire: undefined,
-      submittedLabel: fileName ?? current?.submittedLabel,
-      version: (current?.version ?? 0) + 1,
-    });
-    pushHistoryFor(clientId, {
-      date, heure, utilisateur: nameFor(clientId), role: 'Client',
-      action: `${docLabelFor(clientId, docId)} déposé`,
-      type: 'depot' as HistoActionType, cible: nameFor(clientId),
-    });
+  // ── État de chargement / erreur ────────────────────────────────────────────
+  const sourceQuery = isStaff ? clientsQuery : mesDocsQuery;
+  const loading = (isStaff || isClient) && sourceQuery.isPending;
+  const queryError = isStaff
+    ? (clientsQuery.error ?? historiqueQuery.error)
+    : (profileQuery.error ?? mesDocsQuery.error ?? notificationsQuery.error);
+  const error = queryError ? apiErrorMessage(queryError, 'Impossible de charger les pièces du dossier.') : null;
+  const retry = () => {
+    void clientsQuery.refetch();
+    void profileQuery.refetch();
+    void mesDocsQuery.refetch();
+    void historiqueQuery.refetch();
+    void notificationsQuery.refetch();
   };
 
   return (
@@ -262,7 +371,9 @@ export function DocStateProvider({ children }: { children: React.ReactNode }) {
       requisDocs, history, allDocsByClient: allDocs, allHistoryByClient: allHistory,
       acceptDoc, refuseDoc, requestReplacement, remettreVerification, depositDoc,
       dossierEtape, dossierEtapes: allEtapes, setDossierEtape, pushNotification,
+      submittedByClient, loading, error, retry,
     }}>
+      {actionError && <ApiErrorBanner message={actionError} onClose={() => setActionError(null)} />}
       {children}
     </DocStateContext.Provider>
   );

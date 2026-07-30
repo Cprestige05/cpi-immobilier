@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   TrendingUp, Users, FileText, CheckCircle2,
   Clock, AlertCircle, XCircle, ArrowUpRight,
@@ -13,17 +14,20 @@ import { useNavigate } from '../contexts/NavigationContext';
 import { useClientContext } from '../contexts/ClientContext';
 import { useDocState } from '../data/docStateContext';
 import { useCpiDocs } from '../data/cpiDocsContext';
-import { computeJourneyStep, readDemandeSubmitted, TIMELINE_STEPS, SIGNATURE_INDEX, DOCS_VALIDES_INDEX } from '../data/dossierJourney';
+import { computeJourneyStep, TIMELINE_STEPS, SIGNATURE_INDEX, DOCS_VALIDES_INDEX } from '../data/dossierJourney';
 import {
-  loadClients, registerClient, generateDossierRef,
-  loadStaff, registerStaff, generatePassword, BUILTIN_STAFF,
+  useStaffQuery, useCreateStaff, useCreateClient, toStaffAccount,
   type StaffAccount,
 } from '../data/clientRegistry';
-import { logActivity } from '../data/activityLog';
-import { seedDemoData, clearDemoData, countDemoData } from '../data/demoSeed';
+import { apiErrorMessage, TOKEN_KEY } from '../api/client';
 import {
-  loadBanks, registerBank, deleteBank, isBankActive, BANK_COLORS,
-  loadAssignments, assignBankToClient, setBankStatus, removeAssignment,
+  staffApi, DEMO_REF_PREFIX,
+  type DemoSeedResult, type DemoClearResult,
+} from '../api/endpoints';
+import {
+  useBanksQuery, useCreateBank, useDeleteBank, isBankActive, BANK_COLORS,
+  useAssignBank, useSetBankStatus, useRemoveBankAssignment,
+  toBank, toAssignmentMap,
   type Bank, type BankStatus,
 } from '../data/bankRegistry';
 import type { ClientSummary } from '../data/demoStore';
@@ -78,8 +82,11 @@ export default function AdminDashboard({ user, activeNav }: Props) {
 
   const { navigate } = useNavigate();
   const { allClients } = useClientContext();
-  const { allDocsByClient, dossierEtapes, allHistoryByClient } = useDocState();
+  const { allDocsByClient, dossierEtapes, submittedByClient, allHistoryByClient } = useDocState();
   const { allCpiDocsByClient, allCpiHistoryByClient } = useCpiDocs();
+  // Comptes du personnel CPI (API) — sert au calcul de la charge par technicien.
+  const staffQuery = useStaffQuery(true);
+  const staffAccounts: StaffAccount[] = (staffQuery.data ?? []).map(toStaffAccount);
 
   const [query, setQuery] = useState('');
   const [period, setPeriod] = useState<'tout' | 'jour' | '7j' | '30j'>('tout');
@@ -88,7 +95,7 @@ export default function AdminDashboard({ user, activeNav }: Props) {
   // ── Dérivation de l'état réel de chaque dossier ─────────────────────────────
   const rows = allClients.map(c => {
     const docs = allDocsByClient[c.id] ?? [];
-    const submitted = readDemandeSubmitted(c.id, false);
+    const submitted = submittedByClient[c.id] ?? false;
     const etape = dossierEtapes[c.id] ?? DOCS_VALIDES_INDEX;
     const activeStep = computeJourneyStep(submitted, docs, etape);
     const validated = docs.filter(d => d.status === 'accepte').length;
@@ -272,9 +279,8 @@ export default function AdminDashboard({ user, activeNav }: Props) {
 
   const httpsOk = typeof window !== 'undefined' && window.location.protocol === 'https:';
 
-  // Nombre d'agents CPI (comptes intégrés + comptes créés) pour la charge par technicien.
-  const staffAll = loadStaff();
-  const agentsCount = BUILTIN_STAFF.filter(s => s.role === 'agent-cpi').length + staffAll.filter(s => s.role === 'agent-cpi').length;
+  // Nombre d'agents CPI (comptes réels de l'API) pour la charge par technicien.
+  const agentsCount = staffAccounts.filter(s => s.role === 'agent-cpi').length;
   const piecesValidees = allDocs.filter(d => d.status === 'accepte').length;
   const piecesRefusees = allDocs.filter(d => d.status === 'refuse' || d.status === 'a-remplacer').length;
   const piecesTraitees = piecesValidees + piecesRefusees;
@@ -809,14 +815,14 @@ export default function AdminDashboard({ user, activeNav }: Props) {
   );
 }
 
-// ─── Système — configuration technique, maintenance & backend à prévoir ───────
+// ─── Système — configuration technique, stockage & intégrations ───────────────
 
 function SystemeView() {
   const { allCpiDocsByClient } = useCpiDocs();
-  const [toast, setToast] = useState<string | null>(null);
-  const [confirm, setConfirm] = useState<null | 'cache' | 'reset'>(null);
-  const [tick, setTick] = useState(0); // force recalcul du stockage après action
-  const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2800); };
+  const { allClients } = useClientContext();
+  const staffQuery = useStaffQuery(true);
+  const staff: StaffAccount[] = (staffQuery.data ?? []).map(toStaffAccount);
+  const banksQuery = useBanksQuery(true);
 
   // ── Mesures réelles (navigateur) ─────────────────────────────────────────────
   const httpsOk = typeof window !== 'undefined' && window.location.protocol === 'https:';
@@ -825,81 +831,47 @@ function SystemeView() {
     ? ([...document.scripts].map(s => s.src).find(x => /index-.*\.js/.test(x))?.split('/').pop() ?? '—')
     : '—';
 
-  const cpiKeys = typeof localStorage !== 'undefined' ? Object.keys(localStorage).filter(k => k.startsWith('cpi_')) : [];
-  const usedBytes = cpiKeys.reduce((n, k) => n + ((localStorage.getItem(k)?.length ?? 0) + k.length), 0);
-  const usedLabel = usedBytes < 1024 ? `${usedBytes} o` : usedBytes < 1024 * 1024 ? `${(usedBytes / 1024).toFixed(1)} Ko` : `${(usedBytes / 1024 / 1024).toFixed(2)} Mo`;
-  void tick;
-
-  const clientsCount = loadClients().length;
-  const staff = loadStaff();
-  const agentsCount = BUILTIN_STAFF.filter(s => s.role === 'agent-cpi').length + staff.filter(s => s.role === 'agent-cpi').length;
-  const adminsCount = BUILTIN_STAFF.filter(s => s.role === 'admin').length + staff.filter(s => s.role === 'admin').length;
-  const banksCount = loadBanks().length;
+  const clientsCount = allClients.length;
+  const agentsCount = staff.filter(s => s.role === 'agent-cpi').length;
+  const adminsCount = staff.filter(s => s.role === 'admin').length;
+  const banksCount = (banksQuery.data ?? []).length;
   const docsPublies = Object.values(allCpiDocsByClient).flat().filter(d => d.visibleClient).length;
 
-  // ── Actions de maintenance ───────────────────────────────────────────────────
-  const CACHE_PREFIXES = ['cpi_docs_', 'cpi_history_', 'cpi_etape_', 'cpi_cpidocs_', 'cpi_cpihistory_', 'cpi_demande_', 'cpi_chantier_', 'cpi_decaissements', 'cpi_bank_assign', 'cpi_activity_log'];
-  const doPurgeCache = () => {
-    Object.keys(localStorage).filter(k => CACHE_PREFIXES.some(p => k.startsWith(p))).forEach(k => localStorage.removeItem(k));
-    setConfirm(null); setTick(t => t + 1);
-    setTimeout(() => window.location.reload(), 600);
-    showToast('Cache technique vidé — rechargement…');
-  };
-  const doReset = () => {
-    Object.keys(localStorage).filter(k => k.startsWith('cpi_')).forEach(k => localStorage.removeItem(k));
-    setConfirm(null); setTick(t => t + 1);
-    setTimeout(() => window.location.reload(), 600);
-    showToast('Base réinitialisée — rechargement…');
-  };
+  // ── Ce que ce navigateur conserve réellement ────────────────────────────────
+  // Deux clés, et deux seulement : le jeton de session (posé par api/client.ts)
+  // et la photo de profil du membre du personnel, qui n'a pas de route d'API.
+  // Tout le reste — dossiers, pièces, chantiers, journal — vit sur le serveur.
+  const localKeys = typeof localStorage !== 'undefined'
+    ? Object.keys(localStorage).filter(k => k.startsWith('cpi_'))
+    : [];
+  const localRows = [
+    {
+      k: 'Jeton de session',
+      v: localKeys.includes(TOKEN_KEY) ? 'présent' : 'absent',
+      note: 'Effacé à la déconnexion et à toute réponse 401.',
+    },
+    {
+      k: 'Photo de profil (cache local)',
+      v: `${localKeys.filter(k => k.startsWith('cpi_staff_avatar_')).length} enregistrée(s)`,
+      note: "Confinée à ce poste : l'API ne stocke pas encore les avatars.",
+    },
+  ];
 
-  // ── Données de démo / test ─────────────────────────────────────────────────────
-  const demoCount = countDemoData();
-  const doSeedDemo = () => {
-    const n = seedDemoData();
-    showToast(`${n} dossiers de démo chargés — rechargement…`);
-    setTimeout(() => window.location.reload(), 700);
-  };
-  const doClearDemo = () => {
-    const n = clearDemoData();
-    showToast(`${n} dossiers de démo supprimés — rechargement…`);
-    setTimeout(() => window.location.reload(), 700);
-  };
-
-  const exportJSON = () => {
-    const data: Record<string, string> = {};
-    cpiKeys.forEach(k => { const v = localStorage.getItem(k); if (v !== null) data[k] = v; });
-    const payload = { app: 'CPI Immobilier', version: 'v1.0', exportedAt: new Date().toISOString(), data };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `cpi-sauvegarde-${new Date().toISOString().slice(0, 10)}.json`; a.click();
-    URL.revokeObjectURL(url);
-    showToast('Sauvegarde exportée.');
-  };
-  const importJSON = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const parsed = JSON.parse(String(reader.result));
-        const data = parsed.data ?? parsed;
-        if (!data || typeof data !== 'object') throw new Error('format');
-        Object.entries(data).forEach(([k, v]) => { if (k.startsWith('cpi_') && typeof v === 'string') localStorage.setItem(k, v); });
-        showToast('Sauvegarde importée — rechargement…');
-        setTimeout(() => window.location.reload(), 700);
-      } catch { showToast('Fichier de sauvegarde invalide.'); }
-    };
-    reader.readAsText(file);
-  };
-
-  const integrations: { label: string; note: string; icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }> }[] = [
-    { label: 'API / Backend REST', note: 'Persistance centralisée des données', icon: Server },
-    { label: 'Base de données', note: 'Remplace le stockage navigateur', icon: Database },
-    { label: 'Envoi e-mail', note: 'Identifiants & notifications par e-mail', icon: Mail },
-    { label: 'Envoi SMS', note: 'Notifications par SMS', icon: Smartphone },
-    { label: 'Envoi WhatsApp', note: 'Notifications WhatsApp', icon: Smartphone },
-    { label: 'Stockage des fichiers', note: 'Pièces justificatives & documents', icon: HardDrive },
-    { label: 'API bancaire (décaissements)', note: 'Décaissements terrain & tranches', icon: Landmark },
-    { label: 'Authentification sécurisée', note: 'Mots de passe & sessions', icon: Key },
+  // ── Intégrations : ce qui est branché, et ce qui reste à brancher ───────────
+  const integrations: {
+    label: string;
+    note: string;
+    icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+    ok: boolean;
+  }[] = [
+    { label: 'API / Backend REST', note: 'API Laravel — persistance centralisée', icon: Server, ok: true },
+    { label: 'Base de données', note: 'PostgreSQL — source de vérité unique', icon: Database, ok: true },
+    { label: 'Stockage des fichiers', note: 'Cloudflare R2 — liens signés de courte durée', icon: HardDrive, ok: true },
+    { label: 'Authentification sécurisée', note: 'Sanctum + connexion Google', icon: Key, ok: true },
+    { label: 'Envoi e-mail', note: 'Identifiants & notifications par e-mail', icon: Mail, ok: false },
+    { label: 'Envoi SMS', note: 'Notifications par SMS', icon: Smartphone, ok: false },
+    { label: 'Envoi WhatsApp', note: 'Notifications WhatsApp', icon: Smartphone, ok: false },
+    { label: 'API bancaire (décaissements)', note: 'Décaissements terrain & tranches', icon: Landmark, ok: false },
   ];
 
   const cardCls = 'bg-white p-5 sm:p-6';
@@ -909,32 +881,14 @@ function SystemeView() {
     { k: 'Build déployé', v: bundle },
     { k: 'URL de la plateforme', v: origin },
     { k: 'Connexion sécurisée', v: httpsOk ? 'HTTPS actif' : 'Non sécurisé', ok: httpsOk },
-    { k: 'Mode de stockage', v: 'Navigateur (localStorage) · backend à venir' },
+    { k: 'Mode de stockage', v: 'Serveur — API Laravel, base PostgreSQL, fichiers Cloudflare R2' },
     { k: 'Rôles actifs', v: 'Client · Agent CPI · Administrateur' },
   ];
 
   return (
     <div className="space-y-6">
       {/* 0. Données de démo / test */}
-      <div className={cardCls} style={{ ...cs, borderColor: 'rgba(200,146,26,0.35)', background: 'rgba(200,146,26,0.04)' }}>
-        <div className="flex items-center gap-2 mb-1"><Users className="w-4 h-4" style={{ color: A.gold }} /><h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: A.text }}>Données de démo (test)</h3></div>
-        <p style={{ fontSize: '0.8125rem', color: A.muted, marginBottom: 14, lineHeight: 1.55 }}>
-          Charge <strong>30 dossiers fictifs</strong> répartis sur tout le parcours (pièces à vérifier, en analyse banque, en construction, contrat à signer) pour tester la plateforme. Ils sont marqués « démo » et <strong>supprimables à tout moment</strong> sans toucher aux vrais comptes.
-        </p>
-        <div className="flex items-center gap-3 flex-wrap">
-          <button onClick={doSeedDemo} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 'var(--r-sm)', border: 'none', background: A.bordeaux, color: '#fff', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>
-            <Plus className="w-4 h-4" /> Charger 30 dossiers de démo
-          </button>
-          {demoCount > 0 && (
-            <button onClick={doClearDemo} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 'var(--r-sm)', border: `1px solid ${A.border}`, background: 'white', color: A.red, fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>
-              <Trash2 className="w-4 h-4" /> Supprimer les données de démo
-            </button>
-          )}
-          <span style={{ fontSize: '0.8125rem', color: A.muted }}>
-            {demoCount > 0 ? `${demoCount} dossier${demoCount > 1 ? 's' : ''} de démo présent${demoCount > 1 ? 's' : ''}` : 'Aucune donnée de démo'}
-          </span>
-        </div>
-      </div>
+      <DemoDataCard clients={allClients} />
 
       {/* 1. Informations plateforme */}
       <div className={cardCls} style={cs}>
@@ -952,15 +906,26 @@ function SystemeView() {
         </div>
       </div>
 
-      {/* 2. Stockage local & maintenance */}
+      {/*
+        2. Stockage & sauvegarde.
+
+        Cette carte proposait naguère « Vider le cache technique », « Réinitialiser
+        la base » et un export / import JSON du localStorage. Les trois n'ont plus
+        d'objet depuis que la plateforme est servie par l'API : les préfixes visés
+        n'existent plus, la base est côté serveur, et l'export ne ramasserait que
+        le jeton de session et une photo de profil. Des boutons qui ne font rien —
+        ou pire, qui prétendent toucher la base — valent moins qu'une carte qui dit
+        où sont vraiment les données. Aucune route de remise à zéro n'a été
+        inventée : purger la base relève de l'exploitation, pas de cet écran.
+      */}
       <div className={cardCls} style={cs}>
-        <div className="flex items-center gap-2 mb-4"><HardDrive className="w-4 h-4" style={{ color: A.bordeaux }} /><h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: A.text }}>Stockage local &amp; maintenance</h3></div>
+        <div className="flex items-center gap-2 mb-4"><HardDrive className="w-4 h-4" style={{ color: A.bordeaux }} /><h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: A.text }}>Stockage &amp; sauvegarde</h3></div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
           {[
-            { l: 'Espace utilisé', v: usedLabel },
-            { l: 'Clés de données', v: String(cpiKeys.length) },
-            { l: 'Comptes clients', v: String(clientsCount) },
+            { l: 'Dossiers en base', v: String(clientsCount) },
             { l: 'Banques partenaires', v: String(banksCount) },
+            { l: 'Documents CPI publiés', v: String(docsPublies) },
+            { l: 'Comptes du personnel', v: String(staff.length) },
           ].map(s => (
             <div key={s.l} className="p-3" style={{ background: '#FAF7F7', borderRadius: 'var(--r-sm)' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, color: A.text }}>{s.v}</div>
@@ -968,33 +933,24 @@ function SystemeView() {
             </div>
           ))}
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button onClick={() => setConfirm('cache')} className="flex items-center gap-2 px-3 py-2" style={{ border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 600, color: A.bordeaux, background: 'white', cursor: 'pointer' }}>
-            <RefreshCw className="w-3.5 h-3.5" /> Vider le cache technique
-          </button>
-          <button onClick={() => setConfirm('reset')} className="flex items-center gap-2 px-3 py-2" style={{ border: `1px solid ${A.red}33`, borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 600, color: A.red, background: 'white', cursor: 'pointer' }}>
-            <Trash2 className="w-3.5 h-3.5" /> Réinitialiser la base
-          </button>
-        </div>
-        <p style={{ fontSize: '0.6875rem', color: A.muted, marginTop: 10, lineHeight: 1.5 }}>
-          « Vider le cache » supprime les données dérivées (documents, historiques, étapes, chantier, journal) et conserve les comptes et banques. « Réinitialiser » efface toutes les données locales.
+        <p style={{ fontSize: '0.8125rem', color: A.muted, marginBottom: 12, lineHeight: 1.6 }}>
+          Toutes les données de la plateforme — dossiers, demandes, pièces justificatives, documents CPI,
+          banques, décaissements, chantiers, notifications et journal d'activité — sont conservées
+          <strong style={{ color: A.text }}> sur le serveur</strong> (base PostgreSQL, fichiers Cloudflare R2).
+          La sauvegarde et la restauration sont donc des opérations d'exploitation, réalisées côté serveur
+          par vos techniciens : rien ne peut être sauvegardé ni réinitialisé depuis ce navigateur.
         </p>
-      </div>
-
-      {/* 3. Sauvegarde des données */}
-      <div className={cardCls} style={cs}>
-        <div className="flex items-center gap-2 mb-4"><Download className="w-4 h-4" style={{ color: A.bordeaux }} /><h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: A.text }}>Sauvegarde des données</h3></div>
-        <p style={{ fontSize: '0.8125rem', color: A.muted, marginBottom: 14, lineHeight: 1.5 }}>
-          En attendant le backend, exportez régulièrement une sauvegarde complète (comptes, dossiers, documents, banques, journal) et réimportez-la si besoin.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <button onClick={exportJSON} className="flex items-center gap-2 px-4 py-2" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>
-            <Download className="w-3.5 h-3.5" /> Exporter la sauvegarde (JSON)
-          </button>
-          <label className="flex items-center gap-2 px-4 py-2" style={{ border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 600, color: A.text, background: 'white', cursor: 'pointer' }}>
-            <Upload className="w-3.5 h-3.5" /> Importer une sauvegarde
-            <input type="file" accept="application/json" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) importJSON(f); e.currentTarget.value = ''; }} />
-          </label>
+        <div style={{ background: '#FAF7F7', borderRadius: 'var(--r-sm)', padding: '12px 14px' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: A.text, marginBottom: 8 }}>Ce que ce navigateur conserve</div>
+          {localRows.map((row, i, arr) => (
+            <div key={row.k} className="flex items-start justify-between gap-3 py-2" style={{ borderBottom: i < arr.length - 1 ? '1px solid rgba(99,2,16,0.06)' : 'none' }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: A.text }}>{row.k}</div>
+                <div style={{ fontSize: '0.6875rem', color: A.muted, lineHeight: 1.5 }}>{row.note}</div>
+              </div>
+              <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: A.muted, flexShrink: 0 }}>{row.v}</span>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -1018,50 +974,177 @@ function SystemeView() {
         </div>
       </div>
 
-      {/* 5. Intégrations & backend à prévoir */}
+      {/* 5. Intégrations */}
       <div className={cardCls} style={cs}>
-        <div className="flex items-center gap-2 mb-1"><Zap className="w-4 h-4" style={{ color: A.gold }} /><h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: A.text }}>Intégrations &amp; backend à prévoir</h3></div>
-        <p style={{ fontSize: '0.75rem', color: A.muted, marginBottom: 14 }}>Services à brancher par vos techniciens. Chaque emplacement est prêt à recevoir sa connexion.</p>
+        <div className="flex items-center gap-2 mb-1"><Zap className="w-4 h-4" style={{ color: A.gold }} /><h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: A.text }}>Intégrations</h3></div>
+        <p style={{ fontSize: '0.75rem', color: A.muted, marginBottom: 14 }}>
+          Services déjà branchés sur la plateforme, et ceux qui restent à connecter par vos techniciens.
+        </p>
         <div className="grid sm:grid-cols-2 gap-2">
           {integrations.map(it => {
             const Icon = it.icon;
             return (
               <div key={it.label} className="flex items-center gap-3 p-3" style={{ background: '#FAF7F7', borderRadius: 'var(--r-sm)' }}>
-                <div className="w-8 h-8 flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(107,74,82,0.10)', borderRadius: 'var(--r-sm)' }}><Icon className="w-4 h-4" style={{ color: A.muted }} /></div>
+                <div className="w-8 h-8 flex items-center justify-center flex-shrink-0" style={{ background: it.ok ? 'rgba(26,107,68,0.10)' : 'rgba(107,74,82,0.10)', borderRadius: 'var(--r-sm)' }}><Icon className="w-4 h-4" style={{ color: it.ok ? A.green : A.muted }} /></div>
                 <div className="flex-1" style={{ minWidth: 100 }}>
                   <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: A.text }}>{it.label}</div>
                   <div style={{ fontSize: '0.625rem', color: A.muted }}>{it.note}</div>
                 </div>
-                <span style={{ fontSize: '0.625rem', fontWeight: 700, color: A.muted, background: 'rgba(107,74,82,0.10)', padding: '3px 8px', borderRadius: 'var(--r-full)', flexShrink: 0 }}>à connecter</span>
+                <span style={{ fontSize: '0.625rem', fontWeight: 700, color: it.ok ? A.green : A.muted, background: it.ok ? 'rgba(26,107,68,0.10)' : 'rgba(107,74,82,0.10)', padding: '3px 8px', borderRadius: 'var(--r-full)', flexShrink: 0 }}>
+                  {it.ok ? 'connecté' : 'à connecter'}
+                </span>
               </div>
             );
           })}
         </div>
       </div>
+    </div>
+  );
+}
 
-      {/* Confirmation maintenance */}
-      {confirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-5">
-          <div onClick={() => setConfirm(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(28,8,16,0.45)' }} />
-          <div className="relative bg-white w-full max-w-md p-6" style={{ borderRadius: 'var(--r-lg)' }}>
-            <div className="flex items-center gap-2 mb-2"><AlertCircle className="w-5 h-5" style={{ color: A.red }} /><h4 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: A.text }}>{confirm === 'cache' ? 'Vider le cache technique ?' : 'Réinitialiser la base ?'}</h4></div>
-            <p style={{ fontSize: '0.8125rem', color: A.muted, lineHeight: 1.55, marginBottom: 18 }}>
-              {confirm === 'cache'
-                ? 'Les documents, historiques, étapes, chantier et journal seront supprimés. Les comptes et banques sont conservés. La page se rechargera.'
-                : 'Toutes les données locales (comptes, dossiers, documents, banques, journal) seront définitivement effacées. Cette action est irréversible.'}
-            </p>
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => setConfirm(null)} className="px-4 py-2" style={{ background: 'white', color: A.muted, border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>Annuler</button>
-              <button onClick={confirm === 'cache' ? doPurgeCache : doReset} className="flex items-center gap-2 px-4 py-2" style={{ background: confirm === 'cache' ? A.bordeaux : A.red, color: 'white', border: 'none', borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>
-                {confirm === 'cache' ? <><RefreshCw className="w-3.5 h-3.5" /> Vider</> : <><Trash2 className="w-3.5 h-3.5" /> Réinitialiser</>}
-              </button>
-            </div>
+// ─── Jeu de démonstration (POST /staff/demo/seed · DELETE /staff/demo/clear) ──
+//
+// Le générateur local d'antan écrivait dans le navigateur ; les 30 dossiers sont
+// désormais créés EN BASE par l'API, avec leurs comptes de connexion, leurs
+// pièces, leurs orientations bancaires, leurs décaissements et leurs chantiers.
+// Deux garde-fous côté serveur, reflétés ici :
+//   · le chargement est refusé (409) tant que des dossiers de démo subsistent —
+//     d'où le bouton désactivé et la phrase qui l'explique ;
+//   · la purge ne touche que les lignes préfixées « demo- ».
+
+function DemoDataCard({ clients }: { clients: ClientSummary[] }) {
+  const queryClient = useQueryClient();
+  const [copied, setCopied] = useState(false);
+
+  // Toutes les clés de cache de l'application sont enracinées sur l'un de ces
+  // deux préfixes : les invalider revient à rafraîchir tout ce que le jeu de
+  // démonstration vient de faire apparaître ou disparaître (dossiers, pièces,
+  // documents CPI, banques, décaissements, chantiers, notifications, journal).
+  const invalidateEverything = () => {
+    void queryClient.invalidateQueries({ queryKey: ['staff'] });
+    void queryClient.invalidateQueries({ queryKey: ['client'] });
+  };
+
+  const seed = useMutation<DemoSeedResult, unknown, void>({
+    mutationFn: () => staffApi.demo.seed(),
+    onSuccess: invalidateEverything,
+  });
+  const clear = useMutation<DemoClearResult, unknown, void>({
+    mutationFn: () => staffApi.demo.clear(),
+    onSuccess: invalidateEverything,
+  });
+
+  // Le registre chargé par l'écran fait foi : un dossier de démonstration se
+  // reconnaît à sa référence préfixée.
+  const demoCount = clients.filter(c => c.ref.startsWith(DEMO_REF_PREFIX)).length;
+  const busy = seed.isPending || clear.isPending;
+  const error = seed.error ?? clear.error;
+  const errorLabel = error
+    ? apiErrorMessage(error, seed.error ? 'Chargement des données de démo impossible.' : 'Suppression des données de démo impossible.')
+    : null;
+
+  const motDePasse = seed.data?.motDePasse ?? null;
+  const copyPassword = () => {
+    if (!motDePasse) return;
+    void navigator.clipboard.writeText(motDePasse).then(
+      () => { setCopied(true); setTimeout(() => setCopied(false), 2000); },
+      () => { /* presse-papiers refusé (contexte non sécurisé) : le mot de passe reste lisible à l'écran */ },
+    );
+  };
+
+  return (
+    <div className="bg-white p-5 sm:p-6" style={{ ...cs, borderColor: 'rgba(200,146,26,0.35)', background: 'rgba(200,146,26,0.04)' }}>
+      <div className="flex items-center gap-2 mb-1">
+        <Users className="w-4 h-4" style={{ color: A.gold }} />
+        <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: A.text }}>Données de démo (test)</h3>
+      </div>
+      <p style={{ fontSize: '0.8125rem', color: A.muted, marginBottom: 14, lineHeight: 1.55 }}>
+        Crée <strong>30 dossiers fictifs</strong> dans la base, répartis sur tout le parcours : inscription,
+        pièces à vérifier, analyse bancaire, contrat à signer, chantier en cours et logement livré — avec
+        leurs comptes de connexion, banques partenaires, décaissements et publications de chantier.
+        Toutes ces lignes portent le préfixe <strong>« demo- »</strong> et sont supprimables à tout moment
+        <strong> sans jamais toucher aux vrais dossiers</strong>.
+      </p>
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => { clear.reset(); seed.mutate(); }}
+          disabled={busy || demoCount > 0}
+          className="flex items-center gap-2 px-4 py-2"
+          style={{
+            background: busy || demoCount > 0 ? 'rgba(107,74,82,0.25)' : A.bordeaux,
+            color: 'white', border: 'none', borderRadius: 'var(--r-sm)',
+            fontSize: '0.8125rem', fontWeight: 700,
+            cursor: busy || demoCount > 0 ? 'not-allowed' : 'pointer',
+          }}
+        >
+          <Database className="w-3.5 h-3.5" />
+          {seed.isPending ? 'Chargement en cours…' : 'Charger 30 dossiers de démo'}
+        </button>
+        <button
+          onClick={() => { seed.reset(); clear.mutate(); }}
+          disabled={busy || demoCount === 0}
+          className="flex items-center gap-2 px-4 py-2"
+          style={{
+            border: `1px solid ${A.red}33`, borderRadius: 'var(--r-sm)',
+            fontSize: '0.8125rem', fontWeight: 600,
+            color: busy || demoCount === 0 ? A.muted : A.red, background: 'white',
+            cursor: busy || demoCount === 0 ? 'not-allowed' : 'pointer',
+          }}
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+          {clear.isPending ? 'Suppression en cours…' : 'Supprimer les données de démo'}
+        </button>
+      </div>
+
+      <p style={{ fontSize: '0.6875rem', color: A.muted, marginTop: 10, lineHeight: 1.5 }}>
+        {demoCount > 0
+          ? <><strong style={{ color: A.text }}>{demoCount} dossier(s) de démonstration</strong> sont actuellement en base. Supprimez-les avant d'en charger de nouveaux.</>
+          : "Aucune donnée de démonstration en base. Le chargement peut prendre quelques secondes."}
+      </p>
+
+      {errorLabel && (
+        <div className="flex items-start gap-2 mt-3" style={{ padding: '10px 14px', borderRadius: 'var(--r-sm)', background: 'rgba(192,57,43,0.08)', border: `1px solid ${A.red}33` }}>
+          <AlertCircle className="w-4 h-4 flex-shrink-0" style={{ color: A.red, marginTop: 1 }} />
+          <span style={{ fontSize: '0.8125rem', color: A.text, lineHeight: 1.5 }}>{errorLabel}</span>
+        </div>
+      )}
+
+      {seed.isSuccess && seed.data && (
+        <div className="mt-3" style={{ padding: '12px 14px', borderRadius: 'var(--r-sm)', background: 'rgba(26,107,68,0.08)', border: '1px solid rgba(26,107,68,0.30)' }}>
+          <div className="flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: A.green, marginTop: 1 }} />
+            <span style={{ fontSize: '0.8125rem', color: A.text, lineHeight: 1.5 }}>
+              <strong>{seed.data.clients} dossiers</strong> de démonstration créés, avec {seed.data.comptes} comptes
+              de connexion et {seed.data.banques} banques partenaires fictives.
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            <span style={{ fontSize: '0.75rem', color: A.muted }}>
+              Connexion : l'adresse e-mail affichée sur chaque dossier, mot de passe
+            </span>
+            <code style={{ fontSize: '0.8125rem', fontWeight: 700, color: A.text, background: 'white', padding: '3px 8px', borderRadius: 'var(--r-sm)', border: `1px solid ${A.border}` }}>
+              {seed.data.motDePasse}
+            </code>
+            <button
+              onClick={copyPassword}
+              className="flex items-center gap-1.5 px-2.5 py-1"
+              style={{ border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: '0.6875rem', fontWeight: 600, color: A.bordeaux, background: 'white', cursor: 'pointer' }}
+            >
+              <Copy className="w-3 h-3" /> {copied ? 'Copié' : 'Copier'}
+            </button>
           </div>
         </div>
       )}
 
-      {toast && (
-        <div className="fixed z-50" style={{ bottom: 24, right: 24, background: A.text, color: 'white', padding: '12px 18px', borderRadius: 'var(--r-sm)', fontSize: '0.875rem', fontWeight: 600, maxWidth: 360 }}>{toast}</div>
+      {clear.isSuccess && clear.data && (
+        <div className="flex items-start gap-2 mt-3" style={{ padding: '10px 14px', borderRadius: 'var(--r-sm)', background: 'rgba(26,107,68,0.08)', border: '1px solid rgba(26,107,68,0.30)' }}>
+          <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: A.green, marginTop: 1 }} />
+          <span style={{ fontSize: '0.8125rem', color: A.text, lineHeight: 1.5 }}>
+            {clear.data.clients} dossier(s), {clear.data.comptes} compte(s), {clear.data.banques} banque(s)
+            et {clear.data.entreesJournal} entrée(s) de journal supprimés. Les vrais dossiers sont intacts.
+          </span>
+        </div>
       )}
     </div>
   );
@@ -1073,7 +1156,7 @@ function AdminModuleView({ activeNav, agentName }: { activeNav: string; agentNam
     <div style={{ height: '100%', overflow: 'auto' }}>
       {activeNav === 'documents-clients'   && <DocumentsClientsModule agentName={agentName} />}
       {activeNav === 'documents-admin'     && <DocumentsAdminModule agentName={agentName} />}
-      {activeNav === 'chantier'            && <ChantierModule />}
+      {activeNav === 'chantier'            && <ChantierModule agentName={agentName} />}
       {activeNav === 'decaissements'       && <DecaissementsModule />}
       {activeNav === 'notifications-agent' && <NotificationsModule agentName={agentName} />}
       {activeNav === 'historique'          && <HistoriqueModule />}
@@ -1105,7 +1188,7 @@ const cs: React.CSSProperties = { border: `1px solid ${A.border}`, borderRadius:
 function DemandesView({ agentName }: { agentName: string }) {
   const { navigate } = useNavigate();
   const { allClients } = useClientContext();
-  const { allDocsByClient, dossierEtapes, acceptDoc, refuseDoc, requestReplacement, setDossierEtape } = useDocState();
+  const { allDocsByClient, dossierEtapes, submittedByClient, acceptDoc, refuseDoc, requestReplacement, setDossierEtape } = useDocState();
   const { allCpiDocsByClient, requestSignature, markSigned } = useCpiDocs();
 
   const [query, setQuery] = useState('');
@@ -1115,9 +1198,17 @@ function DemandesView({ agentName }: { agentName: string }) {
   const [commentFor, setCommentFor] = useState<{ docId: string; kind: 'refuse' | 'remplacer' } | null>(null);
   const [commentText, setCommentText] = useState('');
   const [toast, setToast] = useState<string | null>(null);
-  const [banks] = useState<Bank[]>(() => loadBanks());
-  const [assignMap, setAssignMap] = useState(() => loadAssignments());
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2500); };
+  const [bankError, setBankError] = useState<string | null>(null);
+  const failWith = (fallback: string) => (e: unknown) => setBankError(apiErrorMessage(e, fallback));
+
+  // Banques partenaires + orientations : /staff/banks porte les deux.
+  const banksQuery = useBanksQuery(true);
+  const banks: Bank[] = (banksQuery.data ?? []).map(toBank);
+  const assignMap = toAssignmentMap(banksQuery.data ?? []);
+  const assignMutation = useAssignBank();
+  const statusMutation = useSetBankStatus();
+  const removeMutation = useRemoveBankAssignment();
 
   const BANK_STATUS_CFG: Record<BankStatus, { label: string; color: string }> = {
     'en-attente': { label: 'En attente', color: A.gold },
@@ -1127,7 +1218,7 @@ function DemandesView({ agentName }: { agentName: string }) {
 
   const rows = allClients.map(c => {
     const docs = allDocsByClient[c.id] ?? [];
-    const submitted = readDemandeSubmitted(c.id, false);
+    const submitted = submittedByClient[c.id] ?? false;
     const etapeCpi = dossierEtapes[c.id] ?? DOCS_VALIDES_INDEX;
     const activeStep = computeJourneyStep(submitted, docs, etapeCpi);
     const validated = docs.filter(d => d.status === 'accepte').length;
@@ -1366,11 +1457,27 @@ function DemandesView({ agentName }: { agentName: string }) {
             {/* Orientation banques partenaires */}
             <div style={{ fontSize: '0.75rem', fontWeight: 700, color: A.muted, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Orientation banques</div>
             {(() => {
-              const assigned = assignMap[selected.c.id] ?? [];
+              const clientId = selected.c.id;
+              const clientName = selected.c.name;
+              const assigned = assignMap[clientId] ?? [];
               const available = banks.filter(b => !assigned.some(a => a.bankId === b.id));
+              const busy = assignMutation.isPending || statusMutation.isPending || removeMutation.isPending;
               return (
                 <div className="space-y-2 mb-4">
-                  {banks.length === 0 && <div style={{ fontSize: '0.8125rem', color: A.muted }}>Aucune banque partenaire enregistrée. Ajoutez-en dans « Partenaires ».</div>}
+                  {banksQuery.isPending && <div style={{ fontSize: '0.8125rem', color: A.muted }}>Chargement des banques partenaires…</div>}
+                  {banksQuery.isError && (
+                    <div style={{ fontSize: '0.8125rem', color: A.red }}>
+                      {apiErrorMessage(banksQuery.error, 'Impossible de charger les banques partenaires.')}{' '}
+                      <button onClick={() => { void banksQuery.refetch(); }} style={{ background: 'transparent', border: 'none', color: A.bordeaux, fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}>Réessayer</button>
+                    </div>
+                  )}
+                  {bankError && (
+                    <div role="alert" style={{ fontSize: '0.8125rem', fontWeight: 600, color: A.red, background: 'rgba(192,57,43,0.08)', border: `1px solid ${A.red}40`, borderRadius: 'var(--r-sm)', padding: '8px 12px' }}>
+                      {bankError}{' '}
+                      <button onClick={() => setBankError(null)} style={{ background: 'transparent', border: 'none', color: A.red, fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}>Fermer</button>
+                    </div>
+                  )}
+                  {!banksQuery.isPending && !banksQuery.isError && banks.length === 0 && <div style={{ fontSize: '0.8125rem', color: A.muted }}>Aucune banque partenaire enregistrée. Ajoutez-en dans « Partenaires ».</div>}
                   {assigned.map(a => {
                     const st = BANK_STATUS_CFG[a.status];
                     return (
@@ -1379,12 +1486,20 @@ function DemandesView({ agentName }: { agentName: string }) {
                           <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: A.text }}>{a.bankName}</span>
                           <div className="flex items-center gap-2">
                             <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: st.color, background: `${st.color}14`, padding: '2px 8px', borderRadius: 'var(--r-full)' }}>{st.label}</span>
-                            <button onClick={() => { removeAssignment(selected.c.id, a.bankId); setAssignMap(loadAssignments()); showToast('Orientation retirée.'); }} style={{ background: 'white', border: `1px solid ${A.border}`, borderRadius: 'var(--r-xs)', padding: 4, cursor: 'pointer' }}><X className="w-3 h-3" style={{ color: A.muted }} /></button>
+                            <button disabled={busy} onClick={() => removeMutation.mutate({ clientId, bankId: a.bankId }, {
+                              onSuccess: () => showToast('Orientation retirée.'),
+                              onError: failWith("Le retrait de l'orientation a échoué."),
+                            })} style={{ background: 'white', border: `1px solid ${A.border}`, borderRadius: 'var(--r-xs)', padding: 4, cursor: 'pointer' }}><X className="w-3 h-3" style={{ color: A.muted }} /></button>
                           </div>
                         </div>
                         <div className="flex gap-1.5 flex-wrap">
                           {(['en-attente', 'accord', 'refus'] as BankStatus[]).map(s => (
-                            <button key={s} onClick={() => { setBankStatus(selected.c.id, a.bankId, s); setAssignMap(loadAssignments()); logActivity({ utilisateur: 'Administrateur', role: 'Administrateur', action: `Réponse banque « ${a.bankName} » → ${BANK_STATUS_CFG[s].label}`, type: 'banque', cible: selected.c.name }); showToast('Statut mis à jour.'); }}
+                            <button key={s} disabled={busy} onClick={() => statusMutation.mutate({ clientId, bankId: a.bankId, status: s }, {
+                              onSuccess: () => {
+                                showToast('Statut mis à jour.');
+                              },
+                              onError: failWith('La mise à jour du statut a échoué.'),
+                            })}
                               style={{ padding: '3px 10px', borderRadius: 'var(--r-xs)', border: `1px solid ${a.status === s ? BANK_STATUS_CFG[s].color : A.border}`, cursor: 'pointer', fontSize: '0.625rem', fontWeight: 700, background: a.status === s ? BANK_STATUS_CFG[s].color : 'white', color: a.status === s ? 'white' : A.muted }}>{BANK_STATUS_CFG[s].label}</button>
                           ))}
                         </div>
@@ -1394,7 +1509,12 @@ function DemandesView({ agentName }: { agentName: string }) {
                   {available.length > 0 && (
                     <div className="flex gap-1.5 flex-wrap pt-1">
                       {available.map(b => (
-                        <button key={b.id} onClick={() => { assignBankToClient(selected.c.id, b); setAssignMap(loadAssignments()); logActivity({ utilisateur: 'Administrateur', role: 'Administrateur', action: `Dossier orienté vers ${b.name}`, type: 'banque', cible: selected.c.name }); showToast(`Dossier orienté vers ${b.name}.`); }}
+                        <button key={b.id} disabled={busy} onClick={() => assignMutation.mutate({ clientId, bankId: b.id }, {
+                          onSuccess: () => {
+                            showToast(`Dossier orienté vers ${b.name}.`);
+                          },
+                          onError: failWith("L'orientation du dossier a échoué."),
+                        })}
                           className="flex items-center gap-1 px-2.5 py-1.5" style={{ background: 'white', color: b.color, border: `1px solid ${b.color}40`, borderRadius: 'var(--r-sm)', fontSize: '0.6875rem', fontWeight: 700, cursor: 'pointer' }}><Plus className="w-3 h-3" /> {b.name}</button>
                       ))}
                     </div>
@@ -1430,10 +1550,16 @@ const ROLE_CFG: Record<string, { label: string; color: string }> = {
 
 function UsersView({ agentName }: { agentName: string }) {
   const { navigate } = useNavigate();
-  const { allDocsByClient, dossierEtapes, pushNotification } = useDocState();
+  const { allDocsByClient, dossierEtapes, submittedByClient, pushNotification } = useDocState();
+  const { allClients } = useClientContext();
 
-  const [clients, setClients] = useState<ClientSummary[]>(() => loadClients());
-  const [staff, setStaff] = useState<StaffAccount[]>(() => loadStaff());
+  // Registre réel : dossiers clients et comptes du personnel viennent de l'API.
+  const staffQuery   = useStaffQuery(true);
+  const createClient = useCreateClient();
+  const createStaff  = useCreateStaff();
+
+  const clients: ClientSummary[] = allClients;
+  const staff: StaffAccount[] = (staffQuery.data ?? []).map(toStaffAccount);
   const [query, setQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<'tous' | 'clients' | 'personnel'>('tous');
   const [showAdd, setShowAdd] = useState(false);
@@ -1444,14 +1570,11 @@ function UsersView({ agentName }: { agentName: string }) {
   const [toast, setToast] = useState<string | null>(null);
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2500); };
 
-  const allStaff = [
-    ...BUILTIN_STAFF.map(s => ({ ...s, builtin: true })),
-    ...staff.map(s => ({ ...s, builtin: false })),
-  ];
+  const allStaff = staff;
 
   const clientRows = clients.map(c => {
     const docs = allDocsByClient[c.id] ?? [];
-    const submitted = readDemandeSubmitted(c.id, false);
+    const submitted = submittedByClient[c.id] ?? false;
     const etapeCpi = dossierEtapes[c.id] ?? DOCS_VALIDES_INDEX;
     return { c, activeStep: computeJourneyStep(submitted, docs, etapeCpi) };
   });
@@ -1470,29 +1593,48 @@ function UsersView({ agentName }: { agentName: string }) {
   const roleLabel = (r: string) => ROLE_CFG[r]?.label ?? 'Client';
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
 
+  // Création réelle via l'API : la référence de dossier et le mot de passe
+  // provisoire sont générés côté serveur.
+  const creating = createClient.isPending || createStaff.isPending;
+
   const addUser = () => {
     const name = form.name.trim();
     const email = form.email.trim();
     if (!name || !email) { showToast('Nom et e-mail requis.'); return; }
-    const today = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
-    if (form.role === 'client') {
-      const id = `c-${Date.now()}`;
-      const ref = generateDossierRef();
-      registerClient({ id, name, ref, statut: 'Dossier en préparation', progression: 0, projectNom: '—', adresse: '—', dateInscription: today, email: email || undefined, phone: form.phone.trim() || undefined });
-      setClients(loadClients());
-      const message = `Bonjour ${name},\n\nVotre espace client CPI Immobilier a été créé.\n\nConnexion : ${origin}\n→ « Accéder à mon espace », onglet « Espace client »\nConnectez-vous avec votre nom : ${name}\nNuméro de dossier : ${ref}\n\nL'équipe CPI`;
-      setCreds({ name, roleLabel: 'Client', email, ref, message });
-    } else {
-      const password = generatePassword();
-      registerStaff({ email, name, role: form.role, password, createdAt: today });
-      setStaff(loadStaff());
-      const message = `Bonjour ${name},\n\nVotre accès professionnel CPI Immobilier (${roleLabel(form.role)}) a été créé.\n\nConnexion : ${origin}\n→ « Espace professionnel CPI »\nIdentifiant : ${email}\nMot de passe provisoire : ${password}\n\nMerci de le changer à la première connexion.\nL'équipe CPI`;
-      setCreds({ name, roleLabel: roleLabel(form.role), email, password, message });
+    if (creating) return;
+    const role = form.role;
+    const finish = () => {
+      setShowAdd(false);
+      setForm({ role: 'client', name: '', email: '', phone: '' });
+      showToast('Utilisateur créé.');
+    };
+
+    if (role === 'client') {
+      createClient.mutate(
+        { name, email, phone: form.phone.trim() },
+        {
+          onSuccess: created => {
+            const message = `Bonjour ${name},\n\nVotre espace client CPI Immobilier a été créé.\n\nConnexion : ${origin}\n→ « Accéder à mon espace », onglet « Espace client »\nConnectez-vous avec votre nom : ${name}\nNuméro de dossier : ${created.ref}\n\nL'équipe CPI`;
+            setCreds({ name, roleLabel: 'Client', email, ref: created.ref, message });
+            finish();
+          },
+          onError: e => showToast(apiErrorMessage(e, 'La création du dossier client a échoué.')),
+        },
+      );
+      return;
     }
-    logActivity({ utilisateur: 'Administrateur', role: 'Administrateur', action: `Compte créé — ${roleLabel(form.role)}`, type: 'compte', cible: name });
-    setShowAdd(false);
-    setForm({ role: 'client', name: '', email: '', phone: '' });
-    showToast('Utilisateur créé.');
+
+    createStaff.mutate(
+      { name, email, role },
+      {
+        onSuccess: ({ temporaryPassword }) => {
+          const message = `Bonjour ${name},\n\nVotre accès professionnel CPI Immobilier (${roleLabel(role)}) a été créé.\n\nConnexion : ${origin}\n→ « Espace professionnel CPI »\nIdentifiant : ${email}\nMot de passe provisoire : ${temporaryPassword}\n\nMerci de le changer à la première connexion.\nL'équipe CPI`;
+          setCreds({ name, roleLabel: roleLabel(role), email, password: temporaryPassword, message });
+          finish();
+        },
+        onError: e => showToast(apiErrorMessage(e, 'La création du compte professionnel a échoué.')),
+      },
+    );
   };
 
   const sendEmail = () => {
@@ -1599,7 +1741,7 @@ function UsersView({ agentName }: { agentName: string }) {
                   </div>
                   <div style={{ fontSize: '0.75rem', color: A.muted, marginTop: 2 }}>{s.email}</div>
                 </div>
-                <span style={{ fontSize: '0.625rem', fontWeight: 700, color: A.muted, background: '#FAF7F7', padding: '3px 9px', borderRadius: 'var(--r-full)' }}>{s.builtin ? 'Compte système' : 'Ajouté par l’admin'}</span>
+                <span style={{ fontSize: '0.625rem', fontWeight: 700, color: A.muted, background: '#FAF7F7', padding: '3px 9px', borderRadius: 'var(--r-full)' }}>Compte CPI</span>
                 <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: A.green }}>● Actif</span>
               </div>
             );
@@ -1719,16 +1861,22 @@ function UsersView({ agentName }: { agentName: string }) {
 const PRODUCT_OPTIONS = ['Fonctionnaire', 'Secteur privé', 'Diaspora', 'Terrain', 'Construction'];
 
 function PartnersView() {
-  const { allClients } = useClientContext();
-  const [banks, setBanks] = useState<Bank[]>(() => loadBanks());
   const [showAdd, setShowAdd] = useState(false);
   const [confirmDel, setConfirmDel] = useState<Bank | null>(null);
   const [form, setForm] = useState<{ name: string; conventionDate: string; validity: string; products: string[]; rate: string; contact: string; color: string }>({ name: '', conventionDate: '', validity: '', products: [], rate: '', contact: '', color: BANK_COLORS[0] });
   const [toast, setToast] = useState<string | null>(null);
+  const [bankError, setBankError] = useState<string | null>(null);
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2500); };
+  const failWith = (fallback: string) => (e: unknown) => setBankError(apiErrorMessage(e, fallback));
+
+  // /staff/banks : registre + orientations en un seul appel.
+  const banksQuery = useBanksQuery(true);
+  const banks: Bank[] = (banksQuery.data ?? []).map(toBank);
+  const assignments = toAssignmentMap(banksQuery.data ?? []);
+  const createMutation = useCreateBank();
+  const deleteMutation = useDeleteBank();
 
   const now = new Date();
-  const assignments = loadAssignments();
   const countForBank = (bankId: string) => Object.values(assignments).flat().filter(a => a.bankId === bankId).length;
   const accordsForBank = (bankId: string) => Object.values(assignments).flat().filter(a => a.bankId === bankId && a.status === 'accord').length;
 
@@ -1737,26 +1885,55 @@ function PartnersView() {
   const addBank = () => {
     const name = form.name.trim();
     if (!name) { showToast('Le nom de la banque est requis.'); return; }
-    const id = `bank-${Date.now()}`;
-    registerBank({ id, name, conventionDate: form.conventionDate.trim() || '—', validity: form.validity.trim() || '—', products: form.products, rate: form.rate.trim() || '—', contact: form.contact.trim() || '—', color: form.color });
-    setBanks(loadBanks());
-    logActivity({ utilisateur: 'Administrateur', role: 'Administrateur', action: `Banque partenaire ajoutée — ${name}`, type: 'banque' });
-    setShowAdd(false);
-    setForm({ name: '', conventionDate: '', validity: '', products: [], rate: '', contact: '', color: BANK_COLORS[0] });
-    showToast('Banque partenaire ajoutée.');
+    createMutation.mutate({
+      name,
+      convention_date: form.conventionDate.trim() || null,
+      validity: form.validity.trim() || null,
+      products: form.products,
+      rate: form.rate.trim() || null,
+      contact: form.contact.trim() || null,
+      color: form.color,
+    }, {
+      onSuccess: () => {
+        setShowAdd(false);
+        setForm({ name: '', conventionDate: '', validity: '', products: [], rate: '', contact: '', color: BANK_COLORS[0] });
+        showToast('Banque partenaire ajoutée.');
+      },
+      onError: failWith("L'ajout de la banque a échoué."),
+    });
   };
 
   const removeBank = () => {
     if (!confirmDel) return;
     const removedName = confirmDel.name;
-    deleteBank(confirmDel.id);
-    setBanks(loadBanks());
-    logActivity({ utilisateur: 'Administrateur', role: 'Administrateur', action: `Banque partenaire retirée — ${removedName}`, type: 'banque' });
-    setConfirmDel(null);
-    showToast('Banque retirée.');
+    deleteMutation.mutate(confirmDel.id, {
+      onSuccess: () => {
+        setConfirmDel(null);
+        showToast('Banque retirée.');
+      },
+      onError: failWith('Le retrait de la banque a échoué.'),
+    });
   };
 
   const toggleProduct = (p: string) => setForm(f => ({ ...f, products: f.products.includes(p) ? f.products.filter(x => x !== p) : [...f.products, p] }));
+
+  if (banksQuery.isPending) {
+    return (
+      <div className="bg-white p-8 text-center" style={cs}>
+        <Landmark className="w-7 h-7 mx-auto mb-2" style={{ color: A.border }} />
+        <div style={{ fontSize: '0.875rem', color: A.muted }}>Chargement des banques partenaires…</div>
+      </div>
+    );
+  }
+
+  if (banksQuery.isError) {
+    return (
+      <div className="bg-white p-8 text-center" style={cs}>
+        <div style={{ fontSize: '0.875rem', color: A.red, marginBottom: 12 }}>{apiErrorMessage(banksQuery.error, 'Impossible de charger les banques partenaires.')}</div>
+        <button onClick={() => { void banksQuery.refetch(); }} className="px-4 py-2" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>Réessayer</button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4" style={{ position: 'relative' }}>
@@ -1767,6 +1944,14 @@ function PartnersView() {
           <Plus className="w-4 h-4" /> Ajouter une banque
         </button>
       </div>
+
+      {/* Erreur d'action (rien n'échoue en silence) */}
+      {bankError && (
+        <div role="alert" className="p-3" style={{ background: 'rgba(192,57,43,0.08)', border: `1px solid ${A.red}40`, borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 600, color: A.red }}>
+          {bankError}{' '}
+          <button onClick={() => setBankError(null)} style={{ background: 'transparent', border: 'none', color: A.red, fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}>Fermer</button>
+        </div>
+      )}
 
       {/* Synthèse */}
       <div className="grid grid-cols-3 gap-3">
@@ -1886,7 +2071,7 @@ function PartnersView() {
                 </div>
               </div>
               <div className="flex gap-2 pt-1">
-                <button onClick={addBank} className="flex-1 px-4 py-2" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>Ajouter la banque</button>
+                <button onClick={addBank} disabled={createMutation.isPending} className="flex-1 px-4 py-2" style={{ background: A.bordeaux, color: 'white', border: 'none', borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>{createMutation.isPending ? 'Ajout en cours…' : 'Ajouter la banque'}</button>
                 <button onClick={() => setShowAdd(false)} className="px-4 py-2" style={{ background: 'white', color: A.muted, border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>Annuler</button>
               </div>
             </div>
@@ -1900,9 +2085,9 @@ function PartnersView() {
           <div onClick={() => setConfirmDel(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(28,8,16,0.45)' }} />
           <div className="p-5" style={{ position: 'relative', width: 'min(380px, 100%)', background: 'white', borderRadius: 'var(--r-lg)', boxShadow: '0 24px 64px rgba(0,0,0,0.24)' }}>
             <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.0625rem', color: A.text, marginBottom: 6 }}>Retirer {confirmDel.name} ?</h3>
-            <p style={{ fontSize: '0.8125rem', color: A.muted, marginBottom: 14 }}>Cette banque ne sera plus proposée aux dossiers. Les orientations existantes ne sont pas supprimées.</p>
+            <p style={{ fontSize: '0.8125rem', color: A.muted, marginBottom: 14 }}>Cette banque ne sera plus proposée aux dossiers, et les orientations déjà enregistrées vers elle seront retirées.</p>
             <div className="flex gap-2">
-              <button onClick={removeBank} className="flex-1 px-4 py-2" style={{ background: A.red, color: 'white', border: 'none', borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>Retirer</button>
+              <button onClick={removeBank} disabled={deleteMutation.isPending} className="flex-1 px-4 py-2" style={{ background: A.red, color: 'white', border: 'none', borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>{deleteMutation.isPending ? 'Retrait…' : 'Retirer'}</button>
               <button onClick={() => setConfirmDel(null)} className="px-4 py-2" style={{ background: 'white', color: A.muted, border: `1px solid ${A.border}`, borderRadius: 'var(--r-sm)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>Annuler</button>
             </div>
           </div>

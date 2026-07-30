@@ -12,7 +12,8 @@ import {
 } from 'lucide-react';
 import type { AuthUser } from '../App';
 import { useClientData } from '../data/useClientData';
-import { loadBanks, loadAssignments, type BankStatus } from '../data/bankRegistry';
+import { useMesBanquesQuery, toBankAssignment, type BankStatus } from '../data/bankRegistry';
+import { apiErrorMessage } from '../api/client';
 import { useDossierJourney, TIMELINE_STEPS } from '../data/dossierJourney';
 import { useNavigate } from '../contexts/NavigationContext';
 
@@ -211,9 +212,31 @@ function Section({ icon: Icon, iconBg, iconColor, title, subtitle, right, childr
 // ─── Full-width Journey Banner ────────────────────────────────────────────────
 
 function DossierJourneyBanner() {
-  const { activeStep, nextEtape, total } = useDossierJourney();
+  // L'étape est calculée par le serveur (GET /client/mon-dossier-journey).
+  const { activeStep, nextEtape, total, loading, error, retry } = useDossierJourney();
   const [anim, setAnim] = useState(false);
   useEffect(() => { const t = setTimeout(() => setAnim(true), 100); return () => clearTimeout(t); }, []);
+
+  if (loading) {
+    return (
+      <div role="status" aria-live="polite" className="cpi-skeleton" style={{ height: 148, borderRadius: 'var(--r-lg)', marginBottom: '16px' }} />
+    );
+  }
+
+  if (error) {
+    return (
+      <div role="alert" style={{ background: 'var(--card)', border: '1px solid rgba(192,57,43,0.22)', borderRadius: 'var(--r-lg)', marginBottom: '16px', padding: '18px 22px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <AlertCircle size={16} style={{ color: 'var(--destructive)', flexShrink: 0 }} />
+        <div style={{ flex: 1, minWidth: 200 }}>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 700, color: 'var(--foreground)' }}>Parcours indisponible</div>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', marginTop: 2 }}>{error}</div>
+        </div>
+        <button onClick={retry} style={{ padding: '8px 18px', borderRadius: 'var(--r-full)', border: 'none', background: 'var(--primary)', color: 'var(--primary-foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer' }}>
+          Réessayer
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -953,50 +976,66 @@ const BANK_STATUS_UI: Record<BankStatus, { label: string; color: string; bg: str
   refus:        { label: 'Non retenue',        color: 'var(--destructive)', bg: 'rgba(192,57,43,0.08)' },
 };
 
-function BanksSection({ clientId }: { clientId: string }) {
-  const banks = loadBanks();
-  const assigned = loadAssignments()[clientId] ?? [];
-  if (banks.length === 0 && assigned.length === 0) return null;
+/**
+ * Orientations bancaires du dossier connecté — GET /client/mes-banques.
+ * L'API n'expose pas le registre complet des banques à un compte client
+ * (aucune route /client/banks au STEP 9) : la section ne montre donc que les
+ * banques réellement saisies sur le dossier.
+ */
+function BanksSection() {
+  const query = useMesBanquesQuery(true);
+  const assigned = (query.data ?? []).map(toBankAssignment);
 
-  return (
+  const shell = (children: React.ReactNode) => (
     <section style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '20px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
         <Building size={18} style={{ color: 'var(--primary)' }} />
         <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>Banques partenaires</h3>
       </div>
-      {assigned.length > 0 ? (
-        <>
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', margin: '0 0 14px' }}>
-            Votre dossier est étudié par {assigned.length > 1 ? 'ces banques partenaires' : 'cette banque partenaire'}, pour maximiser vos chances de financement.
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {assigned.map(a => {
-              const st = BANK_STATUS_UI[a.status];
-              return (
-                <div key={a.bankId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', padding: '12px 14px', background: 'var(--secondary)', borderRadius: 'var(--radius)' }}>
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600, color: 'var(--foreground)' }}>{a.bankName}</span>
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: st.color, background: st.bg, padding: '3px 10px', borderRadius: 'var(--r-full)' }}>{st.label}</span>
-                </div>
-              );
-            })}
-          </div>
-        </>
-      ) : (
-        <>
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', margin: '0 0 14px' }}>
-            Banques partenaires susceptibles de financer votre projet immobilier :
-          </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {banks.map(b => (
-              <span key={b.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 14px', background: 'var(--secondary)', borderRadius: 'var(--r-full)', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--foreground)' }}>
-                <span style={{ width: 10, height: 10, borderRadius: '50%', background: b.color }} />
-                {b.name}{b.rate && b.rate !== '—' ? ` · ${b.rate}` : ''}
-              </span>
-            ))}
-          </div>
-        </>
-      )}
+      {children}
     </section>
+  );
+
+  if (query.isPending) {
+    return shell(
+      <p style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', margin: '10px 0 0' }}>
+        <Loader2 size={14} style={{ animation: 'spin 0.8s linear infinite' }} /> Chargement de vos banques…
+      </p>,
+    );
+  }
+
+  if (query.error) {
+    return shell(
+      <div style={{ marginTop: 10 }}>
+        <p style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--destructive)', margin: '0 0 10px' }}>
+          <AlertCircle size={14} /> {apiErrorMessage(query.error, 'Impossible de charger vos banques partenaires.')}
+        </p>
+        <button onClick={() => { void query.refetch(); }} style={{ padding: '7px 14px', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--foreground)', fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>
+          Réessayer
+        </button>
+      </div>,
+    );
+  }
+
+  if (assigned.length === 0) return null;
+
+  return shell(
+    <>
+      <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--muted-foreground)', margin: '0 0 14px' }}>
+        Votre dossier est étudié par {assigned.length > 1 ? 'ces banques partenaires' : 'cette banque partenaire'}, pour maximiser vos chances de financement.
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {assigned.map(a => {
+          const st = BANK_STATUS_UI[a.status];
+          return (
+            <div key={a.bankId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', padding: '12px 14px', background: 'var(--secondary)', borderRadius: 'var(--radius)' }}>
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fontWeight: 600, color: 'var(--foreground)' }}>{a.bankName}</span>
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', fontWeight: 700, color: st.color, background: st.bg, padding: '3px 10px', borderRadius: 'var(--r-full)' }}>{st.label}</span>
+            </div>
+          );
+        })}
+      </div>
+    </>,
   );
 }
 
@@ -1015,7 +1054,7 @@ export default function MonDossierPage({ user }: { user: AuthUser }) {
         <ProjectHeader clientName={user.name} />
         {toSignDocs.length > 0 && <SignatureBanner docs={toSignDocs} onSign={d => setSignTarget(toTarget(d))} />}
         <PiecesSection />
-        <BanksSection clientId={client.id} />
+        <BanksSection />
         <CpiDocsSection
           docs={cpiList}
           onSign={d => setSignTarget(toTarget(d))}

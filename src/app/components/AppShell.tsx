@@ -10,12 +10,14 @@ import type { AuthUser, UserRole } from '../App';
 import { ClientProvider } from '../contexts/ClientContext';
 import { NavigationProvider, useNavigate } from '../contexts/NavigationContext';
 import type { ClientSummary } from '../data/demoStore';
-import { loadClients } from '../data/clientRegistry';
+import { useClientsQuery, useMyProfileQuery, toClientSummary } from '../data/clientRegistry';
 import { useClientData } from '../data/useClientData';
-import { getDecaissement } from '../data/decaissementStore';
-import { DocStateProvider } from '../data/docStateContext';
-import { CpiDocsProvider } from '../data/cpiDocsContext';
-import { ChantierStateProvider } from '../data/chantierStateContext';
+import { useBankRegistrySync } from '../data/bankRegistry';
+import { DocStateProvider, useMesDocumentsQuery } from '../data/docStateContext';
+import { CpiDocsProvider, useMesDocumentsCpiQuery, useCpiDocsQuery } from '../data/cpiDocsContext';
+import { ChantierStateProvider, useChantierState, useMonChantierQuery } from '../data/chantierStateContext';
+import { useDossierJourneyQuery } from '../data/dossierJourney';
+import { apiErrorMessage } from '../api/client';
 import ClientDashboardHome from './ClientDashboardHome';
 import AgentDashboard from './AgentDashboard';
 import AdminDashboard from './AdminDashboard';
@@ -80,6 +82,9 @@ function getNavItems(role: UserRole, hasChantier = false): NavItem[] {
     { id: 'documents-clients',  label: 'Documents clients',  icon: FolderOpen      },
     { id: 'documents-admin',    label: 'Documents admin',    icon: ScrollText      },
     { id: 'decaissements',      label: 'Décaissements bancaires', icon: Banknote   },
+    // AdminDashboard route déjà « chantier » (MODULE_NAVS) : seule l'entrée de
+    // menu manquait, le module de suivi était donc inatteignable.
+    { id: 'chantier',           label: 'Suivi chantier',     icon: HardHat         },
     { id: 'notifications-agent',label: 'Notifications',      icon: Bell            },
     { id: 'historique',         label: 'Historique',         icon: History         },
     { id: 'statistiques',       label: 'Rapports & Stats',   icon: BarChart3       },
@@ -358,9 +363,12 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
   const isClientRole = user.role === 'client-public' || user.role === 'client-fonctionnaire';
   const dossierRef = isClientRole && client.ref && client.ref !== '—' ? client.ref : null;
 
-  // « Mon chantier » n'est proposé au client que si sa construction a été lancée.
-  const hasChantier = isClientRole && getDecaissement(client.id).constructionActive;
-  const navItems = getNavItems(user.role, hasChantier);
+  // « Mon chantier » n'est proposé au client que si sa construction a été
+  // lancée. Le signal vient de GET /client/mon-chantier (statut du chantier),
+  // la seule source que le client possède : le cache des décaissements n'est
+  // alimenté que côté personnel et laissait l'entrée invisible pour tout client.
+  const { hasChantier } = useChantierState();
+  const navItems = getNavItems(user.role, isClientRole && hasChantier);
 
   const renderDashboard = () => {
     if (activeNav === 'statistiques')  return <StatisticsDashboard user={user} />;
@@ -603,27 +611,79 @@ function AppShellInner({ user, onLogout }: AppShellProps) {
 
 // ─── Exported shell — wraps all providers ────────────────────────────────────
 
+// ─── Écrans d'attente / d'erreur du chargement initial ───────────────────────
+
+function ShellLoading() {
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: 'var(--background)', fontFamily: 'var(--font-sans)' }}>
+      <div className="cpi-skeleton" style={{ width: 220, height: 14, borderRadius: 'var(--r-full)' }} />
+      <div className="cpi-skeleton" style={{ width: 160, height: 14, borderRadius: 'var(--r-full)' }} />
+      <span role="status" aria-live="polite" style={{ fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>
+        Chargement de vos dossiers…
+      </span>
+    </div>
+  );
+}
+
+function ShellError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div role="alert" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, background: 'var(--background)', fontFamily: 'var(--font-sans)', textAlign: 'center' }}>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, color: 'var(--foreground)' }}>
+        Impossible de charger vos données
+      </div>
+      <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', margin: 0, maxWidth: 420, lineHeight: 1.6 }}>{message}</p>
+      <button onClick={onRetry} style={{ padding: '10px 22px', borderRadius: 'var(--r-full)', border: 'none', background: 'var(--primary)', color: 'var(--primary-foreground)', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer' }}>
+        Réessayer
+      </button>
+    </div>
+  );
+}
+
 export default function AppShell({ user, onLogout }: AppShellProps) {
   const isClientRole = user.role === 'client-public' || user.role === 'client-fonctionnaire';
-  // Clients réels connus = registre (base vide au départ).
-  const registered = loadClients();
-  const isNewClient = !!user.clientId && !registered.some(c => c.id === user.clientId);
-  const freshClient: ClientSummary | null = isNewClient
-    ? {
-        id: user.clientId!,
-        name: user.name,
-        ref: '—',
-        statut: 'Dossier en préparation',
-        progression: 0,
-        projectNom: '—',
-        adresse: '—',
-      }
-    : null;
-  const allClients = freshClient ? [...registered, freshClient] : registered;
+
+  // Chargement initial — mêmes clés de cache que les contextes : une seule
+  // requête par ressource, mais les erreurs sont traitées ici, en un point.
+  const clientsQuery = useClientsQuery(!isClientRole);
+  const profileQuery = useMyProfileQuery(isClientRole);
+  const mesDocsQuery = useMesDocumentsQuery(isClientRole);
+  const mesCpiQuery  = useMesDocumentsCpiQuery(isClientRole);
+  const journeyQuery = useDossierJourneyQuery(isClientRole);
+  const cpiDocsQuery = useCpiDocsQuery(!isClientRole);
+  // Même clé que ChantierStateProvider : un seul appel, mais l'entrée de menu
+  // « Mon chantier » est déjà correcte au premier rendu (pas d'apparition tardive).
+  const chantierQuery = useMonChantierQuery(isClientRole);
+  // Alimente le cache mémoire des banques (loadBanks / loadAssignments /
+  // resolveClientBank) pour tout l'arbre — non bloquant.
+  useBankRegistrySync(!isClientRole, isClientRole);
+
+  // Forme minimale commune aux requêtes surveillées (types de données différents).
+  type GateQuery = { isPending: boolean; isError: boolean; error: unknown; refetch: () => unknown };
+  const gating: GateQuery[] = isClientRole
+    ? [profileQuery, mesDocsQuery, mesCpiQuery, journeyQuery, chantierQuery]
+    : [clientsQuery, cpiDocsQuery];
+  const retryAll = () => gating.forEach(q => { void q.refetch(); });
+
+  if (gating.some(q => q.isPending)) return <ShellLoading />;
+  const failed = gating.find(q => q.isError);
+  if (failed) {
+    return <ShellError message={apiErrorMessage(failed.error, 'Le serveur CPI est injoignable pour le moment.')} onRetry={retryAll} />;
+  }
+
+  // Clients connus : le registre complet pour le personnel, son seul dossier
+  // pour un client connecté.
+  const allClients: ClientSummary[] = isClientRole
+    ? (profileQuery.data ? [toClientSummary(profileQuery.data)] : [])
+    : (clientsQuery.data ?? []).map(toClientSummary);
+
+  const initialId = isClientRole
+    ? (profileQuery.data?.id ?? user.clientId ?? 'c-none')
+    : (allClients[0]?.id ?? 'c-none');
+
   const defaultPage = isClientRole ? 'simulateur' : 'dashboard';
   return (
     <NavigationProvider defaultPage={defaultPage}>
-    <ClientProvider allClients={allClients} initialId={user.clientId ?? registered[0]?.id ?? 'c-none'} locked={isClientRole}>
+    <ClientProvider allClients={allClients} initialId={initialId} locked={isClientRole}>
     <DocStateProvider>
     <CpiDocsProvider>
     <ChantierStateProvider>

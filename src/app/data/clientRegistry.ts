@@ -1,109 +1,170 @@
 /**
- * clientRegistry — registre des VRAIS clients inscrits.
+ * clientRegistry — registre des VRAIS clients et du personnel CPI.
  *
- * Aucune donnée fictive : la liste démarre vide. Chaque inscription réelle
- * (écran d'inscription) ajoute un ClientSummary ici, persisté dans localStorage.
- * L'Agent CPI et l'Administrateur lisent ce registre pour retrouver, suivre et
- * gérer les dossiers de leurs vrais clients.
+ * La source de vérité est désormais l'API Laravel (`/staff/clients` pour le
+ * personnel, `/client/profile` pour le client connecté) : plus aucune donnée
+ * n'est persistée dans le localStorage (les clés `cpi_clients_registry_v1` et
+ * `cpi_staff_registry_v1` ont disparu).
  *
- * Pur TypeScript (pas de React) — utilisable au chargement des modules/contextes.
+ * Ce module reste du TypeScript pur côté lecture : `loadClients()` /
+ * `loadStaff()` renvoient un cache mémoire, synchrone, alimenté par les hooks
+ * TanStack Query exportés plus bas. Les consommateurs non-React historiques
+ * (chantierStateContext…) continuent donc de compiler et de fonctionner.
  */
 
+import { useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { staffApi, clientApi, type ClientData, type StaffCreated, type UserData } from '../api/endpoints';
 import type { ClientSummary } from './demoStore';
+import { frDate } from './demoStore';
 
-const LS_KEY = 'cpi_clients_registry_v1';
+// ─── Clés de cache TanStack Query (partagées entre contextes) ─────────────────
 
-/** Charge la liste des clients réels inscrits (vide par défaut). */
+export const CLIENTS_QUERY_KEY   = ['staff', 'clients'] as const;
+export const STAFF_QUERY_KEY     = ['staff', 'accounts'] as const;
+export const MY_PROFILE_QUERY_KEY = ['client', 'profile'] as const;
+
+// ─── Cache mémoire (pont vers les consommateurs synchrones) ───────────────────
+
+let clientsCache: ClientSummary[] = [];
+
+/** Liste des clients connus (cache mémoire alimenté par l'API). */
 export function loadClients(): ClientSummary[] {
-  try {
-    const s = localStorage.getItem(LS_KEY);
-    if (s) {
-      const parsed = JSON.parse(s);
-      if (Array.isArray(parsed)) return parsed as ClientSummary[];
-    }
-  } catch {}
-  return [];
+  return clientsCache;
 }
 
-/** Remplace intégralement la liste persistée. */
-export function saveClients(list: ClientSummary[]): void {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(list)); } catch {}
+/** Remplace le cache mémoire à partir de la réponse de l'API. */
+export function hydrateClients(list: ClientSummary[]): void {
+  clientsCache = list;
 }
+
+// ─── Conversions DTO → formes attendues par l'UI ──────────────────────────────
+
+/** ClientData (API) → ClientSummary (forme historique des écrans). */
+export function toClientSummary(c: ClientData): ClientSummary {
+  return {
+    id: c.id,
+    name: c.name,
+    ref: c.ref,
+    statut: c.statut,
+    progression: c.progression,
+    projectNom: c.projectNom ?? '—',
+    adresse: c.adresse ?? '—',
+    dateInscription: frDate(c.dateInscription),
+    email: c.email ?? undefined,
+    phone: c.phone ?? undefined,
+  };
+}
+
+// ─── Lecture : liste des clients (personnel CPI) ──────────────────────────────
 
 /**
- * Enregistre (ou met à jour) un client réel dans le registre et renvoie la
- * liste complète à jour.
+ * Charge le registre complet depuis l'API et hydrate le cache mémoire.
+ * `enabled` doit être faux pour un compte client (il n'a pas accès à /staff).
  */
-export function registerClient(client: ClientSummary): ClientSummary[] {
-  const list = loadClients();
-  const idx = list.findIndex(c => c.id === client.id);
-  if (idx >= 0) list[idx] = { ...list[idx], ...client };
-  else list.push(client);
-  saveClients(list);
-  return list;
+export function useClientsQuery(enabled: boolean): UseQueryResult<ClientData[]> {
+  const query = useQuery({
+    queryKey: CLIENTS_QUERY_KEY,
+    queryFn: () => staffApi.clients.listAll(),
+    enabled,
+  });
+
+  useEffect(() => {
+    if (query.data) hydrateClients(query.data.map(toClientSummary));
+  }, [query.data]);
+
+  return query;
 }
 
-/**
- * Retrouve un client existant par e-mail (prioritaire) ou par nom — permet à un
- * client de reconnecter à SON compte au lieu d'en créer un nouveau.
- */
-export function findClient(name: string, email: string): ClientSummary | undefined {
-  const list = loadClients();
-  const em = email.trim().toLowerCase();
-  const nm = name.trim().toLowerCase();
-  if (em) { const byEmail = list.find(c => c.email && c.email.toLowerCase() === em); if (byEmail) return byEmail; }
-  if (nm) return list.find(c => c.name.trim().toLowerCase() === nm);
-  return undefined;
+/** Dossier du client connecté (compte `client` uniquement). */
+export function useMyProfileQuery(enabled: boolean): UseQueryResult<ClientData> {
+  const query = useQuery({
+    queryKey: MY_PROFILE_QUERY_KEY,
+    queryFn: () => clientApi.profile(),
+    enabled,
+  });
+
+  useEffect(() => {
+    if (query.data) hydrateClients([toClientSummary(query.data)]);
+  }, [query.data]);
+
+  return query;
 }
 
-/** Génère une référence de dossier lisible et unique. */
-export function generateDossierRef(): string {
-  const year = new Date().getFullYear();
-  const suffix = String(Date.now()).slice(-5);
-  return `CPI-${year}-${suffix}`;
+// ─── Écriture : création d'un dossier client ──────────────────────────────────
+
+/** Création d'un dossier client — la référence est générée par le serveur. */
+export function useCreateClient() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { name: string; email?: string; phone?: string }) =>
+      staffApi.clients.create({
+        name: input.name,
+        email: input.email || null,
+        phone: input.phone || null,
+      }),
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: CLIENTS_QUERY_KEY }); },
+  });
 }
 
 // ─── Comptes professionnels (personnel CPI) ───────────────────────────────────
 
 export interface StaffAccount {
+  id: string;
   email: string;
   name: string;
   role: 'agent-cpi' | 'admin';
-  password: string;
+  /** Mot de passe provisoire — connu uniquement à la création du compte. */
+  password?: string;
   createdAt?: string;
 }
 
-/** Comptes intégrés (toujours présents). Mot de passe libre ≥ 4 caractères. */
-export const BUILTIN_STAFF: StaffAccount[] = [
-  { email: 'agent@cpi.sn', name: 'Agent CPI',          role: 'agent-cpi', password: '' },
-  { email: 'admin@cpi.sn', name: 'Administrateur CPI', role: 'admin',     password: '' },
-];
+let staffCache: StaffAccount[] = [];
 
-const STAFF_KEY = 'cpi_staff_registry_v1';
-
-/** Personnel ajouté par l'administrateur (hors comptes intégrés). */
+/** Personnel CPI connu (cache mémoire alimenté par l'API). */
 export function loadStaff(): StaffAccount[] {
-  try {
-    const s = localStorage.getItem(STAFF_KEY);
-    if (s) {
-      const parsed = JSON.parse(s);
-      if (Array.isArray(parsed)) return parsed as StaffAccount[];
-    }
-  } catch {}
-  return [];
+  return staffCache;
 }
 
-export function registerStaff(account: StaffAccount): StaffAccount[] {
-  const list = loadStaff();
-  const idx = list.findIndex(s => s.email.toLowerCase() === account.email.toLowerCase());
-  if (idx >= 0) list[idx] = { ...list[idx], ...account };
-  else list.push(account);
-  try { localStorage.setItem(STAFF_KEY, JSON.stringify(list)); } catch {}
-  return list;
+/** Remplace le cache mémoire à partir de la réponse de l'API. */
+export function hydrateStaff(list: StaffAccount[]): void {
+  staffCache = list;
 }
 
-/** Génère un mot de passe provisoire lisible pour un nouveau compte pro. */
-export function generatePassword(): string {
-  const rand = Math.random().toString(36).slice(2, 8).toUpperCase();
-  return `CPI-${rand}`;
+/** UserData (API) → StaffAccount (le rôle Spatie `super-admin` s'affiche « admin »). */
+export function toStaffAccount(u: UserData): StaffAccount {
+  return {
+    id: u.id,
+    email: u.email,
+    name: u.name,
+    role: u.role === 'super-admin' ? 'admin' : 'agent-cpi',
+  };
+}
+
+/** Liste des comptes du personnel (administrateur uniquement). */
+export function useStaffQuery(enabled: boolean): UseQueryResult<UserData[]> {
+  const query = useQuery({
+    queryKey: STAFF_QUERY_KEY,
+    queryFn: () => staffApi.staff.list(),
+    enabled,
+  });
+
+  useEffect(() => {
+    if (query.data) hydrateStaff(query.data.map(toStaffAccount));
+  }, [query.data]);
+
+  return query;
+}
+
+/** Création d'un compte pro — le mot de passe provisoire vient du serveur. */
+export function useCreateStaff() {
+  const qc = useQueryClient();
+  return useMutation<StaffCreated, unknown, { name: string; email: string; role: 'agent-cpi' | 'admin' }>({
+    mutationFn: input => staffApi.staff.create({
+      name: input.name,
+      email: input.email,
+      role: input.role === 'admin' ? 'super-admin' : 'agent-cpi',
+    }),
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: STAFF_QUERY_KEY }); },
+  });
 }

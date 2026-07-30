@@ -17,6 +17,8 @@ interface ClientDoc {
   status: DocStatus;
   version: number;
   comment?: string;
+  /** Lien signé de courte durée vers le fichier réel (bucket privé). */
+  fileUrl?: string;
 }
 
 interface ClientEntry {
@@ -50,12 +52,13 @@ function toClientDoc(d: SharedDoc): ClientDoc {
   return {
     id: d.id,
     label: d.label,
-    file: d.submittedLabel ? `${d.submittedLabel}.pdf` : '—',
+    file: d.submittedLabel ?? '—',
     date: d.date ?? '—',
     size: d.taille ?? '—',
     status: toModuleStatus(d.status as StoreDocStatus),
     version: d.version ?? 0,
     comment: d.commentaire,
+    fileUrl: d.fileUrl,
   };
 }
 
@@ -392,12 +395,19 @@ export default function DocumentsClientsModule({ agentName = 'Agent CPI' }: Prop
                 <button onClick={() => setPreview(null)} style={{ background: 'var(--secondary)', border: 'none', borderRadius: 'var(--r-sm)', padding: 6, cursor: 'pointer' }}><X size={16} style={{ color: 'var(--muted-foreground)' }} /></button>
               </div>
 
-              {/* Rendu placeholder du document */}
+              {/* Fichier réel déposé par le client (lien signé, valable quelques minutes) */}
               <div style={{ background: 'var(--background)', border: '1px dashed var(--border)', borderRadius: 'var(--r-md)', padding: '28px 20px', textAlign: 'center', marginBottom: 14 }}>
                 <FileText size={30} style={{ color: cfg.color, margin: '0 auto 8px', display: 'block' }} />
                 <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--foreground)' }}>{preview.doc.file}</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: 2 }}>{preview.doc.file === '—' ? 'Pièce non déposée' : `${preview.doc.size} · v${preview.doc.version}`}</div>
-                <div style={{ fontSize: '0.6875rem', color: 'var(--muted-foreground)', marginTop: 8, fontStyle: 'italic' }}>Aperçu du fichier réel disponible avec le stockage documentaire (backend).</div>
+                {preview.doc.fileUrl ? (
+                  <a href={preview.doc.fileUrl} target="_blank" rel="noreferrer"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 10, padding: '7px 16px', borderRadius: 'var(--r-sm)', background: 'var(--primary)', color: '#fff', fontSize: '0.75rem', fontWeight: 700, textDecoration: 'none' }}>
+                    <Eye size={12} /> Ouvrir le document
+                  </a>
+                ) : (
+                  <div style={{ fontSize: '0.6875rem', color: 'var(--muted-foreground)', marginTop: 8, fontStyle: 'italic' }}>Aucun fichier déposé pour cette pièce.</div>
+                )}
               </div>
 
               {/* Métadonnées */}

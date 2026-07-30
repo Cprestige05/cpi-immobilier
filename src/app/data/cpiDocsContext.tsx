@@ -1,7 +1,16 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { HistoEntry, HistoActionType } from './demoStore';
-import { loadClients } from './clientRegistry';
+import React, { createContext, useContext, useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { frDate } from './demoStore';
+import { clientApi, staffApi, type CpiDocData } from '../api/endpoints';
+import { apiErrorMessage } from '../api/client';
+import { usePermission } from '../auth/PermissionContext';
+import { useMyProfileQuery } from './clientRegistry';
+import { ApiErrorBanner } from './docStateContext';
 import { useClientContext } from '../contexts/ClientContext';
+import {
+  HISTORIQUE_QUERY_KEY, groupByClient, isCpiDocEvent, toActivityEntries,
+  useHistoriqueQuery, type ActivityEntry,
+} from './activityLog';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -44,9 +53,14 @@ export interface CpiDoc {
 
 interface CpiDocsCtx {
   cpiDocs: CpiDoc[];
-  cpiHistory: HistoEntry[];
+  /**
+   * Journal des documents CPI du dossier sélectionné : les entrées serveur dont
+   * l'événement appartient à la famille `cpi-doc-*`. Vide pour un client — la
+   * route /staff/historique lui est interdite.
+   */
+  cpiHistory: ActivityEntry[];
   allCpiDocsByClient: Record<string, CpiDoc[]>;
-  allCpiHistoryByClient: Record<string, HistoEntry[]>;
+  allCpiHistoryByClient: Record<string, ActivityEntry[]>;
   publishDoc: (docId: string, agentName: string, clientId?: string) => void;
   archiveDoc: (docId: string, agentName: string, clientId?: string) => void;
   requestSignature: (docId: string, agentName: string, clientId?: string) => void;
@@ -60,157 +74,245 @@ interface CpiDocsCtx {
     publishNow: boolean,
     clientId?: string,
   ) => void;
+  /** Chargement des documents CPI depuis l'API. */
+  loading: boolean;
+  /** Erreur de chargement (null si tout va bien). */
+  error: string | null;
+  /** Relance le chargement après une erreur. */
+  retry: () => void;
 }
 
 const CpiDocsContext = createContext<CpiDocsCtx | null>(null);
 
-// ─── Documents CPI initiaux ───────────────────────────────────────────────────
-// Base vide : aucun document fictif. Chaque dossier démarre sans document ; les
-// documents CPI sont créés par l'Agent CPI (createDoc) pour ses vrais clients.
+// ─── Clés de cache TanStack Query ─────────────────────────────────────────────
 
-const INITIAL_DOCS_BY_CLIENT: Record<string, CpiDoc[]> = {};
+export const CPI_DOCS_QUERY_KEY     = ['staff', 'cpi-docs'] as const;
+export const MES_CPI_DOCS_QUERY_KEY = ['client', 'mes-documents-cpi'] as const;
 
-// Ids recalculés à chaque appel (le registre grandit en cours de session).
-const clientIds = (): string[] => loadClients().map(c => c.id);
+/** Documents CPI visibles par le client connecté. */
+export function useMesDocumentsCpiQuery(enabled: boolean): UseQueryResult<CpiDocData[]> {
+  return useQuery({
+    queryKey: MES_CPI_DOCS_QUERY_KEY,
+    queryFn: () => clientApi.mesDocumentsCpi(),
+    enabled,
+  });
+}
 
-// ─── localStorage helpers ──────────────────────────────────────────────────────
+/** Tous les documents CPI (personnel) — regroupés par client côté front. */
+export function useCpiDocsQuery(enabled: boolean): UseQueryResult<CpiDocData[]> {
+  return useQuery({
+    queryKey: CPI_DOCS_QUERY_KEY,
+    queryFn: () => staffApi.cpiDocs.list(),
+    enabled,
+  });
+}
 
-// Préfixe v3 : base vide — invalide toute donnée de démo persistée.
-const LS_CPIDOCS_KEY    = (id: string) => `cpi_cpidocs_v3_${id}`;
-const LS_CPIHISTORY_KEY = (id: string) => `cpi_cpihistory_v3_${id}`;
+// ─── Aucun localStorage ──────────────────────────────────────────────────────
+// La clé `cpi_cpihistory_v3_*` a disparu en Phase 6 : le journal des documents
+// CPI est celui du serveur (événements `cpi-doc-*` de Spatie Activity Log).
 
-const loadAllCpiDocs = (): Record<string, CpiDoc[]> => {
-  const result: Record<string, CpiDoc[]> = {};
-  for (const clientId of clientIds()) {
-    try {
-      const s = localStorage.getItem(LS_CPIDOCS_KEY(clientId));
-      if (s) { result[clientId] = JSON.parse(s) as CpiDoc[]; continue; }
-    } catch {}
-    result[clientId] = [...(INITIAL_DOCS_BY_CLIENT[clientId] ?? [])];
-  }
-  return result;
-};
+// ─── Conversion DTO → CpiDoc ─────────────────────────────────────────────────
 
-const loadAllCpiHistory = (): Record<string, HistoEntry[]> => {
-  const result: Record<string, HistoEntry[]> = {};
-  for (const clientId of clientIds()) {
-    try {
-      const s = localStorage.getItem(LS_CPIHISTORY_KEY(clientId));
-      if (s) { result[clientId] = JSON.parse(s) as HistoEntry[]; continue; }
-    } catch {}
-    result[clientId] = [];
-  }
-  return result;
-};
+function toCpiDoc(d: CpiDocData): CpiDoc {
+  return {
+    id: d.id,
+    categorie: d.categorie as CpiCategorie,
+    nom: d.nom,
+    reference: d.reference ?? undefined,
+    dateCreation: frDate(d.dateCreation) ?? d.dateCreation,
+    datePublication: frDate(d.datePublication),
+    version: d.version,
+    status: d.status as CpiDocStatus,
+    auteur: d.auteur,
+    fichier: d.fichier ?? undefined,
+    commentaire: d.commentaire ?? undefined,
+    visibleClient: d.visibleClient,
+    signatureRequise: d.signatureRequise,
+    taille: d.taille ?? undefined,
+    format: d.format ?? undefined,
+  };
+}
 
 // ─── Provider ────────────────────────────────────────────────────────────────
 
 export function CpiDocsProvider({ children }: { children: React.ReactNode }) {
-  const { selectedClientId, allClients } = useClientContext();
+  const { selectedClientId } = useClientContext();
+  const { role } = usePermission();
+  const isStaff  = role === 'agent-cpi' || role === 'super-admin';
+  const isClient = role === 'client';
+  const queryClient = useQueryClient();
 
-  const [allCpiDocs,    setAllCpiDocs]    = useState<Record<string, CpiDoc[]>>(loadAllCpiDocs);
-  const [allCpiHistory, setAllCpiHistory] = useState<Record<string, HistoEntry[]>>(loadAllCpiHistory);
+  // Personnel CPI : tous les documents en un appel, regroupés par client ici.
+  const staffDocsQuery = useCpiDocsQuery(isStaff);
+  // Client : uniquement les documents publiés pour lui.
+  const profileQuery = useMyProfileQuery(isClient);
+  const mesDocsQuery = useMesDocumentsCpiQuery(isClient);
 
-  useEffect(() => {
-    for (const [clientId, docs] of Object.entries(allCpiDocs)) {
-      try { localStorage.setItem(LS_CPIDOCS_KEY(clientId), JSON.stringify(docs)); } catch {}
+  // Journal serveur : seules les entrées « documents CPI » nous concernent, le
+  // reste est servi par docStateContext — les écrans qui fusionnent les deux ne
+  // doublent donc rien.
+  const historiqueQuery = useHistoriqueQuery(isStaff);
+
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const allCpiDocs: Record<string, CpiDoc[]> = useMemo(() => {
+    const result: Record<string, CpiDoc[]> = {};
+    if (isStaff) {
+      for (const d of staffDocsQuery.data ?? []) {
+        (result[d.clientId] ??= []).push(toCpiDoc(d));
+      }
+    } else if (isClient && profileQuery.data) {
+      result[profileQuery.data.id] = (mesDocsQuery.data ?? []).map(toCpiDoc);
     }
-  }, [allCpiDocs]);
+    return result;
+  }, [isStaff, isClient, staffDocsQuery.data, profileQuery.data, mesDocsQuery.data]);
 
-  useEffect(() => {
-    for (const [clientId, hist] of Object.entries(allCpiHistory)) {
-      try { localStorage.setItem(LS_CPIHISTORY_KEY(clientId), JSON.stringify(hist)); } catch {}
-    }
-  }, [allCpiHistory]);
+  const allCpiHistory: Record<string, ActivityEntry[]> = useMemo(() => {
+    if (!isStaff) return {};
+    return groupByClient(toActivityEntries(historiqueQuery.data).filter(e => isCpiDocEvent(e.event)));
+  }, [isStaff, historiqueQuery.data]);
 
-  const cpiDocs:    CpiDoc[]     = allCpiDocs[selectedClientId]    ?? INITIAL_DOCS_BY_CLIENT[selectedClientId] ?? [];
-  const cpiHistory: HistoEntry[] = allCpiHistory[selectedClientId] ?? [];
+  const cpiDocs:    CpiDoc[]        = allCpiDocs[selectedClientId]    ?? [];
+  const cpiHistory: ActivityEntry[] = allCpiHistory[selectedClientId] ?? [];
 
-  const nameFor = (clientId: string) => allClients.find(c => c.id === clientId)?.name ?? clientId;
-
-  const nowStamp = () => {
-    const d = new Date();
-    return {
-      date: d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }),
-      heure: d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-    };
+  /**
+   * Rafraîchit les documents CPI et le journal : le serveur écrit une entrée
+   * `cpi-doc-*` à chaque geste, plus rien n'est journalisé côté navigateur.
+   */
+  const invalidateCpiDocs = () => {
+    void queryClient.invalidateQueries({ queryKey: CPI_DOCS_QUERY_KEY });
+    void queryClient.invalidateQueries({ queryKey: MES_CPI_DOCS_QUERY_KEY });
+    void queryClient.invalidateQueries({ queryKey: HISTORIQUE_QUERY_KEY });
   };
 
-  const pushHistoryFor = (clientId: string, entry: Omit<HistoEntry, 'id'>) =>
-    setAllCpiHistory(prev => ({
-      ...prev,
-      [clientId]: [{ ...entry, id: 'hcpi-' + Date.now() }, ...(prev[clientId] ?? [])],
-    }));
+  // ── Mutations ──────────────────────────────────────────────────────────────
 
-  const updateDocFor = (clientId: string, docId: string, patch: Partial<CpiDoc>) =>
-    setAllCpiDocs(prev => ({
-      ...prev,
-      [clientId]: (prev[clientId] ?? []).map(d => d.id !== docId ? d : { ...d, ...patch }),
-    }));
+  const publishMutation = useMutation({
+    mutationFn: (docId: string) => staffApi.cpiDocs.publish(docId),
+    onSuccess: invalidateCpiDocs,
+    onError: e => setActionError(apiErrorMessage(e, 'La publication du document a échoué.')),
+  });
 
-  const docNomFor = (clientId: string, docId: string) =>
-    (allCpiDocs[clientId] ?? []).find(d => d.id === docId)?.nom ?? docId;
+  const archiveMutation = useMutation({
+    mutationFn: (docId: string) => staffApi.cpiDocs.archive(docId),
+    onSuccess: invalidateCpiDocs,
+    onError: e => setActionError(apiErrorMessage(e, "L'archivage du document a échoué.")),
+  });
 
-  const publishDoc = (docId: string, agentName: string, clientId: string = selectedClientId) => {
-    const { date, heure } = nowStamp();
-    updateDocFor(clientId, docId, { status: 'disponible', visibleClient: true, datePublication: date });
-    pushHistoryFor(clientId, { date, heure, utilisateur: agentName, role: 'Agent CPI', action: `Document publié — ${docNomFor(clientId, docId)}`, type: 'document' as HistoActionType, cible: nameFor(clientId) });
+  // Demander une signature = marquer la signature requise puis publier
+  // (l'API bascule alors le statut en « à signer » et rend le doc visible).
+  const requestSignatureMutation = useMutation({
+    mutationFn: async (docId: string) => {
+      await staffApi.cpiDocs.update(docId, { signature_requise: true });
+      return staffApi.cpiDocs.publish(docId);
+    },
+    onSuccess: invalidateCpiDocs,
+    onError: e => setActionError(apiErrorMessage(e, 'La demande de signature a échoué.')),
+  });
+
+  const signMutation = useMutation({
+    mutationFn: (docId: string) => staffApi.cpiDocs.sign(docId),
+    onSuccess: invalidateCpiDocs,
+    onError: e => setActionError(apiErrorMessage(e, 'La signature du document a échoué.')),
+  });
+
+  const signByClientMutation = useMutation({
+    mutationFn: (docId: string) => clientApi.signCpiDoc(docId),
+    onSuccess: invalidateCpiDocs,
+    onError: e => setActionError(apiErrorMessage(e, 'La signature électronique a échoué.')),
+  });
+
+  // Retirer de l'espace client sans archiver : seule la visibilité change.
+  const retireMutation = useMutation({
+    mutationFn: (docId: string) => staffApi.cpiDocs.update(docId, { visible_client: false }),
+    onSuccess: invalidateCpiDocs,
+    onError: e => setActionError(apiErrorMessage(e, 'Le retrait du document a échoué.')),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (v: {
+      clientId: string;
+      fields: Omit<CpiDoc, 'id' | 'dateCreation' | 'datePublication' | 'status' | 'visibleClient'>;
+      publishNow: boolean;
+    }) => {
+      const created = await staffApi.cpiDocs.create({
+        client_id: v.clientId,
+        categorie: v.fields.categorie,
+        nom: v.fields.nom,
+        reference: v.fields.reference ?? null,
+        version: v.fields.version,
+        commentaire: v.fields.commentaire ?? null,
+        fichier: v.fields.fichier ?? null,
+        signature_requise: v.fields.signatureRequise,
+        taille: v.fields.taille ?? null,
+        format: v.fields.format ?? null,
+      });
+      return v.publishNow ? staffApi.cpiDocs.publish(created.id) : created;
+    },
+    onSuccess: invalidateCpiDocs,
+    onError: e => setActionError(apiErrorMessage(e, 'La création du document a échoué.')),
+  });
+
+  // ── Actions exposées (mêmes signatures qu'avant l'API) ─────────────────────
+
+  // Aucune écriture de journal ici : l'API journalise chaque geste
+  // (`cpi-doc-publie`, `cpi-doc-signe`…) et `invalidateCpiDocs` recharge
+  // l'historique. Le paramètre `agentName` reste dans la signature — les écrans
+  // l'affichent —, mais il ne sert plus à écrire de trace locale.
+
+  const publishDoc = (docId: string, _agentName?: string, _clientId: string = selectedClientId) => {
+    publishMutation.mutate(docId);
   };
 
-  const archiveDoc = (docId: string, agentName: string, clientId: string = selectedClientId) => {
-    const { date, heure } = nowStamp();
-    updateDocFor(clientId, docId, { status: 'archive', visibleClient: false });
-    pushHistoryFor(clientId, { date, heure, utilisateur: agentName, role: 'Agent CPI', action: `Document archivé — ${docNomFor(clientId, docId)}`, type: 'document' as HistoActionType, cible: nameFor(clientId) });
+  const archiveDoc = (docId: string, _agentName?: string, _clientId: string = selectedClientId) => {
+    archiveMutation.mutate(docId);
   };
 
-  const requestSignature = (docId: string, agentName: string, clientId: string = selectedClientId) => {
-    const { date, heure } = nowStamp();
-    updateDocFor(clientId, docId, { status: 'a-signer', signatureRequise: true, visibleClient: true });
-    pushHistoryFor(clientId, { date, heure, utilisateur: agentName, role: 'Agent CPI', action: `Signature demandée — ${docNomFor(clientId, docId)}`, type: 'document' as HistoActionType, cible: nameFor(clientId) });
+  const requestSignature = (docId: string, _agentName?: string, _clientId: string = selectedClientId) => {
+    requestSignatureMutation.mutate(docId);
   };
 
-  const markSigned = (docId: string, agentName: string, clientId: string = selectedClientId) => {
-    const { date, heure } = nowStamp();
-    updateDocFor(clientId, docId, { status: 'signe', signatureRequise: false, datePublication: date });
-    pushHistoryFor(clientId, { date, heure, utilisateur: agentName, role: 'Agent CPI', action: `Document signé — ${docNomFor(clientId, docId)}`, type: 'validation' as HistoActionType, cible: nameFor(clientId) });
+  const markSigned = (docId: string, _agentName?: string, _clientId: string = selectedClientId) => {
+    signMutation.mutate(docId);
   };
 
-  const signDocByClient = (docId: string, clientId: string = selectedClientId) => {
-    const { date, heure } = nowStamp();
-    updateDocFor(clientId, docId, { status: 'signe', signatureRequise: false, datePublication: date });
-    pushHistoryFor(clientId, { date, heure, utilisateur: nameFor(clientId), role: 'Client', action: `Document signé — ${docNomFor(clientId, docId)}`, type: 'validation' as HistoActionType, cible: nameFor(clientId) });
+  const signDocByClient = (docId: string, _clientId: string = selectedClientId) => {
+    signByClientMutation.mutate(docId);
   };
 
-  const retireFromClient = (docId: string, agentName: string, clientId: string = selectedClientId) => {
-    const { date, heure } = nowStamp();
-    updateDocFor(clientId, docId, { visibleClient: false });
-    pushHistoryFor(clientId, { date, heure, utilisateur: agentName, role: 'Agent CPI', action: `Document retiré de l'espace client — ${docNomFor(clientId, docId)}`, type: 'document' as HistoActionType, cible: nameFor(clientId) });
+  const retireFromClient = (docId: string, _agentName?: string, _clientId: string = selectedClientId) => {
+    retireMutation.mutate(docId);
   };
 
   const createDoc = (
     fields: Omit<CpiDoc, 'id' | 'dateCreation' | 'datePublication' | 'status' | 'visibleClient'>,
-    agentName: string,
+    _agentName: string,
     publishNow: boolean,
     clientId: string = selectedClientId,
   ) => {
-    const { date, heure } = nowStamp();
-    // Un document publié qui requiert une signature part directement en « à signer »
-    // (le client le voit et peut le signer dans « Mon dossier »).
-    const publishedStatus = fields.signatureRequise ? 'a-signer' : 'disponible';
-    const newDoc: CpiDoc = {
-      ...fields, id: 'cpi-' + Date.now(), dateCreation: date,
-      status: publishNow ? publishedStatus : 'brouillon',
-      visibleClient: publishNow, datePublication: publishNow ? date : undefined,
-    };
-    setAllCpiDocs(prev => ({
-      ...prev,
-      [clientId]: [newDoc, ...(prev[clientId] ?? [])],
-    }));
-    pushHistoryFor(clientId, { date, heure, utilisateur: agentName, role: 'Agent CPI', action: publishNow ? `Document publié — ${fields.nom}` : `Brouillon créé — ${fields.nom}`, type: 'document' as HistoActionType, cible: nameFor(clientId) });
+    createMutation.mutate({ clientId, fields, publishNow });
+  };
+
+  // ── État de chargement / erreur ────────────────────────────────────────────
+  const sourceQuery = isStaff ? staffDocsQuery : mesDocsQuery;
+  const loading = (isStaff || isClient) && sourceQuery.isPending;
+  const queryError = isStaff
+    ? (staffDocsQuery.error ?? historiqueQuery.error)
+    : (profileQuery.error ?? mesDocsQuery.error);
+  const error = queryError ? apiErrorMessage(queryError, 'Impossible de charger les documents CPI.') : null;
+  const retry = () => {
+    void staffDocsQuery.refetch();
+    void mesDocsQuery.refetch();
+    void historiqueQuery.refetch();
   };
 
   return (
-    <CpiDocsContext.Provider value={{ cpiDocs, cpiHistory, allCpiDocsByClient: allCpiDocs, allCpiHistoryByClient: allCpiHistory, publishDoc, archiveDoc, requestSignature, markSigned, signDocByClient, retireFromClient, createDoc }}>
+    <CpiDocsContext.Provider value={{
+      cpiDocs, cpiHistory, allCpiDocsByClient: allCpiDocs, allCpiHistoryByClient: allCpiHistory,
+      publishDoc, archiveDoc, requestSignature, markSigned, signDocByClient, retireFromClient, createDoc,
+      loading, error, retry,
+    }}>
+      {actionError && <ApiErrorBanner message={actionError} onClose={() => setActionError(null)} />}
       {children}
     </CpiDocsContext.Provider>
   );

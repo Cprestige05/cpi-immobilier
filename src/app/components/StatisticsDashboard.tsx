@@ -14,7 +14,7 @@ import type { AuthUser, UserRole } from '../App';
 import { useClientContext } from '../contexts/ClientContext';
 import { useDocState } from '../data/docStateContext';
 import { useCpiDocs } from '../data/cpiDocsContext';
-import { computeJourneyStep, readDemandeSubmitted, SIGNATURE_INDEX, DOCS_VALIDES_INDEX, TIMELINE_STEPS } from '../data/dossierJourney';
+import { computeJourneyStep, SIGNATURE_INDEX, DOCS_VALIDES_INDEX, TIMELINE_STEPS } from '../data/dossierJourney';
 
 interface Props { user: AuthUser }
 
@@ -148,12 +148,12 @@ export default function StatisticsDashboard({ user }: Props) {
 
   // ── Métriques RÉELLES du portefeuille (clients suivis) ─────────────────────
   const { allClients } = useClientContext();
-  const { allDocsByClient, dossierEtapes } = useDocState();
+  const { allDocsByClient, dossierEtapes, submittedByClient } = useDocState();
   const { allCpiDocsByClient } = useCpiDocs();
 
   const realRows = allClients.map(c => {
     const docs = allDocsByClient[c.id] ?? [];
-    const submitted = readDemandeSubmitted(c.id, false);
+    const submitted = submittedByClient[c.id] ?? false;
     const etape = dossierEtapes[c.id] ?? DOCS_VALIDES_INDEX;
     const activeStep = computeJourneyStep(submitted, docs, etape);
     const toSign = (allCpiDocsByClient[c.id] ?? []).filter(d => d.visibleClient && d.signatureRequise && d.status === 'a-signer').length;

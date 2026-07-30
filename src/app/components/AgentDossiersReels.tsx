@@ -9,7 +9,7 @@ import { useDocState, type SharedDoc } from '../data/docStateContext';
 import { useCpiDocs, type CpiDoc } from '../data/cpiDocsContext';
 import { useClientData } from '../data/useClientData';
 import {
-  TIMELINE_STEPS, computeJourneyStep, readDemandeSubmitted,
+  TIMELINE_STEPS, computeJourneyStep,
   DOCS_VALIDES_INDEX, SIGNATURE_INDEX,
 } from '../data/dossierJourney';
 
@@ -63,13 +63,14 @@ function deriveClientState(
   allDocs: Record<string, SharedDoc[]>,
   etapes: Record<string, number>,
   cpiByClient: Record<string, CpiDoc[]>,
+  submittedByClient: Record<string, boolean>,
 ): ClientState {
   const docs = allDocs[clientId] ?? [];
   const total = docs.length;
   const validated = docs.filter(d => d.status === 'accepte').length;
   const hasIssue = docs.some(d => d.status === 'refuse' || d.status === 'a-remplacer');
   const allValid = total > 0 && validated === total;
-  const submitted = readDemandeSubmitted(clientId, false);
+  const submitted = submittedByClient[clientId] ?? false;
   const etape = etapes[clientId] ?? DOCS_VALIDES_INDEX;
   const activeStep = computeJourneyStep(submitted, docs, etape);
   const toSign = (cpiByClient[clientId] ?? []).filter(d => d.visibleClient && d.signatureRequise && d.status === 'a-signer').length;
@@ -181,7 +182,7 @@ function Card({ title, sub, right, children }: { title: string; sub?: string; ri
 
 function DossierFiche({ agentName, onBack }: { agentName: string; onBack: () => void }) {
   const client = useClientData();
-  const { requisDocs, dossierEtape, acceptDoc, refuseDoc, requestReplacement, setDossierEtape } = useDocState();
+  const { requisDocs, dossierEtape, submittedByClient, acceptDoc, refuseDoc, requestReplacement, setDossierEtape } = useDocState();
   const { cpiDocs, publishDoc, requestSignature, markSigned, createDoc } = useCpiDocs();
   const [modal, setModal] = useState<{ docId: string; mode: 'refuse' | 'remplacer' } | null>(null);
   const [showUpload, setShowUpload] = useState(false);
@@ -189,7 +190,7 @@ function DossierFiche({ agentName, onBack }: { agentName: string; onBack: () => 
   const total = requisDocs.length;
   const validated = requisDocs.filter(d => d.status === 'accepte').length;
   const allValid = total > 0 && validated === total;
-  const submitted = readDemandeSubmitted(client.id, false);
+  const submitted = submittedByClient[client.id] ?? false;
   const activeStep = computeJourneyStep(submitted, requisDocs, dossierEtape);
 
   const visibleCpi = cpiDocs.filter(d => d.visibleClient && d.status !== 'archive');
@@ -420,7 +421,7 @@ function UploadDocModal({ onClose, onPublish }: { onClose: () => void; onPublish
 
 export default function AgentDossiersReels({ agentName, mode = 'actifs' }: { agentName: string; mode?: 'actifs' | 'traites' | 'clients' | 'dashboard' }) {
   const { allClients, selectedClientId, setSelectedClientId } = useClientContext();
-  const { allDocsByClient, dossierEtapes } = useDocState();
+  const { allDocsByClient, dossierEtapes, submittedByClient } = useDocState();
   const { allCpiDocsByClient } = useCpiDocs();
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -428,7 +429,7 @@ export default function AgentDossiersReels({ agentName, mode = 'actifs' }: { age
     return <DossierFiche agentName={agentName} onBack={() => setOpenId(null)} />;
   }
 
-  const rows = allClients.map(c => ({ summary: c, st: deriveClientState(c.id, allDocsByClient, dossierEtapes, allCpiDocsByClient) }));
+  const rows = allClients.map(c => ({ summary: c, st: deriveClientState(c.id, allDocsByClient, dossierEtapes, allCpiDocsByClient, submittedByClient) }));
 
   // ── Tableau de bord : KPIs + actions requises ──────────────────────────────
   if (mode === 'dashboard') {

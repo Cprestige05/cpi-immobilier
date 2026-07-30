@@ -263,14 +263,18 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
 
   const clientData = useClientData();
   const { navigate } = useNavigate();
-  const { chantierInfo, tranches: ctxTranches, publications, medias, events, chantierHistory } = useChantierState();
+  const {
+    chantierInfo, tranches: ctxTranches, publications, medias, events, chantierHistory,
+    loading, error, retry,
+  } = useChantierState();
   const heroProgress = chantierInfo.progression;
 
   // Équipe réelle uniquement : renseignée par le CPI au fil du chantier. Aucun
   // membre fictif tant que les vraies informations ne sont pas saisies.
   const TEAM = useMemo(() => {
     const members: { initials: string; nom: string; role: string; tel: string; email: string; color: string }[] = [];
-    const chef = clientData.chantier?.chefChantier;
+    // Le chef de chantier vient désormais de l'API (fiche du chantier).
+    const chef = chantierInfo.chefChantier;
     if (chef && chef !== '—') {
       members.push({ initials: chef.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase(), nom: chef, role: 'Chef de chantier', tel: '—', email: '—', color: 'var(--primary)' });
     }
@@ -278,32 +282,32 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
       members.push({ initials: clientData.conseiller.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase(), nom: clientData.conseiller, role: 'Conseiller CPI', tel: '—', email: '—', color: 'var(--primary)' });
     }
     return members;
-  }, [clientData]);
+  }, [chantierInfo.chefChantier, clientData]);
 
-  // TRANCHES_LIVE: merge demoStore base data with context overrides
-  const TRANCHES_LIVE: Tranche[] = useMemo(() => {
-    const baseTranches = clientData.tranches.length > 0 ? clientData.tranches : [];
-    return baseTranches.map(t => {
-      const ctx = ctxTranches.find(c => c.num === t.num);
-      const etat: TrancheEtat = ctx?.etat === 'terminee' ? 'terminee' : ctx?.etat === 'en-cours' ? 'en-cours' : ctx?.etat === 'en-attente' ? 'en-attente' : t.etat;
+  // Les quatre tranches viennent de l'API (chantier du dossier) ; les montants,
+  // eux, restent portés par le suivi financier quand il est renseigné.
+  const TRANCHES_LIVE: Tranche[] = useMemo(() =>
+    ctxTranches.map(t => {
+      const base = clientData.tranches.find(b => b.num === t.num);
       const extra = TRANCHE_DETAILS[t.num] ?? {};
+      const montant = base?.montant ?? '—';
       return {
         id: `t${t.num}`,
         num: `T${t.num}`,
         label: t.label,
         detail: extra.detail ?? t.description ?? '',
         pct: t.pct,
-        montant: t.montant,
-        montantDec: etat === 'terminee' ? t.montant : '—',
-        date: (ctx?.date || t.date) ?? '—',
-        etat,
-        cpiOk: etat === 'terminee',
-        banqueOk: etat === 'terminee',
-        commentaire: ctx?.comment || '',
+        montant,
+        montantDec: t.etat === 'terminee' ? montant : '—',
+        date: t.date ?? base?.date ?? '—',
+        etat: t.etat as TrancheEtat,
+        cpiOk: t.etat === 'terminee',
+        banqueOk: t.etat === 'terminee',
+        commentaire: t.comment || '',
         photos: 0,
       } as Tranche;
-    });
-  }, [clientData.tranches, ctxTranches]);
+    })
+  , [clientData.tranches, ctxTranches]);
 
   // DISBURSEMENTS derived from store
   const DISBURSEMENTS = useMemo(() =>
@@ -328,9 +332,13 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
     return Object.entries(byDate).sort((a, b) => b[0].localeCompare(a[0])).map(([date, entries]) => ({ date, entries }));
   }, [publications]);
 
+  // `m.url` est le lien signé de courte durée renvoyé par l'API (bucket privé) :
+  // on l'utilise comme vignette, avec le dégradé en repli le temps du chargement.
   const GALLERY_LIVE = useMemo(() =>
     medias.filter(m => m.type === 'photo' && m.visibleClient).map(m => ({
-      bg: m.bg || 'linear-gradient(135deg,var(--primary),#B05070)',
+      bg: m.url
+        ? `url(${JSON.stringify(m.url)}) center / cover no-repeat`
+        : (m.bg || 'linear-gradient(135deg,var(--primary),#B05070)'),
       label: m.titre, tranche: m.phase ? `T${m.phase}` : 'T1', date: m.date,
     })), [medias]);
   const rawGallery = GALLERY_LIVE.length > 0 ? GALLERY_LIVE : GALLERY_ITEMS;
@@ -362,6 +370,33 @@ export default function MonChantierPage({ user: _user }: { user: AuthUser }) {
   const tranchesDone = TRANCHES_LIVE.filter(t => t.etat === 'terminee').length;
   const totalDec = DISBURSEMENTS.filter(d => d.etat === 'payee').length;
   const totalDecMontant = clientData.disbursements.find(d => d.status === 'Effectué')?.montant ?? '—';
+
+  // Le chantier vient de l'API : ni écran blanc pendant le chargement, ni échec
+  // silencieux si le serveur ne répond pas.
+  if (loading) {
+    return (
+      <div role="status" aria-live="polite" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, minHeight: '50vh', fontFamily: 'var(--font-sans)' }}>
+        <div className="cpi-skeleton" style={{ width: 220, height: 14, borderRadius: 'var(--r-full)' }} />
+        <div className="cpi-skeleton" style={{ width: 160, height: 14, borderRadius: 'var(--r-full)' }} />
+        <span style={{ fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>Chargement de votre chantier…</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div role="alert" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, minHeight: '50vh', padding: 24, textAlign: 'center', fontFamily: 'var(--font-sans)' }}>
+        <AlertCircle size={22} style={{ color: '#C0392B' }} />
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.0625rem', fontWeight: 800, color: 'var(--foreground)' }}>
+          Impossible d'afficher votre chantier
+        </div>
+        <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', margin: 0, maxWidth: 420, lineHeight: 1.6 }}>{error}</p>
+        <button onClick={retry} style={{ padding: '10px 22px', borderRadius: 'var(--r-full)', border: 'none', background: 'var(--primary)', color: 'var(--primary-foreground)', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer' }}>
+          Réessayer
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', fontFamily: 'var(--font-sans)', maxWidth: '960px' }}>
